@@ -1,6 +1,6 @@
 # AGENTS.md
 
-U14U — a framework-agnostic UI library for mobile and desktop web, built from vanilla ES6 modules and bundled with esbuild. Modern, futuristic design, fully themeable.
+UI4U — a framework-agnostic UI library for mobile and desktop web, built from vanilla ES6 modules and bundled with esbuild. Modern, futuristic design, fully themeable.
 
 ## Setup commands
 
@@ -30,7 +30,7 @@ Every component follows the same shape — keep new ones consistent:
 - Custom element `ui-<kebab-name>`, registered through `src/core/registry.js`; importing a module must have no side effects
 - Zero runtime dependencies; no global CSS — styles live in the component folder, scoped to the element
 - One options object, never long positional argument lists; every option documented in JSDoc
-- Theming only through CSS custom properties prefixed `--u14u-`; never hardcode color, spacing, radius, or shadow values in component CSS
+- Theming only through CSS custom properties prefixed `--ui4u-`; never hardcode color, spacing, radius, or shadow values in component CSS
 - Mobile-first: base styles target small screens, desktop refinements go in container/`@media` queries
 - Public API carries JSDoc `@param`/`@returns` plus one runnable `@example`
 
@@ -61,7 +61,7 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 - E2E/browser: `npm run test:e2e` (Playwright against `demo/`, mobile + desktop projects)
 - Run `npx playwright install chromium` once before the first e2e run
 - Component modules under `src/components/` must not import CSS — only their `index.js` does, so node:test can import the module directly
-- `U14UElement` captures `globalThis.HTMLElement` at module evaluation, so tests must call `setupDom()` before dynamically importing any component
+- `UI4UElement` captures `globalThis.HTMLElement` at module evaluation, so tests must call `setupDom()` before dynamically importing any component
 - New behavior needs a test that mirrors the source path — `test/components/tabs.test.js` for `src/components/tabs/`
 - Accessibility is part of done: keyboard navigation, focus trapping in popups, and correct ARIA roles must be asserted in tests
 - All tests pass before a PR opens

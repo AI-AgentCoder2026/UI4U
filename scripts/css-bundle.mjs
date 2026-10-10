@@ -3,7 +3,7 @@ import { relative, resolve } from 'node:path';
 
 /**
  * Order matters: design tokens and themes must land before any component rule,
- * otherwise a component would resolve `var(--u14u-*)` before it is defined.
+ * otherwise a component would resolve `var(--ui4u-*)` before it is defined.
  */
 const LAYER_ORDER = ['tokens.css', 'themes.css', 'reset.css', 'base.css'];
 
@@ -27,7 +27,7 @@ async function collect(iterable) {
 }
 
 /**
- * Concatenates every stylesheet in the library into a single `dist/u14u.css`
+ * Concatenates every stylesheet in the library into a single `dist/ui4u.css`
  * so consumers can opt into a plain stylesheet instead of runtime injection.
  *
  * @param {string} root Absolute path to the repository root.
@@ -54,8 +54,8 @@ export async function buildCssBundle(root) {
 
   const banner = [
     '/*!',
-    ' * U14U — design tokens + component styles',
-    ' * Themes are token overrides: set data-theme on <html> and override --u14u-* custom properties.',
+    ' * UI4U — design tokens + component styles',
+    ' * Themes are token overrides: set data-theme on <html> and override --ui4u-* custom properties.',
     ' * Generated file — edit src/styles/*.css or src/components/*/*.css instead.',
     ' */',
     '',
@@ -67,7 +67,7 @@ export async function buildCssBundle(root) {
   );
 
   const css = `${banner}\n${sections.join('\n')}`;
-  const outFile = resolve(root, 'dist/u14u.css');
+  const outFile = resolve(root, 'dist/ui4u.css');
 
   await mkdir(resolve(root, 'dist'), { recursive: true });
   await writeFile(outFile, css, 'utf8');

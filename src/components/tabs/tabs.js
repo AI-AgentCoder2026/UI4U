@@ -1,4 +1,4 @@
-import { U14UElement } from '../../core/base.js';
+import { UI4UElement } from '../../core/base.js';
 import { el, on, uid } from '../../core/dom.js';
 
 /**
@@ -25,7 +25,7 @@ import { el, on, uid } from '../../core/dom.js';
  * `ui-tabs` owns all panel wiring — roles, `aria-*`, `hidden` and tab order —
  * so you never set them by hand.
  */
-export class Tab extends U14UElement {}
+export class Tab extends UI4UElement {}
 
 /**
  * Tabbed panels with a keyboard-navigable tab list and full ARIA wiring.
@@ -38,9 +38,9 @@ export class Tab extends U14UElement {}
  * </ui-tabs>
  * ```
  *
- * Listens for `u14u:change` — `detail: { index, label, tab }`.
+ * Listens for `ui4u:change` — `detail: { index, label, tab }`.
  */
-export class Tabs extends U14UElement {
+export class Tabs extends UI4UElement {
   static get observedAttributes() {
     return ['active', 'orientation', 'activation', 'variant', 'label'];
   }
@@ -173,10 +173,10 @@ export class Tabs extends U14UElement {
     const panels = this.tabs;
     if (panels.length === 0) return;
 
-    const baseId = uid('u14u-tabs');
+    const baseId = uid('ui4u-tabs');
 
     /** @type {HTMLElement} */
-    const list = el('div', { class: 'u14u-tabs__list', role: 'tablist' });
+    const list = el('div', { class: 'ui4u-tabs__list', role: 'tablist' });
     list.setAttribute('aria-orientation', this.orientation);
 
     /** @type {HTMLButtonElement[]} */
@@ -197,7 +197,7 @@ export class Tabs extends U14UElement {
         'button',
         {
           type: 'button',
-          class: 'u14u-tabs__tab',
+          class: 'ui4u-tabs__tab',
           role: 'tab',
           id: tabId,
           'aria-controls': panel.id,
@@ -272,7 +272,7 @@ export class Tabs extends U14UElement {
     if (focus) this.#buttons[next]?.focus();
 
     if (changed) {
-      this.emit('u14u:change', {
+      this.emit('ui4u:change', {
         index: next,
         label: this.#panels[next]?.getAttribute('label') ?? '',
         tab: this.#panels[next] ?? null,

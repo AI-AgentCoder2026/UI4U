@@ -1,7 +1,7 @@
 /**
  * A tiny synchronous event emitter used for component-internal signalling.
  *
- * Public component events are real DOM `CustomEvent`s (see `U14UElement.emit`);
+ * Public component events are real DOM `CustomEvent`s (see `UI4UElement.emit`);
  * this emitter is for wiring inside a component where no DOM event is needed.
  */
 export class Emitter {
@@ -60,7 +60,7 @@ export class Emitter {
       try {
         handler(payload);
       } catch (error) {
-        console.error(`[u14u] listener for "${type}" threw:`, error);
+        console.error(`[ui4u] listener for "${type}" threw:`, error);
       }
     }
 

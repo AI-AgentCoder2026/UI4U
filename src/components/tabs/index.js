@@ -10,7 +10,7 @@
 import css from './tabs.css';
 import { Tabs, Tab } from './tabs.js';
 
-/** Style id used for runtime injection and for `style[data-u14u]`. */
+/** Style id used for runtime injection and for `style[data-ui4u]`. */
 export const TABS_STYLE_ID = 'ui-tabs';
 
 /** Raw stylesheet text, injected by `src/index.js`. */

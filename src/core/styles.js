@@ -1,12 +1,12 @@
 /**
  * Runtime style injection.
  *
- * U14U ships no global CSS at import time. Each component's stylesheet is
+ * UI4U ships no global CSS at import time. Each component's stylesheet is
  * injected once, lazily, into `<head>` as a single `<style>` element keyed by
  * component id. Rules are scoped to that component's own tag name, so the
  * library never leaks selectors into consumer markup.
  *
- * Prefer this only in the bundled runtime path. If you link `dist/u14u.css`
+ * Prefer this only in the bundled runtime path. If you link `dist/ui4u.css`
  * directly, skip injection entirely.
  */
 
@@ -34,7 +34,7 @@ export function injectStyle(id, css) {
 
   // `textContent`, never `innerHTML` — CSS is authored, but the rule holds everywhere.
   const style = document.createElement('style');
-  style.setAttribute('data-u14u', id);
+  style.setAttribute('data-ui4u', id);
   style.textContent = source;
 
   (document.head || document.documentElement).appendChild(style);

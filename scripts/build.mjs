@@ -17,27 +17,27 @@ const shared = {
   loader: { '.css': 'text' },
   logLevel: 'info',
   metafile: true,
-  define: { __U14U_VERSION__: JSON.stringify(pkg.version) },
+  define: { __UI4U_VERSION__: JSON.stringify(pkg.version) },
   banner: {
-    js: `/*! U14U v${pkg.version} | MIT */`,
+    js: `/*! UI4U v${pkg.version} | MIT */`,
   },
 };
 
 const targets = [
-  { ...shared, format: 'esm', outfile: 'dist/u14u.esm.js', minify: false, sourcemap: true },
-  { ...shared, format: 'cjs', outfile: 'dist/u14u.cjs', minify: false, sourcemap: true },
+  { ...shared, format: 'esm', outfile: 'dist/ui4u.esm.js', minify: false, sourcemap: true },
+  { ...shared, format: 'cjs', outfile: 'dist/ui4u.cjs', minify: false, sourcemap: true },
   {
     ...shared,
     format: 'iife',
-    globalName: 'U14U',
-    outfile: 'dist/u14u.global.js',
+    globalName: 'UI4U',
+    outfile: 'dist/ui4u.global.js',
     minify: true,
     sourcemap: false,
   },
   {
     ...shared,
     format: 'esm',
-    outfile: 'dist/u14u.esm.min.js',
+    outfile: 'dist/ui4u.esm.min.js',
     minify: true,
     sourcemap: false,
   },
@@ -59,5 +59,5 @@ for (const target of targets) {
 }
 
 const css = await buildCssBundle(root);
-console.log(`  dist/u14u.css              ${(css.bytes / 1024).toFixed(1)} kB`);
+console.log(`  dist/ui4u.css              ${(css.bytes / 1024).toFixed(1)} kB`);
 console.log(`\nBuilt ${pkg.name} v${pkg.version} from ${css.files.length} stylesheets.`);

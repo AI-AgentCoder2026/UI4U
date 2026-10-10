@@ -1,9 +1,9 @@
-# U14U
+# UI4U
 
 A framework-agnostic, mobile-first UI library for modern web apps.
 
 Vanilla ES6 modules. Zero runtime dependencies. Custom elements throughout, so it drops
-into any stack — or none. Every visual value is a `--u14u-*` custom property, which makes
+into any stack — or none. Every visual value is a `--ui4u-*` custom property, which makes
 theming a token override rather than a CSS fork.
 
 ```
@@ -34,7 +34,7 @@ npm install
 ### ES modules
 
 ```js
-import 'u14u';
+import 'ui4u';
 ```
 
 ```html
@@ -48,8 +48,8 @@ import 'u14u';
 ### Script tag
 
 ```html
-<link rel="stylesheet" href="/node_modules/u14u/dist/u14u.css" />
-<script src="/node_modules/u14u/dist/u14u.global.js"></script>
+<link rel="stylesheet" href="/node_modules/ui4u/dist/ui4u.css" />
+<script src="/node_modules/ui4u/dist/ui4u.global.js"></script>
 ```
 
 ### Individual components
@@ -57,8 +57,8 @@ import 'u14u';
 Component modules have no import side effects, so you can register only what you use:
 
 ```js
-import { Tabs, Tab, define, injectStyle } from 'u14u';
-import tabsCss from 'u14u/src/components/tabs/tabs.css'; // bundler only
+import { Tabs, Tab, define, injectStyle } from 'ui4u';
+import tabsCss from 'ui4u/src/components/tabs/tabs.css'; // bundler only
 
 injectStyle('ui-tabs', tabsCss);
 define('ui-tab', Tab);
@@ -69,14 +69,14 @@ define('ui-tabs', Tabs);
 
 Every component is a custom element configured through attributes and one options
 object. Options are documented with JSDoc on the class; every public event is prefixed
-`u14u:`.
+`ui4u:`.
 
 ```js
 const tabs = document.querySelector('ui-tabs');
 
 tabs.configure({ variant: 'underline', activation: 'manual', active: 1 });
 
-tabs.addEventListener('u14u:change', ({ detail }) => {
+tabs.addEventListener('ui4u:change', ({ detail }) => {
   console.log(detail.index, detail.label);
 });
 ```
@@ -95,12 +95,12 @@ fallback when no `data-theme` is set.
 
 ```css
 ui-tabs {
-  --u14u-primary: #f43f5e;
-  --u14u-radius-lg: 4px;
+  --ui4u-primary: #f43f5e;
+  --ui4u-radius-lg: 4px;
 }
 ```
 
-Motion honours `prefers-reduced-motion` — every `--u14u-duration-*` token collapses to
+Motion honours `prefers-reduced-motion` — every `--ui4u-duration-*` token collapses to
 `0ms` in one place, and components read those tokens rather than hardcoding timings.
 
 ## Development
@@ -118,11 +118,11 @@ Build outputs:
 
 | File | For |
 | --- | --- |
-| `dist/u14u.esm.js` | bundlers, `import` |
-| `dist/u14u.cjs` | Node `require` |
-| `dist/u14u.global.js` | `<script>` tags, exposes `window.U14U` |
-| `dist/u14u.esm.min.js` | bundlers, minified |
-| `dist/u14u.css` | optional stylesheet instead of runtime injection |
+| `dist/ui4u.esm.js` | bundlers, `import` |
+| `dist/ui4u.cjs` | Node `require` |
+| `dist/ui4u.global.js` | `<script>` tags, exposes `window.UI4U` |
+| `dist/ui4u.esm.min.js` | bundlers, minified |
+| `dist/ui4u.css` | optional stylesheet instead of runtime injection |
 
 ## Contributing
 

@@ -1,7 +1,7 @@
 /**
- * U14U design tokens.
+ * UI4U design tokens.
  *
- * Every value a component needs is declared here as a `--u14u-*` custom
+ * Every value a component needs is declared here as a `--ui4u-*` custom
  * property. Components must reference these tokens and never hardcode a
  * colour, radius, spacing step, shadow, or duration.
  *
@@ -13,152 +13,152 @@
   color-scheme: light dark;
 
   /* ---------------------------------------------------------------- type */
-  --u14u-font-sans:
+  --ui4u-font-sans:
     'Inter var', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
-  --u14u-font-mono:
+  --ui4u-font-mono:
     ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
 
-  --u14u-font-size-xs: 0.75rem;
-  --u14u-font-size-sm: 0.8125rem;
-  --u14u-font-size-md: 0.9375rem;
-  --u14u-font-size-lg: 1.0625rem;
-  --u14u-font-size-xl: 1.25rem;
-  --u14u-font-size-2xl: 1.5rem;
-  --u14u-font-size-3xl: 2rem;
+  --ui4u-font-size-xs: 0.75rem;
+  --ui4u-font-size-sm: 0.8125rem;
+  --ui4u-font-size-md: 0.9375rem;
+  --ui4u-font-size-lg: 1.0625rem;
+  --ui4u-font-size-xl: 1.25rem;
+  --ui4u-font-size-2xl: 1.5rem;
+  --ui4u-font-size-3xl: 2rem;
 
-  --u14u-line-tight: 1.2;
-  --u14u-line-normal: 1.55;
-  --u14u-line-loose: 1.75;
+  --ui4u-line-tight: 1.2;
+  --ui4u-line-normal: 1.55;
+  --ui4u-line-loose: 1.75;
 
-  --u14u-weight-regular: 400;
-  --u14u-weight-medium: 500;
-  --u14u-weight-semibold: 600;
-  --u14u-weight-bold: 700;
+  --ui4u-weight-regular: 400;
+  --ui4u-weight-medium: 500;
+  --ui4u-weight-semibold: 600;
+  --ui4u-weight-bold: 700;
 
-  --u14u-tracking-tight: -0.02em;
-  --u14u-tracking-normal: 0;
-  --u14u-tracking-wide: 0.06em;
-  --u14u-tracking-widest: 0.14em;
+  --ui4u-tracking-tight: -0.02em;
+  --ui4u-tracking-normal: 0;
+  --ui4u-tracking-wide: 0.06em;
+  --ui4u-tracking-widest: 0.14em;
 
   /* ------------------------------------------------------------ spacing */
-  --u14u-space-0: 0;
-  --u14u-space-1: 0.25rem;
-  --u14u-space-2: 0.5rem;
-  --u14u-space-3: 0.75rem;
-  --u14u-space-4: 1rem;
-  --u14u-space-5: 1.25rem;
-  --u14u-space-6: 1.5rem;
-  --u14u-space-7: 2rem;
-  --u14u-space-8: 3rem;
+  --ui4u-space-0: 0;
+  --ui4u-space-1: 0.25rem;
+  --ui4u-space-2: 0.5rem;
+  --ui4u-space-3: 0.75rem;
+  --ui4u-space-4: 1rem;
+  --ui4u-space-5: 1.25rem;
+  --ui4u-space-6: 1.5rem;
+  --ui4u-space-7: 2rem;
+  --ui4u-space-8: 3rem;
 
   /* ------------------------------------------------------------- radius */
-  --u14u-radius-xs: 4px;
-  --u14u-radius-sm: 6px;
-  --u14u-radius-md: 10px;
-  --u14u-radius-lg: 16px;
-  --u14u-radius-xl: 22px;
-  --u14u-radius-full: 999px;
+  --ui4u-radius-xs: 4px;
+  --ui4u-radius-sm: 6px;
+  --ui4u-radius-md: 10px;
+  --ui4u-radius-lg: 16px;
+  --ui4u-radius-xl: 22px;
+  --ui4u-radius-full: 999px;
 
   /* -------------------------------------------------------------- brand */
-  --u14u-primary: #0ea5e9;
-  --u14u-primary-hover: #0284c7;
-  --u14u-primary-active: #0369a1;
-  --u14u-primary-soft: rgba(14, 165, 233, 0.12);
-  --u14u-primary-contrast: #ffffff;
+  --ui4u-primary: #0ea5e9;
+  --ui4u-primary-hover: #0284c7;
+  --ui4u-primary-active: #0369a1;
+  --ui4u-primary-soft: rgba(14, 165, 233, 0.12);
+  --ui4u-primary-contrast: #ffffff;
 
-  --u14u-accent: #8b5cf6;
-  --u14u-accent-hover: #7c3aed;
-  --u14u-accent-soft: rgba(139, 92, 246, 0.12);
-  --u14u-accent-contrast: #ffffff;
+  --ui4u-accent: #8b5cf6;
+  --ui4u-accent-hover: #7c3aed;
+  --ui4u-accent-soft: rgba(139, 92, 246, 0.12);
+  --ui4u-accent-contrast: #ffffff;
 
   /* ----------------------------------------------------------- surfaces */
-  --u14u-bg: #eef2f8;
-  --u14u-bg-pattern: radial-gradient(
+  --ui4u-bg: #eef2f8;
+  --ui4u-bg-pattern: radial-gradient(
     1200px 600px at 15% -10%,
     rgba(14, 165, 233, 0.16),
     transparent 60%
   );
-  --u14u-surface: #ffffff;
-  --u14u-surface-2: #f4f7fb;
-  --u14u-surface-3: #e9eff7;
-  --u14u-surface-glass: rgba(255, 255, 255, 0.72);
-  --u14u-surface-glass-strong: rgba(255, 255, 255, 0.88);
-  --u14u-surface-sunken: #e6ecf5;
-  --u14u-overlay: rgba(9, 16, 32, 0.5);
+  --ui4u-surface: #ffffff;
+  --ui4u-surface-2: #f4f7fb;
+  --ui4u-surface-3: #e9eff7;
+  --ui4u-surface-glass: rgba(255, 255, 255, 0.72);
+  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.88);
+  --ui4u-surface-sunken: #e6ecf5;
+  --ui4u-overlay: rgba(9, 16, 32, 0.5);
 
   /* --------------------------------------------------------------- text */
-  --u14u-text: #0b1220;
-  --u14u-text-muted: #55637a;
-  --u14u-text-subtle: #8595ad;
-  --u14u-text-inverse: #f6f9ff;
-  --u14u-text-link: var(--u14u-primary-hover);
+  --ui4u-text: #0b1220;
+  --ui4u-text-muted: #55637a;
+  --ui4u-text-subtle: #8595ad;
+  --ui4u-text-inverse: #f6f9ff;
+  --ui4u-text-link: var(--ui4u-primary-hover);
 
   /* ------------------------------------------------------------ borders */
-  --u14u-border: rgba(15, 32, 60, 0.1);
-  --u14u-border-strong: rgba(15, 32, 60, 0.2);
-  --u14u-border-subtle: rgba(15, 32, 60, 0.06);
-  --u14u-divider: rgba(15, 32, 60, 0.08);
+  --ui4u-border: rgba(15, 32, 60, 0.1);
+  --ui4u-border-strong: rgba(15, 32, 60, 0.2);
+  --ui4u-border-subtle: rgba(15, 32, 60, 0.06);
+  --ui4u-divider: rgba(15, 32, 60, 0.08);
 
   /* ------------------------------------------------------------- status */
-  --u14u-success: #10b981;
-  --u14u-success-soft: rgba(16, 185, 129, 0.12);
-  --u14u-warning: #f59e0b;
-  --u14u-warning-soft: rgba(245, 158, 11, 0.14);
-  --u14u-danger: #e11d48;
-  --u14u-danger-hover: #be123c;
-  --u14u-danger-soft: rgba(225, 29, 72, 0.12);
-  --u14u-info: #3b82f6;
-  --u14u-info-soft: rgba(59, 130, 246, 0.12);
+  --ui4u-success: #10b981;
+  --ui4u-success-soft: rgba(16, 185, 129, 0.12);
+  --ui4u-warning: #f59e0b;
+  --ui4u-warning-soft: rgba(245, 158, 11, 0.14);
+  --ui4u-danger: #e11d48;
+  --ui4u-danger-hover: #be123c;
+  --ui4u-danger-soft: rgba(225, 29, 72, 0.12);
+  --ui4u-info: #3b82f6;
+  --ui4u-info-soft: rgba(59, 130, 246, 0.12);
 
   /* ----------------------------------------------------- shadows + glow */
-  --u14u-shadow-xs: 0 1px 2px rgba(9, 16, 32, 0.06);
-  --u14u-shadow-sm: 0 1px 2px rgba(9, 16, 32, 0.06), 0 2px 6px rgba(9, 16, 32, 0.06);
-  --u14u-shadow-md: 0 4px 12px rgba(9, 16, 32, 0.08), 0 12px 28px rgba(9, 16, 32, 0.08);
-  --u14u-shadow-lg: 0 10px 24px rgba(9, 16, 32, 0.1), 0 28px 60px rgba(9, 16, 32, 0.14);
-  --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --ui4u-shadow-xs: 0 1px 2px rgba(9, 16, 32, 0.06);
+  --ui4u-shadow-sm: 0 1px 2px rgba(9, 16, 32, 0.06), 0 2px 6px rgba(9, 16, 32, 0.06);
+  --ui4u-shadow-md: 0 4px 12px rgba(9, 16, 32, 0.08), 0 12px 28px rgba(9, 16, 32, 0.08);
+  --ui4u-shadow-lg: 0 10px 24px rgba(9, 16, 32, 0.1), 0 28px 60px rgba(9, 16, 32, 0.14);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
-  --u14u-glow-primary: 0 0 0 1px rgba(14, 165, 233, 0.28), 0 0 22px rgba(14, 165, 233, 0.28);
-  --u14u-glow-accent: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 22px rgba(139, 92, 246, 0.26);
-  --u14u-glass-blur: saturate(180%) blur(16px);
+  --ui4u-glow-primary: 0 0 0 1px rgba(14, 165, 233, 0.28), 0 0 22px rgba(14, 165, 233, 0.28);
+  --ui4u-glow-accent: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 22px rgba(139, 92, 246, 0.26);
+  --ui4u-glass-blur: saturate(180%) blur(16px);
 
   /* ------------------------------------------------------------- motion */
-  --u14u-duration-instant: 60ms;
-  --u14u-duration-fast: 120ms;
-  --u14u-duration-base: 180ms;
-  --u14u-duration-slow: 260ms;
-  --u14u-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --u14u-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --u14u-ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --u14u-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ui4u-duration-instant: 60ms;
+  --ui4u-duration-fast: 120ms;
+  --ui4u-duration-base: 180ms;
+  --ui4u-duration-slow: 260ms;
+  --ui4u-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ui4u-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ui4u-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ui4u-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 
   /* ------------------------------------------------------------- layers */
-  --u14u-z-base: 0;
-  --u14u-z-sticky: 100;
-  --u14u-z-sidebar: 200;
-  --u14u-z-header: 250;
-  --u14u-z-dropdown: 300;
-  --u14u-z-popup: 400;
-  --u14u-z-tooltip: 500;
-  --u14u-z-toast: 600;
+  --ui4u-z-base: 0;
+  --ui4u-z-sticky: 100;
+  --ui4u-z-sidebar: 200;
+  --ui4u-z-header: 250;
+  --ui4u-z-dropdown: 300;
+  --ui4u-z-popup: 400;
+  --ui4u-z-tooltip: 500;
+  --ui4u-z-toast: 600;
 
   /* -------------------------------------------------------------- focus */
-  --u14u-focus-ring-width: 2px;
-  --u14u-focus-ring-offset: 2px;
-  --u14u-focus-ring-color: var(--u14u-primary);
-  --u14u-focus-ring: 0 0 0 var(--u14u-focus-ring-width) var(--u14u-focus-ring-color);
-  --u14u-focus-ring-offset-shadow: 0 0 0 var(--u14u-focus-ring-offset) var(--u14u-bg);
+  --ui4u-focus-ring-width: 2px;
+  --ui4u-focus-ring-offset: 2px;
+  --ui4u-focus-ring-color: var(--ui4u-primary);
+  --ui4u-focus-ring: 0 0 0 var(--ui4u-focus-ring-width) var(--ui4u-focus-ring-color);
+  --ui4u-focus-ring-offset-shadow: 0 0 0 var(--ui4u-focus-ring-offset) var(--ui4u-bg);
 }
 
 /**
  * Single place where the motion budget is zeroed. Components only ever read
- * `--u14u-duration-*`, so this collapses every transition and animation.
+ * `--ui4u-duration-*`, so this collapses every transition and animation.
  */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --u14u-duration-instant: 0ms;
-    --u14u-duration-fast: 0ms;
-    --u14u-duration-base: 0ms;
-    --u14u-duration-slow: 0ms;
+    --ui4u-duration-instant: 0ms;
+    --ui4u-duration-fast: 0ms;
+    --ui4u-duration-base: 0ms;
+    --ui4u-duration-slow: 0ms;
   }
 }

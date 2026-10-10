@@ -3,88 +3,88 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>U14U — Tabs</title>
-    <link rel="stylesheet" href="/dist/u14u.css" />
+    <title>UI4U — Tabs</title>
+    <link rel="stylesheet" href="/dist/ui4u.css" />
     <link rel="stylesheet" href="/src/styles/reset.css" />
     <style>
       .page {
         max-width: 60rem;
         margin-inline: auto;
-        padding: var(--u14u-space-7) var(--u14u-space-4) var(--u14u-space-8);
+        padding: var(--ui4u-space-7) var(--ui4u-space-4) var(--ui4u-space-8);
       }
       .page > header {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: var(--u14u-space-4);
-        margin-bottom: var(--u14u-space-7);
+        gap: var(--ui4u-space-4);
+        margin-bottom: var(--ui4u-space-7);
       }
       h1 {
-        font-size: var(--u14u-font-size-3xl);
-        letter-spacing: var(--u14u-tracking-tight);
+        font-size: var(--ui4u-font-size-3xl);
+        letter-spacing: var(--ui4u-tracking-tight);
       }
       .lede {
-        color: var(--u14u-text-muted);
-        margin-top: var(--u14u-space-2);
+        color: var(--ui4u-text-muted);
+        margin-top: var(--ui4u-space-2);
       }
       .controls {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--u14u-space-3);
+        gap: var(--ui4u-space-3);
         align-items: center;
-        margin-bottom: var(--u14u-space-5);
-        padding: var(--u14u-space-4);
-        border: 1px solid var(--u14u-border);
-        border-radius: var(--u14u-radius-lg);
-        background: var(--u14u-surface-glass);
+        margin-bottom: var(--ui4u-space-5);
+        padding: var(--ui4u-space-4);
+        border: 1px solid var(--ui4u-border);
+        border-radius: var(--ui4u-radius-lg);
+        background: var(--ui4u-surface-glass);
       }
       .controls label {
         display: inline-flex;
         align-items: center;
-        gap: var(--u14u-space-2);
-        font-size: var(--u14u-font-size-sm);
-        color: var(--u14u-text-muted);
+        gap: var(--ui4u-space-2);
+        font-size: var(--ui4u-font-size-sm);
+        color: var(--ui4u-text-muted);
       }
       select,
       button {
-        padding: var(--u14u-space-2) var(--u14u-space-3);
-        border: 1px solid var(--u14u-border-strong);
-        border-radius: var(--u14u-radius-sm);
-        background: var(--u14u-surface-2);
-        color: var(--u14u-text);
+        padding: var(--ui4u-space-2) var(--ui4u-space-3);
+        border: 1px solid var(--ui4u-border-strong);
+        border-radius: var(--ui4u-radius-sm);
+        background: var(--ui4u-surface-2);
+        color: var(--ui4u-text);
         font: inherit;
-        font-size: var(--u14u-font-size-sm);
+        font-size: var(--ui4u-font-size-sm);
       }
       button {
         cursor: pointer;
       }
       button:hover {
-        border-color: var(--u14u-primary);
+        border-color: var(--ui4u-primary);
       }
       section {
-        margin-top: var(--u14u-space-7);
+        margin-top: var(--ui4u-space-7);
       }
       h2 {
-        font-size: var(--u14u-font-size-lg);
-        margin-bottom: var(--u14u-space-3);
-        color: var(--u14u-text);
+        font-size: var(--ui4u-font-size-lg);
+        margin-bottom: var(--ui4u-space-3);
+        color: var(--ui4u-text);
       }
       .log {
-        margin-top: var(--u14u-space-4);
-        padding: var(--u14u-space-3);
-        border-radius: var(--u14u-radius-md);
-        background: var(--u14u-surface-sunken);
-        border: 1px solid var(--u14u-border);
-        font-family: var(--u14u-font-mono);
-        font-size: var(--u14u-font-size-sm);
-        color: var(--u14u-text-muted);
+        margin-top: var(--ui4u-space-4);
+        padding: var(--ui4u-space-3);
+        border-radius: var(--ui4u-radius-md);
+        background: var(--ui4u-surface-sunken);
+        border: 1px solid var(--ui4u-border);
+        font-family: var(--ui4u-font-mono);
+        font-size: var(--ui4u-font-size-sm);
+        color: var(--ui4u-text-muted);
         min-height: 3rem;
       }
       code {
-        font-family: var(--u14u-font-mono);
+        font-family: var(--ui4u-font-mono);
         font-size: 0.9em;
-        color: var(--u14u-primary);
+        color: var(--ui4u-primary);
       }
     </style>
   </head>
@@ -140,7 +140,7 @@
         </ui-tab>
         <ui-tab label="Settings">
           <strong>Settings.</strong> Everything is themed through
-          <code>--u14u-*</code> custom properties. Override a token — do not fork
+          <code>--ui4u-*</code> custom properties. Override a token — do not fork
           component CSS.
         </ui-tab>
       </ui-tabs>
@@ -151,19 +151,19 @@
         <h2>Theming</h2>
         <p>
           Switch theme, or override any token directly:
-          <code>ui-tabs { --u14u-primary: #f43f5e; }</code>
+          <code>ui-tabs { --ui4u-primary: #f43f5e; }</code>
         </p>
         <div class="controls" id="accent-demo">
-          <button type="button" data-accent="var(--u14u-primary)">primary</button>
-          <button type="button" data-accent="var(--u14u-accent)">accent</button>
-          <button type="button" data-accent="var(--u14u-success)">success</button>
-          <button type="button" data-accent="var(--u14u-danger)">danger</button>
+          <button type="button" data-accent="var(--ui4u-primary)">primary</button>
+          <button type="button" data-accent="var(--ui4u-accent)">accent</button>
+          <button type="button" data-accent="var(--ui4u-success)">success</button>
+          <button type="button" data-accent="var(--ui4u-danger)">danger</button>
         </div>
       </section>
     </div>
 
     <script type="module">
-      import '/dist/u14u.esm.js';
+      import '/dist/ui4u.esm.js';
 
       const tabs = document.getElementById('demo');
       const log = document.getElementById('log');
@@ -177,8 +177,8 @@
       document.getElementById('next').addEventListener('click', () => tabs.next());
       document.getElementById('prev').addEventListener('click', () => tabs.previous());
 
-      tabs.addEventListener('u14u:change', (event) => {
-        log.textContent = `u14u:change → index ${event.detail.index} ("${event.detail.label}")`;
+      tabs.addEventListener('ui4u:change', (event) => {
+        log.textContent = `ui4u:change → index ${event.detail.index} ("${event.detail.label}")`;
       });
 
       document.getElementById('theme').addEventListener('click', () => {
@@ -190,7 +190,7 @@
 
       document.getElementById('accent-demo').addEventListener('click', (event) => {
         const accent = event.target.dataset.accent;
-        if (accent) tabs.style.setProperty('--u14u-primary', accent);
+        if (accent) tabs.style.setProperty('--ui4u-primary', accent);
       });
     </script>
   </body>

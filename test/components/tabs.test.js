@@ -161,7 +161,7 @@ describe('ui-tabs active state', () => {
 describe('ui-tabs change events', () => {
   afterEach(() => cleanup());
 
-  it('emits u14u:change with index, label and tab on click', () => {
+  it('emits ui4u:change with index, label and tab on click', () => {
     const host = mount(THREE_TABS);
     const tabs = host.querySelector('ui-tabs');
     const changes = collectChanges(tabs);

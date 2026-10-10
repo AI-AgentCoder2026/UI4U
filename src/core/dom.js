@@ -20,7 +20,7 @@ let uidCounter = 0;
  * @param {string} [prefix]
  * @returns {string}
  */
-export function uid(prefix = 'u14u') {
+export function uid(prefix = 'ui4u') {
   uidCounter += 1;
   return `${prefix}-${uidCounter}`;
 }
@@ -182,7 +182,7 @@ export function focusables(root) {
 
 /**
  * Whether the user asked for reduced motion. Components should read this in
- * addition to the `--u14u-duration-*` tokens, for JS-driven animation.
+ * addition to the `--ui4u-duration-*` tokens, for JS-driven animation.
  *
  * @returns {boolean}
  */

@@ -1,9 +1,9 @@
 /**
  * Opt-in page reset.
  *
- * NOT bundled into `dist/u14u.css` and NOT injected at runtime — the U14U
+ * NOT bundled into `dist/ui4u.css` and NOT injected at runtime — the UI4U
  * component library ships no global CSS. Link this yourself if your app wants
- * a baseline, e.g. `<link rel="stylesheet" href="./node_modules/u14u/src/styles/reset.css">`.
+ * a baseline, e.g. `<link rel="stylesheet" href="./node_modules/ui4u/src/styles/reset.css">`.
  */
 
 *,
@@ -20,12 +20,12 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: var(--u14u-font-sans);
-  font-size: var(--u14u-font-size-md);
-  line-height: var(--u14u-line-normal);
-  color: var(--u14u-text);
-  background-color: var(--u14u-bg);
-  background-image: var(--u14u-bg-pattern);
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-font-size-md);
+  line-height: var(--ui4u-line-normal);
+  color: var(--ui4u-text);
+  background-color: var(--ui4u-bg);
+  background-image: var(--ui4u-bg-pattern);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,7 +75,7 @@ button {
 }
 
 :where(a) {
-  color: var(--u14u-text-link);
+  color: var(--ui4u-text-link);
   text-underline-offset: 0.2em;
 }
 

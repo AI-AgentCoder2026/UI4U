@@ -1,5 +1,5 @@
 /**
- * Base class for every U14U custom element.
+ * Base class for every UI4U custom element.
  *
  * The `HTMLElement` lookup is guarded so that importing a component module in a
  * non-browser environment (SSR, node:test) yields a usable class instead of a
@@ -21,7 +21,7 @@ const HTMLElementBase = /** @type {typeof HTMLElement} */ (
  * Subclasses should override `onConnect`/`onDisconnect` rather than the
  * lifecycle callbacks themselves, and call `super` when they do override.
  */
-export class U14UElement extends HTMLElementBase {
+export class UI4UElement extends HTMLElementBase {
   /** @returns {string[]} attributes that trigger `attributeChangedCallback` */
   static get observedAttributes() {
     return [];
@@ -70,16 +70,16 @@ export class U14UElement extends HTMLElementBase {
   }
 
   /**
-   * Dispatches a namespaced `CustomEvent`. Every U14U public event is prefixed
-   * `u14u:` so it cannot collide with consumer or framework events.
+   * Dispatches a namespaced `CustomEvent`. Every UI4U public event is prefixed
+   * `ui4u:` so it cannot collide with consumer or framework events.
    *
-   * @param {string} type e.g. `'u14u:change'`
+   * @param {string} type e.g. `'ui4u:change'`
    * @param {any} [detail]
    * @param {{bubbles?: boolean, composed?: boolean}} [options]
    * @returns {boolean} whether the event was dispatched
    *
    * @example
-   * tabs.addEventListener('u14u:change', (e) => console.log(e.detail.index));
+   * tabs.addEventListener('ui4u:change', (e) => console.log(e.detail.index));
    */
   emit(type, detail = {}, { bubbles = true, composed = true } = {}) {
     if (typeof CustomEvent === 'undefined') return false;

@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 /**
- * ESLint flat config for U14U.
+ * ESLint flat config for UI4U.
  *
  * `src/` is browser code and must stay side-effect free at import time.
  * `test/` runs under node:test but the harness installs DOM globals, so those
@@ -24,7 +24,7 @@ export default [
       globals: {
         ...globals.browser,
         // Replaced at build time by esbuild `define`.
-        __U14U_VERSION__: 'readonly',
+        __UI4U_VERSION__: 'readonly',
       },
     },
     rules: {

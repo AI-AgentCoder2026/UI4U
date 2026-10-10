@@ -22,21 +22,21 @@ const MIME = {
 
 /**
  * esbuild watch. Regenerates the concatenated stylesheet after every rebuild so
- * the dev server and the published `dist/u14u.css` never drift apart.
+ * the dev server and the published `dist/ui4u.css` never drift apart.
  */
 const ctx = await context({
   entryPoints: [resolve(root, 'src/index.js')],
-  outfile: resolve(root, 'dist/u14u.esm.js'),
+  outfile: resolve(root, 'dist/ui4u.esm.js'),
   bundle: true,
   format: 'esm',
   target: ['es2022'],
   loader: { '.css': 'text' },
   sourcemap: true,
   logLevel: 'info',
-  define: { __U14U_VERSION__: JSON.stringify('0.1.0-dev') },
+  define: { __UI4U_VERSION__: JSON.stringify('0.1.0-dev') },
   plugins: [
     {
-      name: 'u14u-css-bundle',
+      name: 'ui4u-css-bundle',
       setup(build) {
         build.onEnd(async () => {
           await buildCssBundle(root);
@@ -76,6 +76,6 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`\n  U14U dev server → http://localhost:${port}/`);
+  console.log(`\n  UI4U dev server → http://localhost:${port}/`);
   console.log('  Demo index     → http://localhost:5173/demo/index.html\n');
 });

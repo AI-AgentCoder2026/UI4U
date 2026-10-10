@@ -37,7 +37,7 @@ test('shows only the active panel on load', async ({ page }) => {
   await expect(panels.nth(2)).toBeHidden();
 });
 
-test('activates a panel on click and emits u14u:change', async ({ page }) => {
+test('activates a panel on click and emits ui4u:change', async ({ page }) => {
   await page.getByRole('tab', { name: 'Settings' }).click();
 
   await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute(
@@ -66,10 +66,10 @@ test('moves between tabs with the arrow keys', async ({ page }) => {
 
 test('applies design tokens from the linked stylesheet', async ({ page }) => {
   const radius = await page
-    .locator('ui-tabs .u14u-tabs__list')
+    .locator('ui-tabs .ui4u-tabs__list')
     .evaluate((node) => getComputedStyle(node).borderTopLeftRadius);
 
-  // --u14u-radius-lg resolves to 16px in the default theme.
+  // --ui4u-radius-lg resolves to 16px in the default theme.
   expect(radius).toBe('16px');
 });
 

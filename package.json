@@ -1,23 +1,23 @@
 {
-  "name": "u14u",
+  "name": "ui4u",
   "version": "0.1.0",
   "description": "A framework-agnostic, mobile-first UI library for modern web apps. Vanilla ES6 modules, fully themeable.",
   "type": "module",
-  "main": "./dist/u14u.cjs",
-  "module": "./dist/u14u.esm.js",
-  "style": "./dist/u14u.css",
-  "unpkg": "./dist/u14u.global.js",
-  "jsdelivr": "./dist/u14u.global.js",
+  "main": "./dist/ui4u.cjs",
+  "module": "./dist/ui4u.esm.js",
+  "style": "./dist/ui4u.css",
+  "unpkg": "./dist/ui4u.global.js",
+  "jsdelivr": "./dist/ui4u.global.js",
   "exports": {
     ".": {
-      "import": "./dist/u14u.esm.js",
-      "require": "./dist/u14u.cjs",
-      "default": "./dist/u14u.esm.js"
+      "import": "./dist/ui4u.esm.js",
+      "require": "./dist/ui4u.cjs",
+      "default": "./dist/ui4u.esm.js"
     },
-    "./global": "./dist/u14u.global.js",
-    "./u14u.min.js": "./dist/u14u.esm.min.js",
+    "./global": "./dist/ui4u.global.js",
+    "./ui4u.min.js": "./dist/ui4u.esm.min.js",
     "./src/*": "./src/*",
-    "./dist/u14u.css": "./dist/u14u.css",
+    "./dist/ui4u.css": "./dist/ui4u.css",
     "./package.json": "./package.json"
   },
   "files": [

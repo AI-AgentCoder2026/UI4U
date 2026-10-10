@@ -1,7 +1,7 @@
 /**
- * U14U themes.
+ * UI4U themes.
  *
- * A theme is nothing but an override of `--u14u-*` tokens from `tokens.css`.
+ * A theme is nothing but an override of `--ui4u-*` tokens from `tokens.css`.
  * Never fork component CSS per theme — override tokens instead.
  *
  * Apply with `data-theme` on <html> (or any ancestor):
@@ -12,84 +12,84 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  --u14u-bg: #eef2f8;
-  --u14u-surface: #ffffff;
-  --u14u-surface-2: #f4f7fb;
-  --u14u-surface-3: #e9eff7;
-  --u14u-surface-sunken: #e6ecf5;
-  --u14u-surface-glass: rgba(255, 255, 255, 0.72);
-  --u14u-surface-glass-strong: rgba(255, 255, 255, 0.88);
+  --ui4u-bg: #eef2f8;
+  --ui4u-surface: #ffffff;
+  --ui4u-surface-2: #f4f7fb;
+  --ui4u-surface-3: #e9eff7;
+  --ui4u-surface-sunken: #e6ecf5;
+  --ui4u-surface-glass: rgba(255, 255, 255, 0.72);
+  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.88);
 
-  --u14u-text: #0b1220;
-  --u14u-text-muted: #55637a;
-  --u14u-text-subtle: #8595ad;
-  --u14u-text-inverse: #f6f9ff;
+  --ui4u-text: #0b1220;
+  --ui4u-text-muted: #55637a;
+  --ui4u-text-subtle: #8595ad;
+  --ui4u-text-inverse: #f6f9ff;
 
-  --u14u-border: rgba(15, 32, 60, 0.1);
-  --u14u-border-strong: rgba(15, 32, 60, 0.2);
-  --u14u-divider: rgba(15, 32, 60, 0.08);
+  --ui4u-border: rgba(15, 32, 60, 0.1);
+  --ui4u-border-strong: rgba(15, 32, 60, 0.2);
+  --ui4u-divider: rgba(15, 32, 60, 0.08);
 
-  --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* Futuristic dark theme — deep space surfaces, restrained cyan/violet glow. */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --u14u-primary: #38bdf8;
-  --u14u-primary-hover: #7dd3fc;
-  --u14u-primary-active: #0ea5e9;
-  --u14u-primary-soft: rgba(56, 189, 248, 0.16);
-  --u14u-primary-contrast: #04121f;
+  --ui4u-primary: #38bdf8;
+  --ui4u-primary-hover: #7dd3fc;
+  --ui4u-primary-active: #0ea5e9;
+  --ui4u-primary-soft: rgba(56, 189, 248, 0.16);
+  --ui4u-primary-contrast: #04121f;
 
-  --u14u-accent: #a78bfa;
-  --u14u-accent-hover: #c4b5fd;
-  --u14u-accent-soft: rgba(167, 139, 250, 0.18);
-  --u14u-accent-contrast: #120a2b;
+  --ui4u-accent: #a78bfa;
+  --ui4u-accent-hover: #c4b5fd;
+  --ui4u-accent-soft: rgba(167, 139, 250, 0.18);
+  --ui4u-accent-contrast: #120a2b;
 
-  --u14u-bg: #05070f;
-  --u14u-bg-pattern:
+  --ui4u-bg: #05070f;
+  --ui4u-bg-pattern:
     radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
     radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
-  --u14u-surface: rgba(17, 24, 39, 0.72);
-  --u14u-surface-2: rgba(28, 37, 55, 0.66);
-  --u14u-surface-3: rgba(38, 50, 72, 0.6);
-  --u14u-surface-sunken: rgba(4, 7, 15, 0.6);
-  --u14u-surface-glass: rgba(15, 23, 42, 0.62);
-  --u14u-surface-glass-strong: rgba(15, 23, 42, 0.82);
-  --u14u-overlay: rgba(2, 5, 12, 0.68);
+  --ui4u-surface: rgba(17, 24, 39, 0.72);
+  --ui4u-surface-2: rgba(28, 37, 55, 0.66);
+  --ui4u-surface-3: rgba(38, 50, 72, 0.6);
+  --ui4u-surface-sunken: rgba(4, 7, 15, 0.6);
+  --ui4u-surface-glass: rgba(15, 23, 42, 0.62);
+  --ui4u-surface-glass-strong: rgba(15, 23, 42, 0.82);
+  --ui4u-overlay: rgba(2, 5, 12, 0.68);
 
-  --u14u-text: #e8eefc;
-  --u14u-text-muted: #93a3bd;
-  --u14u-text-subtle: #64748b;
-  --u14u-text-inverse: #04101f;
-  --u14u-text-link: #7dd3fc;
+  --ui4u-text: #e8eefc;
+  --ui4u-text-muted: #93a3bd;
+  --ui4u-text-subtle: #64748b;
+  --ui4u-text-inverse: #04101f;
+  --ui4u-text-link: #7dd3fc;
 
-  --u14u-border: rgba(148, 180, 255, 0.14);
-  --u14u-border-strong: rgba(148, 180, 255, 0.28);
-  --u14u-border-subtle: rgba(148, 180, 255, 0.08);
-  --u14u-divider: rgba(148, 180, 255, 0.12);
+  --ui4u-border: rgba(148, 180, 255, 0.14);
+  --ui4u-border-strong: rgba(148, 180, 255, 0.28);
+  --ui4u-border-subtle: rgba(148, 180, 255, 0.08);
+  --ui4u-divider: rgba(148, 180, 255, 0.12);
 
-  --u14u-success: #34d399;
-  --u14u-success-soft: rgba(52, 211, 153, 0.16);
-  --u14u-warning: #fbbf24;
-  --u14u-warning-soft: rgba(251, 191, 36, 0.16);
-  --u14u-danger: #fb7185;
-  --u14u-danger-hover: #f43f5e;
-  --u14u-danger-soft: rgba(251, 113, 133, 0.16);
-  --u14u-info: #60a5fa;
-  --u14u-info-soft: rgba(96, 165, 250, 0.16);
+  --ui4u-success: #34d399;
+  --ui4u-success-soft: rgba(52, 211, 153, 0.16);
+  --ui4u-warning: #fbbf24;
+  --ui4u-warning-soft: rgba(251, 191, 36, 0.16);
+  --ui4u-danger: #fb7185;
+  --ui4u-danger-hover: #f43f5e;
+  --ui4u-danger-soft: rgba(251, 113, 133, 0.16);
+  --ui4u-info: #60a5fa;
+  --ui4u-info-soft: rgba(96, 165, 250, 0.16);
 
-  --u14u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --u14u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
-  --u14u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
-  --u14u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
-  --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --ui4u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui4u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --ui4u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
+  --ui4u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-  --u14u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
-  --u14u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+  --ui4u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
+  --ui4u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
 
-  --u14u-focus-ring-offset-shadow: 0 0 0 var(--u14u-focus-ring-offset) var(--u14u-bg);
+  --ui4u-focus-ring-offset-shadow: 0 0 0 var(--ui4u-focus-ring-offset) var(--ui4u-bg);
 }
 
 /* Follow the OS preference only when the consumer has not chosen a theme. */
@@ -97,48 +97,48 @@
   :root:not([data-theme]) {
     color-scheme: dark;
 
-    --u14u-primary: #38bdf8;
-    --u14u-primary-hover: #7dd3fc;
-    --u14u-primary-active: #0ea5e9;
-    --u14u-primary-soft: rgba(56, 189, 248, 0.16);
-    --u14u-primary-contrast: #04121f;
+    --ui4u-primary: #38bdf8;
+    --ui4u-primary-hover: #7dd3fc;
+    --ui4u-primary-active: #0ea5e9;
+    --ui4u-primary-soft: rgba(56, 189, 248, 0.16);
+    --ui4u-primary-contrast: #04121f;
 
-    --u14u-accent: #a78bfa;
-    --u14u-accent-hover: #c4b5fd;
-    --u14u-accent-soft: rgba(167, 139, 250, 0.18);
-    --u14u-accent-contrast: #120a2b;
+    --ui4u-accent: #a78bfa;
+    --ui4u-accent-hover: #c4b5fd;
+    --ui4u-accent-soft: rgba(167, 139, 250, 0.18);
+    --ui4u-accent-contrast: #120a2b;
 
-    --u14u-bg: #05070f;
-    --u14u-bg-pattern:
+    --ui4u-bg: #05070f;
+    --ui4u-bg-pattern:
       radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
       radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
-    --u14u-surface: rgba(17, 24, 39, 0.72);
-    --u14u-surface-2: rgba(28, 37, 55, 0.66);
-    --u14u-surface-3: rgba(38, 50, 72, 0.6);
-    --u14u-surface-sunken: rgba(4, 7, 15, 0.6);
-    --u14u-surface-glass: rgba(15, 23, 42, 0.62);
-    --u14u-surface-glass-strong: rgba(15, 23, 42, 0.82);
-    --u14u-overlay: rgba(2, 5, 12, 0.68);
+    --ui4u-surface: rgba(17, 24, 39, 0.72);
+    --ui4u-surface-2: rgba(28, 37, 55, 0.66);
+    --ui4u-surface-3: rgba(38, 50, 72, 0.6);
+    --ui4u-surface-sunken: rgba(4, 7, 15, 0.6);
+    --ui4u-surface-glass: rgba(15, 23, 42, 0.62);
+    --ui4u-surface-glass-strong: rgba(15, 23, 42, 0.82);
+    --ui4u-overlay: rgba(2, 5, 12, 0.68);
 
-    --u14u-text: #e8eefc;
-    --u14u-text-muted: #93a3bd;
-    --u14u-text-subtle: #64748b;
-    --u14u-text-inverse: #04101f;
-    --u14u-text-link: #7dd3fc;
+    --ui4u-text: #e8eefc;
+    --ui4u-text-muted: #93a3bd;
+    --ui4u-text-subtle: #64748b;
+    --ui4u-text-inverse: #04101f;
+    --ui4u-text-link: #7dd3fc;
 
-    --u14u-border: rgba(148, 180, 255, 0.14);
-    --u14u-border-strong: rgba(148, 180, 255, 0.28);
-    --u14u-border-subtle: rgba(148, 180, 255, 0.08);
-    --u14u-divider: rgba(148, 180, 255, 0.12);
+    --ui4u-border: rgba(148, 180, 255, 0.14);
+    --ui4u-border-strong: rgba(148, 180, 255, 0.28);
+    --ui4u-border-subtle: rgba(148, 180, 255, 0.08);
+    --ui4u-divider: rgba(148, 180, 255, 0.12);
 
-    --u14u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --u14u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
-    --u14u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
-    --u14u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
-    --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --ui4u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --ui4u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --ui4u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
+    --ui4u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
+    --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-    --u14u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
-    --u14u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+    --ui4u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
+    --ui4u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
   }
 }
 
@@ -146,37 +146,37 @@
 [data-theme='contrast'] {
   color-scheme: dark;
 
-  --u14u-bg: #000000;
-  --u14u-surface: #000000;
-  --u14u-surface-2: #0a0a0a;
-  --u14u-surface-3: #141414;
-  --u14u-surface-sunken: #000000;
-  --u14u-surface-glass: #000000;
-  --u14u-surface-glass-strong: #000000;
-  --u14u-overlay: rgba(0, 0, 0, 0.9);
+  --ui4u-bg: #000000;
+  --ui4u-surface: #000000;
+  --ui4u-surface-2: #0a0a0a;
+  --ui4u-surface-3: #141414;
+  --ui4u-surface-sunken: #000000;
+  --ui4u-surface-glass: #000000;
+  --ui4u-surface-glass-strong: #000000;
+  --ui4u-overlay: rgba(0, 0, 0, 0.9);
 
-  --u14u-text: #ffffff;
-  --u14u-text-muted: #e0e0e0;
-  --u14u-text-subtle: #c0c0c0;
-  --u14u-text-inverse: #000000;
-  --u14u-text-link: #7dd3fc;
+  --ui4u-text: #ffffff;
+  --ui4u-text-muted: #e0e0e0;
+  --ui4u-text-subtle: #c0c0c0;
+  --ui4u-text-inverse: #000000;
+  --ui4u-text-link: #7dd3fc;
 
-  --u14u-primary: #7dd3fc;
-  --u14u-primary-hover: #bae6fd;
-  --u14u-primary-contrast: #000000;
-  --u14u-accent: #c4b5fd;
-  --u14u-accent-contrast: #000000;
+  --ui4u-primary: #7dd3fc;
+  --ui4u-primary-hover: #bae6fd;
+  --ui4u-primary-contrast: #000000;
+  --ui4u-accent: #c4b5fd;
+  --ui4u-accent-contrast: #000000;
 
-  --u14u-border: rgba(255, 255, 255, 0.55);
-  --u14u-border-strong: #ffffff;
-  --u14u-divider: rgba(255, 255, 255, 0.4);
+  --ui4u-border: rgba(255, 255, 255, 0.55);
+  --ui4u-border-strong: #ffffff;
+  --ui4u-divider: rgba(255, 255, 255, 0.4);
 
-  --u14u-shadow-xs: none;
-  --u14u-shadow-sm: none;
-  --u14u-shadow-md: none;
-  --u14u-shadow-lg: none;
-  --u14u-shadow-inset: none;
+  --ui4u-shadow-xs: none;
+  --ui4u-shadow-sm: none;
+  --ui4u-shadow-md: none;
+  --ui4u-shadow-lg: none;
+  --ui4u-shadow-inset: none;
 
-  --u14u-glass-blur: none;
-  --u14u-focus-ring-width: 3px;
+  --ui4u-glass-blur: none;
+  --ui4u-focus-ring-width: 3px;
 }

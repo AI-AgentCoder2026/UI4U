@@ -1,5 +1,5 @@
 /**
- * U14U base layer.
+ * UI4U base layer.
  *
  * Deliberately tiny: the library ships no global reset and never styles
  * consumer markup. Only two opt-in utility classes and the shared custom
@@ -26,15 +26,15 @@ ui-grid,
 ui-layout,
 ui-popup,
 ui-tooltip {
-  font-family: var(--u14u-font-sans);
-  color: var(--u14u-text);
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
 }
 
 /**
  * Visually hidden but exposed to assistive technology.
  * Used by every component that renders a label it does not show visually.
  */
-.u14u-sr-only {
+.ui4u-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -47,8 +47,8 @@ ui-tooltip {
   border: 0;
 }
 
-/** Visible focus ring shared by every interactive U14U element. */
-.u14u-focusable:focus-visible {
+/** Visible focus ring shared by every interactive UI4U element. */
+.ui4u-focusable:focus-visible {
   outline: none;
-  box-shadow: var(--u14u-focus-ring);
+  box-shadow: var(--ui4u-focus-ring);
 }

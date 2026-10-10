@@ -1,7 +1,7 @@
 /**
  * DOM harness for node:test.
  *
- * `U14UElement` captures `globalThis.HTMLElement` when its module is evaluated,
+ * `UI4UElement` captures `globalThis.HTMLElement` when its module is evaluated,
  * so a DOM must exist **before** any component module is imported. Tests
  * therefore call `setupDom()` at module scope and then import components
  * dynamically:
@@ -16,7 +16,7 @@ import jsdomPkg from 'jsdom';
 
 const { JSDOM } = jsdomPkg;
 
-/** Globals the U14U source legitimately reaches for. */
+/** Globals the UI4U source legitimately reaches for. */
 const EXPOSED = [
   'window',
   'document',
@@ -54,7 +54,7 @@ export function setupDom(body = '') {
     }
   }
 
-  // jsdom ships no matchMedia; U14U guards for it, and this keeps tests honest.
+  // jsdom ships no matchMedia; UI4U guards for it, and this keeps tests honest.
   if (typeof globalThis.matchMedia !== 'function') {
     globalThis.matchMedia = (query) => ({
       matches: false,
@@ -125,7 +125,7 @@ export function click(target) {
 }
 
 /**
- * Collects `u14u:change` payloads emitted by a component.
+ * Collects `ui4u:change` payloads emitted by a component.
  *
  * @param {EventTarget} target
  * @returns {Array<{ index: number, label: string }>} live array, appended in order
@@ -133,6 +133,6 @@ export function click(target) {
 export function collectChanges(target) {
   /** @type {Array<{ index: number, label: string }>} */
   const seen = [];
-  target.addEventListener('u14u:change', (event) => seen.push(event.detail));
+  target.addEventListener('ui4u:change', (event) => seen.push(event.detail));
   return seen;
 }
