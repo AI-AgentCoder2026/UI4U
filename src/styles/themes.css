@@ -1,0 +1,182 @@
+/**
+ * U14U themes.
+ *
+ * A theme is nothing but an override of `--u14u-*` tokens from `tokens.css`.
+ * Never fork component CSS per theme — override tokens instead.
+ *
+ * Apply with `data-theme` on <html> (or any ancestor):
+ *   <html data-theme="dark">
+ */
+
+/* Explicit light theme, so it can win over the media query below. */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --u14u-bg: #eef2f8;
+  --u14u-surface: #ffffff;
+  --u14u-surface-2: #f4f7fb;
+  --u14u-surface-3: #e9eff7;
+  --u14u-surface-sunken: #e6ecf5;
+  --u14u-surface-glass: rgba(255, 255, 255, 0.72);
+  --u14u-surface-glass-strong: rgba(255, 255, 255, 0.88);
+
+  --u14u-text: #0b1220;
+  --u14u-text-muted: #55637a;
+  --u14u-text-subtle: #8595ad;
+  --u14u-text-inverse: #f6f9ff;
+
+  --u14u-border: rgba(15, 32, 60, 0.1);
+  --u14u-border-strong: rgba(15, 32, 60, 0.2);
+  --u14u-divider: rgba(15, 32, 60, 0.08);
+
+  --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* Futuristic dark theme — deep space surfaces, restrained cyan/violet glow. */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --u14u-primary: #38bdf8;
+  --u14u-primary-hover: #7dd3fc;
+  --u14u-primary-active: #0ea5e9;
+  --u14u-primary-soft: rgba(56, 189, 248, 0.16);
+  --u14u-primary-contrast: #04121f;
+
+  --u14u-accent: #a78bfa;
+  --u14u-accent-hover: #c4b5fd;
+  --u14u-accent-soft: rgba(167, 139, 250, 0.18);
+  --u14u-accent-contrast: #120a2b;
+
+  --u14u-bg: #05070f;
+  --u14u-bg-pattern:
+    radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
+    radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
+  --u14u-surface: rgba(17, 24, 39, 0.72);
+  --u14u-surface-2: rgba(28, 37, 55, 0.66);
+  --u14u-surface-3: rgba(38, 50, 72, 0.6);
+  --u14u-surface-sunken: rgba(4, 7, 15, 0.6);
+  --u14u-surface-glass: rgba(15, 23, 42, 0.62);
+  --u14u-surface-glass-strong: rgba(15, 23, 42, 0.82);
+  --u14u-overlay: rgba(2, 5, 12, 0.68);
+
+  --u14u-text: #e8eefc;
+  --u14u-text-muted: #93a3bd;
+  --u14u-text-subtle: #64748b;
+  --u14u-text-inverse: #04101f;
+  --u14u-text-link: #7dd3fc;
+
+  --u14u-border: rgba(148, 180, 255, 0.14);
+  --u14u-border-strong: rgba(148, 180, 255, 0.28);
+  --u14u-border-subtle: rgba(148, 180, 255, 0.08);
+  --u14u-divider: rgba(148, 180, 255, 0.12);
+
+  --u14u-success: #34d399;
+  --u14u-success-soft: rgba(52, 211, 153, 0.16);
+  --u14u-warning: #fbbf24;
+  --u14u-warning-soft: rgba(251, 191, 36, 0.16);
+  --u14u-danger: #fb7185;
+  --u14u-danger-hover: #f43f5e;
+  --u14u-danger-soft: rgba(251, 113, 133, 0.16);
+  --u14u-info: #60a5fa;
+  --u14u-info-soft: rgba(96, 165, 250, 0.16);
+
+  --u14u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --u14u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --u14u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
+  --u14u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
+  --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  --u14u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
+  --u14u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+
+  --u14u-focus-ring-offset-shadow: 0 0 0 var(--u14u-focus-ring-offset) var(--u14u-bg);
+}
+
+/* Follow the OS preference only when the consumer has not chosen a theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --u14u-primary: #38bdf8;
+    --u14u-primary-hover: #7dd3fc;
+    --u14u-primary-active: #0ea5e9;
+    --u14u-primary-soft: rgba(56, 189, 248, 0.16);
+    --u14u-primary-contrast: #04121f;
+
+    --u14u-accent: #a78bfa;
+    --u14u-accent-hover: #c4b5fd;
+    --u14u-accent-soft: rgba(167, 139, 250, 0.18);
+    --u14u-accent-contrast: #120a2b;
+
+    --u14u-bg: #05070f;
+    --u14u-bg-pattern:
+      radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
+      radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
+    --u14u-surface: rgba(17, 24, 39, 0.72);
+    --u14u-surface-2: rgba(28, 37, 55, 0.66);
+    --u14u-surface-3: rgba(38, 50, 72, 0.6);
+    --u14u-surface-sunken: rgba(4, 7, 15, 0.6);
+    --u14u-surface-glass: rgba(15, 23, 42, 0.62);
+    --u14u-surface-glass-strong: rgba(15, 23, 42, 0.82);
+    --u14u-overlay: rgba(2, 5, 12, 0.68);
+
+    --u14u-text: #e8eefc;
+    --u14u-text-muted: #93a3bd;
+    --u14u-text-subtle: #64748b;
+    --u14u-text-inverse: #04101f;
+    --u14u-text-link: #7dd3fc;
+
+    --u14u-border: rgba(148, 180, 255, 0.14);
+    --u14u-border-strong: rgba(148, 180, 255, 0.28);
+    --u14u-border-subtle: rgba(148, 180, 255, 0.08);
+    --u14u-divider: rgba(148, 180, 255, 0.12);
+
+    --u14u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --u14u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --u14u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
+    --u14u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
+    --u14u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    --u14u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
+    --u14u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+  }
+}
+
+/* High-contrast theme — WCAG AAA oriented, no translucency, heavy borders. */
+[data-theme='contrast'] {
+  color-scheme: dark;
+
+  --u14u-bg: #000000;
+  --u14u-surface: #000000;
+  --u14u-surface-2: #0a0a0a;
+  --u14u-surface-3: #141414;
+  --u14u-surface-sunken: #000000;
+  --u14u-surface-glass: #000000;
+  --u14u-surface-glass-strong: #000000;
+  --u14u-overlay: rgba(0, 0, 0, 0.9);
+
+  --u14u-text: #ffffff;
+  --u14u-text-muted: #e0e0e0;
+  --u14u-text-subtle: #c0c0c0;
+  --u14u-text-inverse: #000000;
+  --u14u-text-link: #7dd3fc;
+
+  --u14u-primary: #7dd3fc;
+  --u14u-primary-hover: #bae6fd;
+  --u14u-primary-contrast: #000000;
+  --u14u-accent: #c4b5fd;
+  --u14u-accent-contrast: #000000;
+
+  --u14u-border: rgba(255, 255, 255, 0.55);
+  --u14u-border-strong: #ffffff;
+  --u14u-divider: rgba(255, 255, 255, 0.4);
+
+  --u14u-shadow-xs: none;
+  --u14u-shadow-sm: none;
+  --u14u-shadow-md: none;
+  --u14u-shadow-lg: none;
+  --u14u-shadow-inset: none;
+
+  --u14u-glass-blur: none;
+  --u14u-focus-ring-width: 3px;
+}

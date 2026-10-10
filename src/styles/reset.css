@@ -1,0 +1,91 @@
+/**
+ * Opt-in page reset.
+ *
+ * NOT bundled into `dist/u14u.css` and NOT injected at runtime — the U14U
+ * component library ships no global CSS. Link this yourself if your app wants
+ * a baseline, e.g. `<link rel="stylesheet" href="./node_modules/u14u/src/styles/reset.css">`.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--u14u-font-sans);
+  font-size: var(--u14u-font-size-md);
+  line-height: var(--u14u-line-normal);
+  color: var(--u14u-text);
+  background-color: var(--u14u-bg);
+  background-image: var(--u14u-bg-pattern);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+ul[class],
+ol[class] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+:where(a) {
+  color: var(--u14u-text-link);
+  text-underline-offset: 0.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

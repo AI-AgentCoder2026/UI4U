@@ -1,0 +1,208 @@
+/**
+ * ui-tabs / ui-tab
+ *
+ * Every value comes from a `--u14u-*` token. Mobile-first: the tab list scrolls
+ * horizontally on narrow screens, and vertical orientation only kicks in once
+ * there is room for it.
+ */
+
+ui-tabs {
+  display: block;
+  container-type: inline-size;
+  container-name: u14u-tabs;
+}
+
+ui-tabs[data-orientation='vertical'] {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--u14u-space-4);
+}
+
+ui-tabs .u14u-tabs__list {
+  display: flex;
+  gap: var(--u14u-space-1);
+  padding: var(--u14u-space-1);
+  margin-bottom: var(--u14u-space-4);
+  border: 1px solid var(--u14u-border);
+  border-radius: var(--u14u-radius-lg);
+  background: var(--u14u-surface-glass);
+  box-shadow: var(--u14u-shadow-sm), var(--u14u-shadow-inset);
+  -webkit-backdrop-filter: var(--u14u-glass-blur);
+  backdrop-filter: var(--u14u-glass-blur);
+
+  /* Narrow screens: keep every tab reachable without wrapping. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+ui-tabs .u14u-tabs__list::-webkit-scrollbar {
+  display: none;
+}
+
+ui-tabs .u14u-tabs__tab {
+  position: relative;
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--u14u-space-2);
+  padding: var(--u14u-space-2) var(--u14u-space-4);
+  border-radius: var(--u14u-radius-md);
+  font-family: var(--u14u-font-sans);
+  font-size: var(--u14u-font-size-md);
+  font-weight: var(--u14u-weight-medium);
+  line-height: var(--u14u-line-tight);
+  letter-spacing: var(--u14u-tracking-normal);
+  color: var(--u14u-text-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--u14u-duration-fast) var(--u14u-ease-standard),
+    background-color var(--u14u-duration-fast) var(--u14u-ease-standard),
+    box-shadow var(--u14u-duration-base) var(--u14u-ease-out);
+}
+
+ui-tabs .u14u-tabs__tab:hover:not([aria-selected='true']) {
+  color: var(--u14u-text);
+  background: var(--u14u-surface-3);
+}
+
+ui-tabs .u14u-tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: var(--u14u-focus-ring), var(--u14u-focus-ring-offset-shadow);
+}
+
+ui-tabs .u14u-tabs__tab[aria-selected='true'] {
+  color: var(--u14u-primary);
+  background: var(--u14u-primary-soft);
+  font-weight: var(--u14u-weight-semibold);
+  box-shadow: var(--u14u-glow-primary);
+}
+
+/* --- variant: solid ------------------------------------------------------ */
+ui-tabs[data-variant='solid'] .u14u-tabs__list {
+  background: var(--u14u-surface-3);
+  box-shadow: none;
+}
+
+ui-tabs[data-variant='solid'] .u14u-tabs__tab[aria-selected='true'] {
+  color: var(--u14u-primary-contrast);
+  background: var(--u14u-primary);
+  box-shadow: var(--u14u-shadow-sm);
+}
+
+/* --- variant: underline -------------------------------------------------- */
+ui-tabs[data-variant='underline'] .u14u-tabs__list {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--u14u-divider);
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+ui-tabs[data-variant='underline'] .u14u-tabs__tab {
+  border-radius: 0;
+  padding: var(--u14u-space-3) var(--u14u-space-4);
+}
+
+ui-tabs[data-variant='underline'] .u14u-tabs__tab::after {
+  content: '';
+  position: absolute;
+  left: var(--u14u-space-3);
+  right: var(--u14u-space-3);
+  bottom: -1px;
+  height: 2px;
+  border-radius: var(--u14u-radius-full);
+  background: var(--u14u-primary);
+  box-shadow: var(--u14u-glow-primary);
+  transform: scaleX(0);
+  transition: transform var(--u14u-duration-base) var(--u14u-ease-out);
+}
+
+ui-tabs[data-variant='underline'] .u14u-tabs__tab[aria-selected='true'] {
+  color: var(--u14u-primary);
+  background: transparent;
+  box-shadow: none;
+}
+
+ui-tabs[data-variant='underline'] .u14u-tabs__tab[aria-selected='true']::after {
+  transform: scaleX(1);
+}
+
+/* --- panels -------------------------------------------------------------- */
+ui-tab {
+  display: block;
+  padding: var(--u14u-space-5);
+  border: 1px solid var(--u14u-border);
+  border-radius: var(--u14u-radius-lg);
+  background: var(--u14u-surface-glass);
+  box-shadow: var(--u14u-shadow-sm);
+  -webkit-backdrop-filter: var(--u14u-glass-blur);
+  backdrop-filter: var(--u14u-glass-blur);
+  color: var(--u14u-text);
+  line-height: var(--u14u-line-normal);
+}
+
+/* Author styles set `display`, so the UA `[hidden]` rule must be restated. */
+ui-tab[hidden] {
+  display: none;
+}
+
+ui-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--u14u-focus-ring), var(--u14u-focus-ring-offset-shadow);
+}
+
+/* --- desktop refinements ------------------------------------------------- */
+@container u14u-tabs (min-width: 42rem) {
+  ui-tabs .u14u-tabs__list {
+    overflow-x: visible;
+  }
+
+  ui-tab {
+    padding: var(--u14u-space-6);
+  }
+}
+
+@container u14u-tabs (min-width: 52rem) {
+  ui-tab {
+    padding: var(--u14u-space-7);
+    font-size: var(--u14u-font-size-lg);
+  }
+}
+
+/* --- vertical orientation ------------------------------------------------ */
+ui-tabs[data-orientation='vertical'] .u14u-tabs__list {
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 12rem;
+  overflow-x: visible;
+  overflow-y: auto;
+}
+
+ui-tabs[data-orientation='vertical'] .u14u-tabs__tab {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+ui-tabs[data-orientation='vertical'] ui-tab {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-tabs .u14u-tabs__tab,
+  ui-tabs[data-variant='underline'] .u14u-tabs__tab::after {
+    transition: none;
+  }
+}

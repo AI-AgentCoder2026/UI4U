@@ -1,0 +1,66 @@
+{
+  "name": "u14u",
+  "version": "0.1.0",
+  "description": "A framework-agnostic, mobile-first UI library for modern web apps. Vanilla ES6 modules, fully themeable.",
+  "type": "module",
+  "main": "./dist/u14u.cjs",
+  "module": "./dist/u14u.esm.js",
+  "style": "./dist/u14u.css",
+  "unpkg": "./dist/u14u.global.js",
+  "jsdelivr": "./dist/u14u.global.js",
+  "exports": {
+    ".": {
+      "import": "./dist/u14u.esm.js",
+      "require": "./dist/u14u.cjs",
+      "default": "./dist/u14u.esm.js"
+    },
+    "./global": "./dist/u14u.global.js",
+    "./u14u.min.js": "./dist/u14u.esm.min.js",
+    "./src/*": "./src/*",
+    "./dist/u14u.css": "./dist/u14u.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": [
+    "./src/index.js"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ui",
+    "components",
+    "web-components",
+    "custom-elements",
+    "vanilla-js",
+    "responsive",
+    "themeable",
+    "design-tokens"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "jsdom": "^25.0.0",
+    "prettier": "^3.3.0"
+  },
+  "allowScripts": {
+    "esbuild@0.24.2": true
+  }
+}

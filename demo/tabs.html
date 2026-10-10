@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>U14U — Tabs</title>
+    <link rel="stylesheet" href="/dist/u14u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <style>
+      .page {
+        max-width: 60rem;
+        margin-inline: auto;
+        padding: var(--u14u-space-7) var(--u14u-space-4) var(--u14u-space-8);
+      }
+      .page > header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--u14u-space-4);
+        margin-bottom: var(--u14u-space-7);
+      }
+      h1 {
+        font-size: var(--u14u-font-size-3xl);
+        letter-spacing: var(--u14u-tracking-tight);
+      }
+      .lede {
+        color: var(--u14u-text-muted);
+        margin-top: var(--u14u-space-2);
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--u14u-space-3);
+        align-items: center;
+        margin-bottom: var(--u14u-space-5);
+        padding: var(--u14u-space-4);
+        border: 1px solid var(--u14u-border);
+        border-radius: var(--u14u-radius-lg);
+        background: var(--u14u-surface-glass);
+      }
+      .controls label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--u14u-space-2);
+        font-size: var(--u14u-font-size-sm);
+        color: var(--u14u-text-muted);
+      }
+      select,
+      button {
+        padding: var(--u14u-space-2) var(--u14u-space-3);
+        border: 1px solid var(--u14u-border-strong);
+        border-radius: var(--u14u-radius-sm);
+        background: var(--u14u-surface-2);
+        color: var(--u14u-text);
+        font: inherit;
+        font-size: var(--u14u-font-size-sm);
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--u14u-primary);
+      }
+      section {
+        margin-top: var(--u14u-space-7);
+      }
+      h2 {
+        font-size: var(--u14u-font-size-lg);
+        margin-bottom: var(--u14u-space-3);
+        color: var(--u14u-text);
+      }
+      .log {
+        margin-top: var(--u14u-space-4);
+        padding: var(--u14u-space-3);
+        border-radius: var(--u14u-radius-md);
+        background: var(--u14u-surface-sunken);
+        border: 1px solid var(--u14u-border);
+        font-family: var(--u14u-font-mono);
+        font-size: var(--u14u-font-size-sm);
+        color: var(--u14u-text-muted);
+        min-height: 3rem;
+      }
+      code {
+        font-family: var(--u14u-font-mono);
+        font-size: 0.9em;
+        color: var(--u14u-primary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-tabs</code></h1>
+          <p class="lede">
+            Keyboard-navigable tabs with automatic or manual activation. Try
+            <kbd>←</kbd> <kbd>→</kbd>, <kbd>Home</kbd> and <kbd>End</kbd>.
+          </p>
+        </div>
+        <button id="theme" type="button">Toggle theme</button>
+      </header>
+
+      <div class="controls">
+        <label>
+          Variant
+          <select id="variant">
+            <option value="glass">glass</option>
+            <option value="solid">solid</option>
+            <option value="underline">underline</option>
+          </select>
+        </label>
+        <label>
+          Orientation
+          <select id="orientation">
+            <option value="horizontal">horizontal</option>
+            <option value="vertical">vertical</option>
+          </select>
+        </label>
+        <label>
+          Activation
+          <select id="activation">
+            <option value="automatic">automatic</option>
+            <option value="manual">manual</option>
+          </select>
+        </label>
+        <button id="prev" type="button">Previous</button>
+        <button id="next" type="button">Next</button>
+      </div>
+
+      <ui-tabs id="demo" label="Project sections" variant="glass">
+        <ui-tab label="Overview">
+          <strong>Overview.</strong> Panels are authored as light DOM — you write the
+          <code>&lt;ui-tab&gt;</code> elements and the component owns roles,
+          <code>aria-*</code> wiring, hidden state and tab order.
+        </ui-tab>
+        <ui-tab label="Activity">
+          <strong>Activity.</strong> Resize the window: padding and type scale up through
+          container queries, while the tab list scrolls horizontally on narrow screens.
+        </ui-tab>
+        <ui-tab label="Settings">
+          <strong>Settings.</strong> Everything is themed through
+          <code>--u14u-*</code> custom properties. Override a token — do not fork
+          component CSS.
+        </ui-tab>
+      </ui-tabs>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
+
+      <section>
+        <h2>Theming</h2>
+        <p>
+          Switch theme, or override any token directly:
+          <code>ui-tabs { --u14u-primary: #f43f5e; }</code>
+        </p>
+        <div class="controls" id="accent-demo">
+          <button type="button" data-accent="var(--u14u-primary)">primary</button>
+          <button type="button" data-accent="var(--u14u-accent)">accent</button>
+          <button type="button" data-accent="var(--u14u-success)">success</button>
+          <button type="button" data-accent="var(--u14u-danger)">danger</button>
+        </div>
+      </section>
+    </div>
+
+    <script type="module">
+      import '/dist/u14u.esm.js';
+
+      const tabs = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      for (const id of ['variant', 'orientation', 'activation']) {
+        document.getElementById(id).addEventListener('change', (event) => {
+          tabs.configure({ [event.target.id]: event.target.value });
+        });
+      }
+
+      document.getElementById('next').addEventListener('click', () => tabs.next());
+      document.getElementById('prev').addEventListener('click', () => tabs.previous());
+
+      tabs.addEventListener('u14u:change', (event) => {
+        log.textContent = `u14u:change → index ${event.detail.index} ("${event.detail.label}")`;
+      });
+
+      document.getElementById('theme').addEventListener('click', () => {
+        const root = document.documentElement;
+        const order = ['dark', 'light', 'contrast'];
+        const current = order.indexOf(root.dataset.theme);
+        root.dataset.theme = order[(current + 1) % order.length];
+      });
+
+      document.getElementById('accent-demo').addEventListener('click', (event) => {
+        const accent = event.target.dataset.accent;
+        if (accent) tabs.style.setProperty('--u14u-primary', accent);
+      });
+    </script>
+  </body>
+</html>

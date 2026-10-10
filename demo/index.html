@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>U14U — Component demos</title>
+    <link rel="stylesheet" href="/dist/u14u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <style>
+      .page {
+        max-width: 56rem;
+        margin-inline: auto;
+        padding: var(--u14u-space-8) var(--u14u-space-4);
+      }
+      h1 {
+        font-size: var(--u14u-font-size-3xl);
+        letter-spacing: var(--u14u-tracking-tight);
+        background: linear-gradient(120deg, var(--u14u-primary), var(--u14u-accent));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      p.lede {
+        color: var(--u14u-text-muted);
+        margin: var(--u14u-space-3) 0 var(--u14u-space-7);
+      }
+      ul {
+        display: grid;
+        gap: var(--u14u-space-3);
+        padding: 0;
+        list-style: none;
+      }
+      a.card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--u14u-space-4);
+        padding: var(--u14u-space-5);
+        border: 1px solid var(--u14u-border);
+        border-radius: var(--u14u-radius-lg);
+        background: var(--u14u-surface-glass);
+        -webkit-backdrop-filter: var(--u14u-glass-blur);
+        backdrop-filter: var(--u14u-glass-blur);
+        text-decoration: none;
+        color: var(--u14u-text);
+        transition:
+          border-color var(--u14u-duration-fast) var(--u14u-ease-standard),
+          transform var(--u14u-duration-fast) var(--u14u-ease-standard);
+      }
+      a.card:hover {
+        border-color: var(--u14u-primary);
+        transform: translateY(-2px);
+      }
+      a.card code {
+        font-family: var(--u14u-font-mono);
+        font-size: var(--u14u-font-size-lg);
+        color: var(--u14u-primary);
+      }
+      a.card span {
+        color: var(--u14u-text-muted);
+        font-size: var(--u14u-font-size-sm);
+        text-align: right;
+      }
+      .todo {
+        color: var(--u14u-text-subtle);
+        font-size: var(--u14u-font-size-sm);
+        padding: var(--u14u-space-4);
+        border: 1px dashed var(--u14u-border-strong);
+        border-radius: var(--u14u-radius-md);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>U14U</h1>
+      <p class="lede">
+        A framework-agnostic, mobile-first UI library. Vanilla ES6 modules, zero runtime
+        dependencies, themed entirely through <code>--u14u-*</code> custom properties.
+      </p>
+
+      <ul>
+        <li>
+          <a class="card" href="/demo/tabs.html">
+            <code>ui-tabs</code>
+            <span>Keyboard navigation, automatic + manual activation, three variants</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="todo" style="margin-top: var(--u14u-space-6)">
+        Planned: <code>ui-layout</code> · <code>ui-sidebar</code> · <code>ui-grid</code> ·
+        <code>ui-input</code> · <code>ui-form</code> · <code>ui-popup</code> ·
+        <code>ui-tooltip</code>
+      </p>
+    </div>
+
+    <script type="module" src="/dist/u14u.esm.js"></script>
+  </body>
+</html>

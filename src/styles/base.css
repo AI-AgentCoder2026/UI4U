@@ -1,0 +1,54 @@
+/**
+ * U14U base layer.
+ *
+ * Deliberately tiny: the library ships no global reset and never styles
+ * consumer markup. Only two opt-in utility classes and the shared custom
+ * element defaults for `ui-*` elements.
+ *
+ * For a full page reset, link `src/styles/reset.css` yourself — it is not part
+ * of the bundle and is never injected at runtime.
+ */
+
+ui-tabs,
+ui-tab,
+ui-sidebar,
+ui-grid,
+ui-layout,
+ui-popup,
+ui-tooltip {
+  box-sizing: border-box;
+}
+
+ui-tabs,
+ui-tab,
+ui-sidebar,
+ui-grid,
+ui-layout,
+ui-popup,
+ui-tooltip {
+  font-family: var(--u14u-font-sans);
+  color: var(--u14u-text);
+}
+
+/**
+ * Visually hidden but exposed to assistive technology.
+ * Used by every component that renders a label it does not show visually.
+ */
+.u14u-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/** Visible focus ring shared by every interactive U14U element. */
+.u14u-focusable:focus-visible {
+  outline: none;
+  box-shadow: var(--u14u-focus-ring);
+}
