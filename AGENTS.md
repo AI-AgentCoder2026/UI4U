@@ -5,7 +5,8 @@ UI4U — a framework-agnostic UI library for mobile and desktop web, built from 
 ## Setup commands
 
 - Install deps:  `npm install`
-- Build:         `npm run build`     — esbuild: `src/index.js` → `dist/` (ESM + UMD, minified)
+- Build:         `npm run build`     — esbuild: `src/index.js` → `dist/` (ESM, CJS, global, minified ESM, combined CSS)
+- Build (site):  `npm run build:pages` — static demo site in `.pages/` for GitHub Pages
 - Dev:           `npm run dev`       — esbuild watch + static demo server
 - Test:          `npm test`          — node:test unit specs
 - Test (browser): `npm run test:e2e` — Playwright smoke tests over `demo/`
@@ -20,7 +21,8 @@ UI4U — a framework-agnostic UI library for mobile and desktop web, built from 
 - `demo/` — one playground page per component, doubling as living documentation
 - `test/` — node:test unit specs mirroring `src/`, plus `test/helpers/` for the DOM harness
 - `e2e/` — Playwright smoke specs (kept out of `test/` so `node --test` never discovers them)
-- `scripts/` — esbuild build/dev scripts
+- `scripts/` — esbuild build/dev scripts, including the static Pages site builder
+- `.github/workflows/` — Pages deployment, gated on lint + unit tests
 - `docs/` — long-form component docs and screenshots
 
 ## Component contract
@@ -39,6 +41,13 @@ Every component follows the same shape — keep new ones consistent:
 `layout` (resizable Top/Left/Right/Middle/Bottom panels) · `tabs` · `sidebar` · `grid` · `input` · `form` (validation) · `popup` (modal/dialog) · `tooltip`
 
 Ship a component only when its demo page and tests exist; add the rest as the project grows.
+
+## Demo pages
+
+- `demo/*.html` doubles as local playground **and** the published GitHub Pages site
+- Reference assets with absolute paths (`/dist/…`, `/src/…`); `scripts/build-pages.mjs` flattens and rewrites them to relative for Pages
+- If you add a new asset reference, add it to `REWRITES` in `scripts/build-pages.mjs` or it will 404 on the published site
+- Verify a new demo locally with `npm run build:pages`, then confirm it renders before pushing
 
 ## Code style
 

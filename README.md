@@ -109,10 +109,15 @@ Motion honours `prefers-reduced-motion` — every `--ui4u-duration-*` token coll
 npm install
 npm run dev        # esbuild watch + demo server → http://localhost:5173
 npm run build      # dist/: ESM, CJS, global build, minified ESM, combined CSS
+npm run build:pages # static demo site in .pages/ for GitHub Pages
 npm test           # node:test
 npm run test:e2e   # Playwright (run `npx playwright install` once first)
 npm run lint       # ESLint flat config
 ```
+
+## Demo
+
+The demo is published at **https://ai-agentcoder2026.github.io/UI4U/** — the `demo/` pages are served straight from `main` via the `Deploy demo to GitHub Pages` workflow, which runs lint and unit tests before every deploy.
 
 Build outputs:
 

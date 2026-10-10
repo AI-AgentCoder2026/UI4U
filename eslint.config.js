@@ -11,7 +11,14 @@ import globals from 'globals';
  */
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'playwright-report/**'],
+    ignores: [
+      'dist/**',
+      '.pages/**',
+      'node_modules/**',
+      'coverage/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
 
   js.configs.recommended,
