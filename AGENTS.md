@@ -16,10 +16,12 @@ U14U — a framework-agnostic UI library for mobile and desktop web, built from 
 - `src/index.js` — public entry point; the only module consumers import
 - `src/core/` — framework primitives: DOM helpers, base class, event bus, component registry, tokens
 - `src/components/<name>/` — one folder per component: `<name>.js`, `<name>.css`, `index.js`
-- `src/styles/` — design tokens, themes, base/reset layer
+- `src/styles/` — design tokens, themes, opt-in reset
 - `demo/` — one playground page per component, doubling as living documentation
-- `test/` — unit specs mirroring `src/`, plus `test/helpers/` for the DOM harness
-- `docs/` — long-form component docs and the theming guide
+- `test/` — node:test unit specs mirroring `src/`, plus `test/helpers/` for the DOM harness
+- `e2e/` — Playwright smoke specs (kept out of `test/` so `node --test` never discovers them)
+- `scripts/` — esbuild build/dev scripts
+- `docs/` — long-form component docs and screenshots
 
 ## Component contract
 
@@ -55,8 +57,11 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 
 ## Testing instructions
 
-- Unit: `npm test` (node:test with the DOM harness in `test/helpers/`)
-- E2E/browser: `npm run test:e2e` (Playwright against `demo/`)
+- Unit: `npm test` — bare `node --test`; discovers `test/**/*.test.js` against a jsdom harness
+- E2E/browser: `npm run test:e2e` (Playwright against `demo/`, mobile + desktop projects)
+- Run `npx playwright install chromium` once before the first e2e run
+- Component modules under `src/components/` must not import CSS — only their `index.js` does, so node:test can import the module directly
+- `U14UElement` captures `globalThis.HTMLElement` at module evaluation, so tests must call `setupDom()` before dynamically importing any component
 - New behavior needs a test that mirrors the source path — `test/components/tabs.test.js` for `src/components/tabs/`
 - Accessibility is part of done: keyboard navigation, focus trapping in popups, and correct ARIA roles must be asserted in tests
 - All tests pass before a PR opens
@@ -66,7 +71,7 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 - Branch from `main`; never push to `main` directly
 - Conventional commits: `feat:` / `fix:` / `docs:` / `refactor:` / `test:` / `chore:`
 - Keep one component per PR where practical, and update its demo page in the same PR
-- Open the PR with `gh pr create` once CI is green
+- Open the PR with `gh pr create` once CI is green (note: `gh` is not installed on this machine — install it or push branches and open PRs in the web UI)
 
 ## Security
 

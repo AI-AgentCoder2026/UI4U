@@ -56,6 +56,19 @@ export default [
   },
 
   {
+    files: ['e2e/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        // `page.evaluate` callbacks are serialised and run in the browser.
+        ...globals.browser,
+      },
+    },
+  },
+
+  {
     files: ['scripts/**/*.mjs', '*.config.js'],
     languageOptions: {
       ecmaVersion: 2022,

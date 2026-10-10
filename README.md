@@ -18,6 +18,8 @@ Early, and deliberately incremental. Shipped:
 | --- | --- | --- |
 | `ui-tabs` | [`demo/tabs.html`](demo/tabs.html) | Keyboard nav, automatic + manual activation, 3 variants |
 
+![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
+
 Planned, in roadmap order: `ui-layout` (resizable top/left/right/middle/bottom) ·
 `ui-sidebar` · `ui-grid` · `ui-input` · `ui-form` · `ui-popup` · `ui-tooltip`.
 
