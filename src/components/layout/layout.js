@@ -70,6 +70,15 @@ export class Layout extends UI4UElement {
     return this;
   }
 
+  attributeChangedCallback(name, oldValue, newValue) {
+    // Observed attributes can fire before the layout is connected and built,
+    // so guard on the panels rather than on a separate flag.
+    if (oldValue === newValue || this.#panels.size === 0) return;
+    // `step` is read live on every keypress, so only `gutter` — which is baked
+    // into the grid template — needs the layout recomputed.
+    if (name === 'gutter') this.#apply();
+  }
+
   /** @returns {number} keyboard resize step in px */
   get step() {
     return Math.max(1, this.getNumber('step', 16));
@@ -135,12 +144,16 @@ export class Layout extends UI4UElement {
   }
 
   /**
-   * Restores every panel to the size it was authored with.
+   * Restores every panel to the size it was authored with, and un-collapses
+   * anything that is currently collapsed.
    *
    * @returns {this}
    */
   reset() {
-    for (const spec of this.#panels.values()) this.#reset(spec.node.getAttribute('slot') ?? 'center');
+    for (const [slot, spec] of this.#panels) {
+      spec.collapsed = false;
+      this.#reset(slot);
+    }
     this.#apply();
     return this;
   }

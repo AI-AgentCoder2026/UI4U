@@ -356,6 +356,49 @@ describe('ui-layout teardown', () => {
   });
 });
 
+describe('ui-layout options', () => {
+  afterEach(() => cleanup());
+
+  it('re-renders the grid when the gutter changes', () => {
+    const layout = mount(FULL).querySelector('ui-layout');
+    assert.match(layout.style.gridTemplateColumns, /var\(--ui4u-layout-splitter-size\)/);
+
+    layout.configure({ gutter: '18px' });
+    assert.match(layout.style.gridTemplateColumns, /18px/);
+
+    layout.configure({ gutter: '' });
+    assert.match(layout.style.gridTemplateColumns, /var\(--ui4u-layout-splitter-size\)/);
+  });
+
+  it('uses the configured keyboard step', () => {
+    const layout = mount(FULL).querySelector('ui-layout');
+    assert.equal(layout.step, 16);
+
+    layout.configure({ step: 40 });
+    assert.equal(layout.step, 40);
+  });
+
+  it('falls back to a safe step for nonsense values', () => {
+    const layout = mount(FULL).querySelector('ui-layout');
+    layout.setAttribute('step', '0');
+    assert.equal(layout.step, 1);
+  });
+
+  it('reset() restores authored sizes and un-collapses panels', () => {
+    const layout = mount(FULL).querySelector('ui-layout');
+
+    layout.setSlotSize('left', 400);
+    assert.equal(layout.sizeOf('left'), 400);
+
+    layout.setSlotCollapsed('left', true);
+    assert.equal(layout.sizeOf('left'), 0);
+
+    layout.reset();
+    assert.equal(layout.sizeOf('left'), 240, 'back to the authored size');
+    assert.equal(layout.panel('left').collapsed, false);
+  });
+});
+
 describe('ui-panel', () => {
   afterEach(() => cleanup());
 

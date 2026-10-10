@@ -213,7 +213,7 @@ ui-layout {
       });
 
       document.getElementById('reset-all').addEventListener('click', () => {
-        for (const slot of layout.slots) layout.setSlotSize(slot, layout.panel(slot).initial);
+        layout.reset();
       });
 
       document.getElementById('collapse-left').addEventListener('click', () => {
