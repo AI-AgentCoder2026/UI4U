@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Disclosure</title>
+    <meta
+      name="description"
+      content="ui-disclosure — a collapsible section with a real button trigger and full ARIA state."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-disclosure</code></h1>
+          <p class="lede">
+            One trigger and the content it reveals. The trigger is a real
+            <code>&lt;button&gt;</code>, so it is keyboard reachable and announces its state
+            through <code>aria-expanded</code>. <kbd>Tab</kbd> to it and press
+            <kbd>Enter</kbd> or <kbd>Space</kbd>.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Variant</span>
+          <ui-tabs id="opt-variant" variant="underline" label="Variant">
+            <ui-tab label="glass"></ui-tab>
+            <ui-tab label="solid"></ui-tab>
+            <ui-tab label="ghost"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="expand-all" type="button">Expand all</button>
+        <button id="collapse-all" type="button">Collapse all</button>
+      </div>
+
+      <ui-disclosure summary="First panel" open>
+        <p>
+          Authored markup is moved into a labelled region on connect and put back on
+          disconnect, so the element can be re-parented without losing its content.
+        </p>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Second panel">
+        <p>Panels are independent. Open one, close another — each keeps its own state.</p>
+        <ui-disclosure summary="Nested panel" variant="ghost">
+          <p>
+            Nesting works: the inner trigger is another native button inside the outer
+            region, so tab order stays correct.
+          </p>
+        </ui-disclosure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Third panel" variant="solid">
+        <p>The <code>solid</code> variant drops the glass blur for denser interfaces.</p>
+      </ui-disclosure>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
+
+      <ui-disclosure summary="Source">
+        <p>Markup, behaviour and options. Both blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-disclosure summary="Advanced" variant="ghost"&gt;
+  &lt;p&gt;Anything can go in here.&lt;/p&gt;
+&lt;/ui-disclosure&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const panel = document.querySelector('ui-disclosure');
+
+panel.configure({ summary: 'Advanced', variant: 'ghost', open: true });
+
+panel.open();
+panel.close();
+panel.toggle();
+
+panel.addEventListener('ui4u:change', (event) =&gt; {
+  console.log('expanded:', event.detail.open);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork. */
+ui-disclosure {
+  --ui4u-radius-lg: 4px;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const log = document.getElementById('log');
+      const panels = [...document.querySelectorAll('ui-disclosure')];
+
+      for (const panel of panels) {
+        panel.addEventListener('ui4u:change', (event) => {
+          log.textContent = `ui4u:change → "${panel.summary}" open: ${event.detail.open}`;
+        });
+      }
+
+      document.getElementById('opt-variant').addEventListener('ui4u:change', (event) => {
+        // Only the three top-level panels follow the picker; nested ones keep
+        // their own variant so the nesting stays visible.
+        for (const panel of panels.filter((p) => !p.querySelector('ui-disclosure'))) {
+          panel.setAttribute('variant', event.detail.label);
+        }
+      });
+
+      document.getElementById('expand-all').addEventListener('click', () => {
+        for (const panel of panels) panel.open();
+      });
+
+      document.getElementById('collapse-all').addEventListener('click', () => {
+        for (const panel of panels) panel.close();
+      });
+    </script>
+  </body>
+</html>

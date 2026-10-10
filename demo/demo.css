@@ -222,6 +222,55 @@ kbd {
   color: var(--ui4u-text-subtle);
 }
 
+/* --- option groups ------------------------------------------------------
+ * The demo drives its own options through UI4U components rather than raw
+ * <select> elements, so these only provide the label + compact sizing.
+ */
+
+.control-grid {
+  display: grid;
+  gap: var(--ui4u-space-4);
+  margin-bottom: var(--ui4u-space-5);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-space-2);
+}
+
+.control-group__label {
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-widest);
+  text-transform: uppercase;
+  color: var(--ui4u-text-subtle);
+}
+
+.control-group ui-tabs .ui4u-tabs__list {
+  margin-bottom: 0;
+}
+
+.control-group ui-tabs .ui4u-tabs__tab {
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  font-size: var(--ui4u-font-size-sm);
+}
+
+/*
+ * The option pickers use <ui-tabs> purely as a segmented control: their panels
+ * are deliberately empty, so they must not render as blank cards. Scoped to
+ * .control-group so it cannot leak into the component demo itself.
+ */
+.control-group ui-tab {
+  display: none;
+}
+
+@media (min-width: 48rem) {
+  .control-grid {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  }
+}
+
 /* --- demo index --------------------------------------------------------- */
 
 .demo-hero {

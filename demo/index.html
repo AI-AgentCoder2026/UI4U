@@ -32,6 +32,12 @@
             <span>Keyboard navigation, automatic + manual activation, three variants</span>
           </a>
         </li>
+        <li>
+          <a class="demo-card" href="/demo/disclosure.html">
+            <code>ui-disclosure</code>
+            <span>Collapsible sections, real button trigger, aria-expanded</span>
+          </a>
+        </li>
       </ul>
 
       <p class="demo-todo">
@@ -40,11 +46,10 @@
         <code>ui-tooltip</code>
       </p>
 
-      <section>
-        <h2>Get started</h2>
+      <ui-disclosure summary="Get started">
         <p>
-          Each component ships with a demo, a unit suite and a browser smoke suite. Import the
-          entry to register everything, or import a single component and call
+          Each component ships with a demo, a unit suite and a browser smoke suite. Import
+          the entry to register everything, or import a single component and call
           <code>define()</code> yourself.
         </p>
 
@@ -67,9 +72,13 @@ import 'ui4u';</code></pre>
           <pre><code data-highlight="html">&lt;ui-tabs label="Project sections"&gt;
   &lt;ui-tab label="Overview"&gt;Overview panel&lt;/ui-tab&gt;
   &lt;ui-tab label="Activity"&gt;Activity panel&lt;/ui-tab&gt;
-&lt;/ui-tabs&gt;</code></pre>
+&lt;/ui-tabs&gt;
+
+&lt;ui-disclosure summary="Source"&gt;
+  &lt;p&gt;Anything can go in here.&lt;/p&gt;
+&lt;/ui-disclosure&gt;</code></pre>
         </figure>
-      </section>
+      </ui-disclosure>
     </div>
 
     <script type="module">

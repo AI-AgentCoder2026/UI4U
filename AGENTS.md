@@ -38,18 +38,23 @@ Every component follows the same shape — keep new ones consistent:
 
 ## Required components (roadmap, ongoing)
 
-`layout` (resizable Top/Left/Right/Middle/Bottom panels) · `tabs` · `sidebar` · `grid` · `input` · `form` (validation) · `popup` (modal/dialog) · `tooltip`
+Shipped: `tabs` · `disclosure`
+
+Roadmap: `layout` (resizable Top/Left/Right/Middle/Bottom panels) · `sidebar` · `grid` · `input` · `form` (validation) · `popup` (modal/dialog) · `tooltip` · `button`
 
 Ship a component only when its demo page and tests exist; add the rest as the project grows.
 
 ## Demo pages
 
 - `demo/*.html` doubles as local playground **and** the published GitHub Pages site
+- Demos must drive themselves with UI4U components wherever one exists — never raw `<select>` or hand-rolled widgets. `e2e/tabs.spec.js` asserts the tabs demo contains zero `<select>` elements
 - Shared demo chrome lives in `demo/demo.css` and `demo/demo.js` — do not duplicate page styles per demo
+- Class names carry the `ui4u-` prefix (`ui4u-tabs__list`, `ui4u-disclosure__summary`), matching the CSS custom property prefix
 - Add a `<figure class="demo-code">` with `<code data-highlight="html|js|css">` for copyable samples; `demo.js` tokenises and injects them with no dependency
 - Reference assets with absolute paths (`/dist/…`, `/src/…`); `scripts/build-pages.mjs` flattens and rewrites them to relative for Pages
 - If you add a new asset reference, add it to `REWRITES` in `scripts/build-pages.mjs` or it will 404 on the published site
 - `<script>` content is raw text — write `=>` literally. `=&gt;` belongs only inside `<pre>` samples, and getting it wrong breaks every import in the block with no visible error
+- Never wrap an interactive component in a `<label>`; labels must not contain buttons or other controls
 - `e2e/tabs.spec.js` asserts demo pages raise no script errors; keep that assertion green
 - Verify a new demo locally with `npm run build:pages`, then confirm it renders before pushing
 

@@ -10,31 +10,37 @@ test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
  * These complement the node:test unit specs: the unit tests assert behaviour
  * against jsdom, these assert the component actually renders, upgrades and
  * responds to real keyboard input in a real browser at real viewport sizes.
+ *
+ * The demo page drives its own options with three more <ui-tabs>, so every
+ * assertion below is scoped to `#demo` — the component under test.
  */
+
+const MAIN = '#demo';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/tabs.html');
 });
 
 test('renders one tab button per panel', async ({ page }) => {
-  await expect(page.getByRole('tab')).toHaveCount(3);
-  await expect(page.getByRole('tab')).toHaveText(['Overview', 'Activity', 'Settings']);
+  const tabs = page.locator(`${MAIN} [role="tab"]`);
+  await expect(tabs).toHaveCount(3);
+  await expect(tabs).toHaveText(['Overview', 'Activity', 'Settings']);
 });
 
 test('exposes the tab list with its accessible name', async ({ page }) => {
-  const tablist = page.getByRole('tablist');
-  await expect(tablist).toHaveAttribute('aria-label', 'Project sections');
+  await expect(page.locator(`${MAIN} [role="tablist"]`)).toHaveAttribute(
+    'aria-label',
+    'Project sections'
+  );
 });
 
 test('shows only the active panel on load', async ({ page }) => {
-  await expect(page.getByRole('tab', { name: 'Overview' })).toHaveAttribute(
+  await expect(page.locator(`${MAIN} [role="tab"]`).first()).toHaveAttribute(
     'aria-selected',
     'true'
   );
 
-  // `ui-tab` panels are hidden with the `hidden` attribute, which removes them
-  // from the accessibility tree — so locate them in the DOM, not by role.
-  const panels = page.locator('ui-tab');
+  const panels = page.locator(`${MAIN} ui-tab`);
   await expect(panels).toHaveCount(3);
   await expect(panels.nth(0)).toBeVisible();
   await expect(panels.nth(1)).toBeHidden();
@@ -42,9 +48,9 @@ test('shows only the active panel on load', async ({ page }) => {
 });
 
 test('activates a panel on click and emits ui4u:change', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.locator(`${MAIN} [role="tab"]`, { hasText: 'Settings' }).click();
 
-  await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute(
+  await expect(page.locator(`${MAIN} [role="tab"]`, { hasText: 'Settings' })).toHaveAttribute(
     'aria-selected',
     'true'
   );
@@ -52,17 +58,17 @@ test('activates a panel on click and emits ui4u:change', async ({ page }) => {
 });
 
 test('moves between tabs with the arrow keys', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Overview' }).focus();
+  await page.locator(`${MAIN} [role="tab"]`, { hasText: 'Overview' }).focus();
   await page.keyboard.press('ArrowRight');
 
-  await expect(page.getByRole('tab', { name: 'Activity' })).toHaveAttribute(
+  await expect(page.locator(`${MAIN} [role="tab"]`, { hasText: 'Activity' })).toHaveAttribute(
     'aria-selected',
     'true'
   );
-  await expect(page.locator('ui-tab').nth(1)).toBeVisible();
+  await expect(page.locator(`${MAIN} ui-tab`).nth(1)).toBeVisible();
 
   await page.keyboard.press('End');
-  await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute(
+  await expect(page.locator(`${MAIN} [role="tab"]`, { hasText: 'Settings' })).toHaveAttribute(
     'aria-selected',
     'true'
   );
@@ -70,7 +76,7 @@ test('moves between tabs with the arrow keys', async ({ page }) => {
 
 test('applies design tokens from the linked stylesheet', async ({ page }) => {
   const radius = await page
-    .locator('ui-tabs .ui4u-tabs__list')
+    .locator(`${MAIN} .ui4u-tabs__list`)
     .evaluate((node) => getComputedStyle(node).borderTopLeftRadius);
 
   // --ui4u-radius-lg resolves to 16px in the default theme.
@@ -97,25 +103,43 @@ test('the demo page runs its scripts without errors', async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
 
   await page.goto('/demo/tabs.html', { waitUntil: 'networkidle' });
-  await expect(page.getByRole('tab')).toHaveCount(3);
+  await expect(page.locator(`${MAIN} [role="tab"]`)).toHaveCount(3);
 
   expect(errors).toEqual([]);
 });
 
-test('source samples are syntax highlighted and copyable', async ({ page }) => {
-  const blocks = page.locator('[data-highlight]');
+test('the Source samples live inside a collapsed ui-disclosure', async ({ page }) => {
+  const source = page.locator('ui-disclosure[summary="Source"]');
+  const trigger = source.getByRole('button');
+
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(source.locator('.ui4u-disclosure__content')).toBeHidden();
+
+  await trigger.click();
+
+  const blocks = source.locator('[data-highlight]');
   await expect(blocks).toHaveCount(4);
 
-  // Highlighting ran: every block contains at least one token span.
-  for (const block of await blocks.all()) {
-    expect(await block.locator('span[class^="tok-"]').count()).toBeGreaterThan(0);
-  }
+  // Highlighting ran, and did not corrupt the sample text.
+  expect(await source.locator('span[class^="tok-"]').count()).toBeGreaterThan(0);
+  expect(await blocks.first().innerText()).toContain('<ui-tabs');
 
-  // Highlighting must not corrupt the sample text.
-  const html = await blocks.first().innerText();
-  expect(html).toContain('<ui-tabs');
-  expect(html).toContain('</ui-tabs>');
+  await source.locator('[data-copy]').first().click();
+  await expect(source.locator('[data-copy]').first()).toHaveText('Copied');
+});
 
-  await page.locator('[data-copy]').first().click();
-  await expect(page.locator('[data-copy]').first()).toHaveText('Copied');
+test('the demo drives its options through UI4U components, not raw selects', async ({ page }) => {
+  await expect(page.locator('select')).toHaveCount(0);
+
+  // Each option group is a ui-tabs whose ui4u:change drives the real tabs.
+  await page.locator('#opt-variant [role="tab"]', { hasText: 'underline' }).click();
+  await expect(page.locator(MAIN)).toHaveAttribute('data-variant', 'underline');
+
+  await page.locator('#opt-orientation [role="tab"]', { hasText: 'vertical' }).click();
+  await expect(page.locator(MAIN)).toHaveAttribute('data-orientation', 'vertical');
+
+  await page.locator('#opt-activation [role="tab"]', { hasText: 'manual' }).click();
+  await expect(
+    page.locator('#opt-activation [role="tab"][aria-selected="true"]')
+  ).toHaveText('manual');
 });

@@ -17,11 +17,12 @@ Early, and deliberately incremental. Shipped:
 | Component | Demo | Notes |
 | --- | --- | --- |
 | `ui-tabs` | [`demo/tabs.html`](demo/tabs.html) | Keyboard nav, automatic + manual activation, 3 variants |
+| `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
 Planned, in roadmap order: `ui-layout` (resizable top/left/right/middle/bottom) ·
-`ui-sidebar` · `ui-grid` · `ui-input` · `ui-form` · `ui-popup` · `ui-tooltip`.
+`ui-sidebar` · `ui-grid` · `ui-input` · `ui-form` · `ui-popup` · `ui-tooltip` · `ui-button`.
 
 ## Install
 
@@ -43,6 +44,10 @@ import 'ui4u';
   <ui-tab label="Activity">…</ui-tab>
   <ui-tab label="Settings">…</ui-tab>
 </ui-tabs>
+
+<ui-disclosure summary="Advanced">
+  <p>Anything can go in here.</p>
+</ui-disclosure>
 ```
 
 ### Script tag

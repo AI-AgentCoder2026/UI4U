@@ -32,13 +32,32 @@ import { injectStyle as inject, hasStyle } from './core/styles.js';
 
 /* ------------------------------------------------------------- components */
 import { Tab, Tabs, TABS_STYLE_ID, tabsCss } from './components/tabs/index.js';
+import {
+  Disclosure,
+  DISCLOSURE_STYLE_ID,
+  disclosureCss,
+} from './components/disclosure/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
 import themesCss from './styles/themes.css';
 import baseCss from './styles/base.css';
 
-export { UI4UElement, Emitter, dom, get, isDefined, definedTags, Tabs, Tab, TABS_STYLE_ID, tabsCss };
+export {
+  UI4UElement,
+  Emitter,
+  dom,
+  get,
+  isDefined,
+  definedTags,
+  Tabs,
+  Tab,
+  TABS_STYLE_ID,
+  tabsCss,
+  Disclosure,
+  DISCLOSURE_STYLE_ID,
+  disclosureCss,
+};
 export { defineElement as define, inject as injectStyle, hasStyle };
 
 /** Library version, inlined by the bundler (`__UI4U_VERSION__`). */
@@ -53,6 +72,12 @@ export const version = typeof __UI4U_VERSION__ !== 'undefined' ? __UI4U_VERSION_
 export const components = [
   { tag: 'ui-tab', ctor: Tab },
   { tag: 'ui-tabs', ctor: Tabs, styleId: TABS_STYLE_ID, css: tabsCss },
+  {
+    tag: 'ui-disclosure',
+    ctor: Disclosure,
+    styleId: DISCLOSURE_STYLE_ID,
+    css: disclosureCss,
+  },
 ];
 
 /**
@@ -85,6 +110,7 @@ export const UI4U = {
   install,
   Tabs,
   Tab,
+  Disclosure,
   UI4UElement,
   Emitter,
   define: defineElement,

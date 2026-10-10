@@ -25,29 +25,33 @@
         <button type="button" data-theme-toggle>Toggle theme</button>
       </header>
 
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Variant</span>
+          <ui-tabs id="opt-variant" variant="underline" label="Variant">
+            <ui-tab label="glass"></ui-tab>
+            <ui-tab label="solid"></ui-tab>
+            <ui-tab label="underline"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Orientation</span>
+          <ui-tabs id="opt-orientation" variant="underline" label="Orientation">
+            <ui-tab label="horizontal"></ui-tab>
+            <ui-tab label="vertical"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Activation</span>
+          <ui-tabs id="opt-activation" variant="underline" label="Activation">
+            <ui-tab label="automatic"></ui-tab>
+            <ui-tab label="manual"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
       <div class="controls">
-        <label>
-          Variant
-          <select id="variant">
-            <option value="glass">glass</option>
-            <option value="solid">solid</option>
-            <option value="underline">underline</option>
-          </select>
-        </label>
-        <label>
-          Orientation
-          <select id="orientation">
-            <option value="horizontal">horizontal</option>
-            <option value="vertical">vertical</option>
-          </select>
-        </label>
-        <label>
-          Activation
-          <select id="activation">
-            <option value="automatic">automatic</option>
-            <option value="manual">manual</option>
-          </select>
-        </label>
         <button id="prev" type="button">Previous</button>
         <button id="next" type="button">Next</button>
       </div>
@@ -71,11 +75,10 @@
 
       <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
 
-      <section>
-        <h2>Theming</h2>
+      <ui-disclosure summary="Theming">
         <p>
-          Switch theme, or override any token directly on the element. A theme is only ever
-          a set of <code>--ui4u-*</code> overrides — never a fork of component CSS.
+          A theme is only ever a set of <code>--ui4u-*</code> overrides — never a fork of
+          component CSS. Pick an accent to override the token on this page's tabs.
         </p>
         <div class="controls" id="accent-demo">
           <button type="button" data-accent="var(--ui4u-primary)">primary</button>
@@ -83,10 +86,9 @@
           <button type="button" data-accent="var(--ui4u-success)">success</button>
           <button type="button" data-accent="var(--ui4u-danger)">danger</button>
         </div>
-      </section>
+      </ui-disclosure>
 
-      <section>
-        <h2>Source</h2>
+      <ui-disclosure summary="Source">
         <p>
           Everything below is the whole integration — markup, behaviour, theming and
           install. The blocks are copyable.
@@ -162,7 +164,44 @@ ui-tabs {
 #   &lt;link rel="stylesheet" href="ui4u.css" /&gt;
 #   &lt;script src="ui4u.global.js"&gt;&lt;/script&gt;</code></pre>
         </figure>
-      </section>
+      </ui-disclosure>
+
+      <ui-disclosure summary="ui-disclosure" variant="ghost">
+        <p>
+          You are looking at one right now. <code>ui-disclosure</code> is the component
+          powering every collapsible section on this page — the trigger is a real
+          <code>&lt;button&gt;</code>, so it is keyboard reachable and announces its state
+          through <code>aria-expanded</code>.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-disclosure summary="Source"&gt;
+  &lt;p&gt;Anything can go in here.&lt;/p&gt;
+&lt;/ui-disclosure&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const panel = document.querySelector('ui-disclosure');
+
+panel.configure({ summary: 'Advanced', variant: 'ghost', open: true });
+
+panel.open();
+panel.close();
+panel.toggle();
+
+panel.addEventListener('ui4u:change', (event) =&gt; {
+  console.log('expanded:', event.detail.open);
+});</code></pre>
+        </figure>
+      </ui-disclosure>
     </div>
 
     <!--
@@ -177,9 +216,17 @@ ui-tabs {
       const tabs = document.getElementById('demo');
       const log = document.getElementById('log');
 
-      for (const id of ['variant', 'orientation', 'activation']) {
-        document.getElementById(id).addEventListener('change', (event) => {
-          tabs.configure({ [event.target.id]: event.target.value });
+      // Each option group is a ui-tabs; its ui4u:change drives the real tabs.
+      const options = [
+        ['opt-variant', 'variant'],
+        ['opt-orientation', 'orientation'],
+        ['opt-activation', 'activation'],
+      ];
+
+      for (const [id, option] of options) {
+        const group = document.getElementById(id);
+        group.addEventListener('ui4u:change', (event) => {
+          tabs.configure({ [option]: event.detail.label });
         });
       }
 
