@@ -197,6 +197,27 @@ test('collapses and restores the nested explorer', async ({ page, isMobile }) =>
   await expect(explorer).toBeVisible();
 });
 
+test('clicking a separator focuses it, so arrows work straight after', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  // Regression: the drag handler calls preventDefault() on pointerdown to avoid
+  // text selection, which also suppresses the browser's focus-on-click. Without
+  // an explicit focus() the handle stays unfocused and the arrow keys do
+  // nothing, which reads as "the keyboard shortcut is broken".
+  const splitter = page.locator(OUTER).first();
+  const explorer = page.locator(EXPLORER);
+
+  const handle = await splitter.boundingBox();
+  await page.mouse.click(handle.x + handle.width / 2, handle.y + handle.height / 2);
+
+  await expect(splitter).toBeFocused();
+
+  const before = (await explorer.boundingBox()).width;
+  await page.keyboard.press('ArrowRight');
+
+  expect((await explorer.boundingBox()).width).toBeGreaterThan(before);
+});
+
 test('resizes by dragging a separator', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 

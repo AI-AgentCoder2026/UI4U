@@ -281,13 +281,14 @@ export class Layout extends UI4UElement {
     }
   }
 
-  /** @param {string} key @param {PanelSlot} before @param {PanelSlot} after */
-  #createSplitter(key, before, after) {
+  /** @param {string} key @param {PanelSlot} before @param {PanelSlot} afterSlot */
+  #createSplitter(key, before, afterSlot) {
     const spec = this.#panels.get(before);
+    const after = this.#panels.get(afterSlot);
     const name =
-      spec?.label || this.#panels.get(after)?.label
-        ? `Resize ${spec?.label || before} and ${this.#panels.get(after)?.label || after}`
-        : `Resize layout`;
+      spec?.label || after?.label
+        ? `Resize ${spec?.label || before} and ${after?.label || afterSlot}`
+        : 'Resize layout';
 
     /** @type {HTMLElement} */
     const splitter = el('div', {
@@ -299,26 +300,45 @@ export class Layout extends UI4UElement {
     });
 
     this.#splitters.set(key, splitter);
-    // The separator is a real child of the layout — it has to be in the DOM to
-    // receive focus, pointer capture and the role that assistive tech reads.
-    this.appendChild(splitter);
+
+    /*
+     * The separator is a real child of the layout — it has to be in the DOM to
+     * receive focus, pointer capture and the role assistive tech reads.
+     *
+     * It is inserted immediately before the region it opens rather than
+     * appended, so tab order reads "handle, then the thing it handles" instead
+     * of making keyboard users tab through a panel's content to reach its
+     * resize handle. Grid placement is unaffected, because `grid-area` decides
+     * where each item lands, not its position in the DOM.
+     */
+    const afterNode = this.#panels.get(afterSlot)?.node ?? null;
+    if (afterNode?.parentNode === this) this.insertBefore(splitter, afterNode);
+    else this.appendChild(splitter);
 
     this.#disposers.push(
-      on(splitter, 'keydown', (event) => this.#onSplitterKey(event, before, after)),
+      on(splitter, 'keydown', (event) => this.#onSplitterKey(event, before, afterSlot)),
       on(splitter, 'dblclick', () => {
         this.#reset(before);
-        this.#reset(after);
+        this.#reset(afterSlot);
         this.#apply();
       }),
       draggable(splitter, {
         onDown: (event) => {
-          const target = this.#panels.get(before) ?? this.#panels.get(after);
+          const target = this.#panels.get(before) ?? this.#panels.get(afterSlot);
           if (!target?.resizable) return false;
+
+          // `preventDefault` below stops text selection during the drag, but it
+          // also suppresses the browser's native focus-on-click. Without this,
+          // clicking the handle and then pressing an arrow key does nothing,
+          // because focus is still wherever it was — which reads as "the
+          // keyboard shortcut is broken".
+          splitter.focus({ preventScroll: true });
+
           // Remember where both panels started: `delta` is cumulative from the
           // pointer-down origin, so it must be added to the starting size
           // rather than used as the size itself.
           this.#dragOrigin.set(before, this.#panels.get(before)?.current ?? 0);
-          this.#dragOrigin.set(after, this.#panels.get(after)?.current ?? 0);
+          this.#dragOrigin.set(afterSlot, this.#panels.get(afterSlot)?.current ?? 0);
           event.preventDefault();
           return true;
         },
