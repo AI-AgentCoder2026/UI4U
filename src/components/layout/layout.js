@@ -19,6 +19,13 @@ import { clamp, toPx } from '../../core/size.js';
  * @property {boolean} collapsible
  * @property {boolean} collapsed
  *
+ /**
+ * @typedef {object} SplitterSpec
+ * @property {HTMLElement} node
+ * @property {PanelSlot} before
+ * @property {PanelSlot} after
+ * @property {'column' | 'row'} axis
+ *
  * @typedef {object} LayoutOptions
  * @property {string} [gutter] Splitter thickness. Default `'var(--ui4u-layout-splitter-size)'`.
  * @property {number} [step] Keyboard resize step in px. Default `16`.
@@ -37,6 +44,20 @@ export const SLOTS = ['top', 'left', 'right', 'center', 'bottom'];
 export function readSlot(node) {
   const value = node.getAttribute('slot');
   return SLOTS.includes(/** @type {PanelSlot} */ (value)) ? /** @type {PanelSlot} */ (value) : 'center';
+}
+
+/**
+ * Grid area for a separator, derived from the region it opens and the axis it
+ * splits. Column separators open `center` (sp-l) or `right` (sp-r); row
+ * separators open `center` (sp-t) or `bottom` (sp-b).
+ *
+ * @param {'column' | 'row'} axis
+ * @param {PanelSlot} after
+ * @returns {string}
+ */
+export function separatorArea(axis, after) {
+  if (axis === 'row') return after === 'bottom' ? 'sp-b' : 'sp-t';
+  return after === 'right' ? 'sp-r' : 'sp-l';
 }
 
 /**
@@ -83,7 +104,7 @@ export class Layout extends UI4UElement {
 
   /** @type {Map<string, PanelSpec>} */
   #panels = new Map();
-  /** @type {Map<string, HTMLElement>} */
+  /** @type {Map<string, SplitterSpec>} */
   #splitters = new Map();
   /** Panel sizes captured at pointer-down, keyed by slot. @type {Map<PanelSlot, number>} */
   #dragOrigin = new Map();
@@ -210,7 +231,7 @@ export class Layout extends UI4UElement {
     this.#disposers = [];
     this.#dragOrigin.clear();
 
-    for (const splitter of this.#splitters.values()) splitter.remove();
+    for (const { node } of this.#splitters.values()) node.remove();
     this.#splitters.clear();
     this.#panels.clear();
 
@@ -272,17 +293,37 @@ export class Layout extends UI4UElement {
   }
 
   #buildSplitters() {
-    const horizontal = ['left', 'center', 'right'].filter((slot) => this.#panels.has(slot));
+    // Column separators divide left / center / right.
+    const columns = ['left', 'center', 'right'].filter((slot) => this.#panels.has(slot));
+    for (let i = 0; i < columns.length - 1; i += 1) {
+      this.#createSplitter(
+        `column:${columns[i]}|${columns[i + 1]}`,
+        /** @type {PanelSlot} */ (columns[i]),
+        /** @type {PanelSlot} */ (columns[i + 1]),
+        'column'
+      );
+    }
 
-    for (let i = 0; i < horizontal.length - 1; i += 1) {
-      const before = /** @type {PanelSlot} */ (horizontal[i]);
-      const after = /** @type {PanelSlot} */ (horizontal[i + 1]);
-      this.#createSplitter(`${before}|${after}`, before, after);
+    // Row separators divide top / center / bottom, so the header and the status
+    // bar are resizable too rather than being fixed decoration.
+    const rows = ['top', 'center', 'bottom'].filter((slot) => this.#panels.has(slot));
+    for (let i = 0; i < rows.length - 1; i += 1) {
+      this.#createSplitter(
+        `row:${rows[i]}|${rows[i + 1]}`,
+        /** @type {PanelSlot} */ (rows[i]),
+        /** @type {PanelSlot} */ (rows[i + 1]),
+        'row'
+      );
     }
   }
 
-  /** @param {string} key @param {PanelSlot} before @param {PanelSlot} afterSlot */
-  #createSplitter(key, before, afterSlot) {
+  /**
+   * @param {string} key
+   * @param {PanelSlot} before
+   * @param {PanelSlot} afterSlot
+   * @param {'column' | 'row'} axis
+   */
+  #createSplitter(key, before, afterSlot, axis) {
     const spec = this.#panels.get(before);
     const after = this.#panels.get(afterSlot);
     const name =
@@ -292,14 +333,16 @@ export class Layout extends UI4UElement {
 
     /** @type {HTMLElement} */
     const splitter = el('div', {
-      class: 'ui4u-layout__splitter',
+      class: `ui4u-layout__splitter ui4u-layout__splitter--${axis}`,
       role: 'separator',
       tabindex: '0',
-      'aria-orientation': 'vertical',
+      // A separator dividing left/right is vertical; one dividing top/bottom is
+      // horizontal. This is what assistive tech announces.
+      'aria-orientation': axis === 'column' ? 'vertical' : 'horizontal',
       'aria-label': name,
     });
 
-    this.#splitters.set(key, splitter);
+    this.#splitters.set(key, { node: splitter, before, after: afterSlot, axis });
 
     /*
      * The separator is a real child of the layout — it has to be in the DOM to
@@ -316,7 +359,7 @@ export class Layout extends UI4UElement {
     else this.appendChild(splitter);
 
     this.#disposers.push(
-      on(splitter, 'keydown', (event) => this.#onSplitterKey(event, before, afterSlot)),
+      on(splitter, 'keydown', (event) => this.#onSplitterKey(event, before, afterSlot, axis)),
       on(splitter, 'dblclick', () => {
         this.#reset(before);
         this.#reset(afterSlot);
@@ -334,7 +377,7 @@ export class Layout extends UI4UElement {
           // keyboard shortcut is broken".
           splitter.focus({ preventScroll: true });
 
-          // Remember where both panels started: `delta` is cumulative from the
+          // Remember where both regions started: `delta` is cumulative from the
           // pointer-down origin, so it must be added to the starting size
           // rather than used as the size itself.
           this.#dragOrigin.set(before, this.#panels.get(before)?.current ?? 0);
@@ -343,8 +386,11 @@ export class Layout extends UI4UElement {
           return true;
         },
         onMove: (event, delta) => {
-          this.#resize(before, (this.#dragOrigin.get(before) ?? 0) + delta.x);
-          this.#resize(after, (this.#dragOrigin.get(after) ?? 0) - delta.x);
+          // Same rule on both axes: travelling along the axis grows what comes
+          // before and shrinks what comes after.
+          const travel = axis === 'column' ? delta.x : delta.y;
+          this.#resize(before, (this.#dragOrigin.get(before) ?? 0) + travel);
+          this.#resize(afterSlot, (this.#dragOrigin.get(afterSlot) ?? 0) - travel);
           this.#apply();
         },
       })
@@ -405,21 +451,31 @@ export class Layout extends UI4UElement {
     this.emit('ui4u:collapse', { slot, collapsed: spec.collapsed, layout: this });
   }
 
-  /** @param {KeyboardEvent} event @param {PanelSlot} before @param {PanelSlot} after */
-  #onSplitterKey(event, before, after) {
+  /**
+   * @param {KeyboardEvent} event
+   * @param {PanelSlot} before
+   * @param {PanelSlot} after
+   * @param {'column' | 'row'} axis
+   */
+  #onSplitterKey(event, before, after, axis) {
     const step = this.step;
     const beforeSpec = this.#panels.get(before);
     const afterSpec = this.#panels.get(after);
+
+    // A column separator responds to the horizontal arrows, a row separator to
+    // the vertical ones, so the keys always match what the handle does on screen.
+    const grow = axis === 'column' ? 'ArrowRight' : 'ArrowDown';
+    const shrink = axis === 'column' ? 'ArrowLeft' : 'ArrowUp';
 
     /** @type {number|null} */
     let delta = null;
 
     switch (event.key) {
-      case 'ArrowLeft':
-        delta = -step;
-        break;
-      case 'ArrowRight':
+      case grow:
         delta = step;
+        break;
+      case shrink:
+        delta = -step;
         break;
       case 'Home':
         event.preventDefault();
@@ -486,21 +542,32 @@ export class Layout extends UI4UElement {
     const width = middle.length;
     const span = (name) => Array(width).fill(name).join(' ');
 
-    /* Rows: optional top, the flexible middle, optional bottom. */
+    /* Rows: optional top, the flexible middle, optional bottom — each separated
+       from its neighbour by a gutter row when both are present. */
     /** @type {string[]} */
     const rows = [];
     /** @type {string[]} */
     const areas = [];
 
-    if (has('top')) {
-      rows.push(size('top'));
-      areas.push(span('top'));
-    }
-    rows.push(has('center') ? 'minmax(0, 1fr)' : 'auto');
-    areas.push(middle.join(' '));
-    if (has('bottom')) {
-      rows.push(size('bottom'));
-      areas.push(span('bottom'));
+    /** @type {PanelSlot[]} */
+    const rowSlots = ['top', 'center', 'bottom'].filter((slot) => has(slot));
+
+    rowSlots.forEach((slot, index) => {
+      rows.push(slot === 'center' ? 'minmax(0, 1fr)' : size(slot));
+      areas.push(slot === 'center' ? middle.join(' ') : span(slot));
+
+      // A gutter row between this region and the next one.
+      const next = rowSlots[index + 1];
+      if (next) {
+        rows.push(gutter);
+        areas.push(span(separatorArea('row', next)));
+      }
+    });
+
+    // A layout with only left/right regions still needs one row to hold them.
+    if (rows.length === 0) {
+      rows.push('auto');
+      areas.push(middle.join(' '));
     }
 
     this.style.gridTemplateAreas = areas.map((row) => `"${row}"`).join(' ');
@@ -515,10 +582,9 @@ export class Layout extends UI4UElement {
       spec.node.hidden = spec.collapsed;
     }
 
-    for (const [key, splitter] of this.#splitters) {
-      const [before, after] = key.split('|');
-      splitter.style.gridArea = before === 'left' || after === 'left' ? 'sp-l' : 'sp-r';
-      this.#updateSplitterAria(splitter, /** @type {PanelSlot} */ (before), /** @type {PanelSlot} */ (after));
+    for (const { node, before, after, axis } of this.#splitters.values()) {
+      node.style.gridArea = separatorArea(axis, after);
+      this.#updateSplitterAria(node, before, after);
     }
   }
 

@@ -48,9 +48,11 @@
         <div>
           <h1><code>ui-layout</code></h1>
           <p class="lede">
-            A resizable workspace. Drag a separator, or focus one and use
-            <kbd>←</kbd> <kbd>→</kbd>, <kbd>Home</kbd>, <kbd>End</kbd>, and
-            <kbd>Enter</kbd> to collapse. Double-click a separator to reset it.
+            A resizable workspace. Every region has its own handle — including the
+            ones above and below the middle row. Drag a separator, or focus one and use
+            <kbd>←</kbd> <kbd>→</kbd> for the side panels,
+            <kbd>↑</kbd> <kbd>↓</kbd> for top and bottom, then <kbd>Home</kbd>,
+            <kbd>End</kbd> and <kbd>Enter</kbd>. Double-click a separator to reset it.
           </p>
         </div>
         <button type="button" data-theme-toggle>Toggle theme</button>
@@ -82,7 +84,7 @@
       </div>
 
       <ui-layout id="demo" step="16">
-        <ui-panel slot="top" label="Header" size="56">UI4U workspace</ui-panel>
+        <ui-panel slot="top" label="Header" size="56" min="32" max="160" resizable>UI4U workspace</ui-panel>
 
         <!--
           A slot can hold a nested layout instead of a panel, which is what makes
@@ -92,7 +94,7 @@
         <ui-layout slot="left" label="Explorer" size="260" min="180" max="420" resizable collapsible step="12">
           <ui-panel slot="left" label="Explorer rail" size="92" min="64" max="200" resizable>Rail</ui-panel>
           <ui-panel slot="center" label="Explorer body">Explorer body</ui-panel>
-          <ui-panel slot="bottom" label="Explorer filters" size="44">Filters</ui-panel>
+          <ui-panel slot="bottom" label="Explorer filters" size="44" min="28" max="120" resizable>Filters</ui-panel>
         </ui-layout>
 
         <ui-panel slot="center" label="Workspace">
@@ -116,7 +118,7 @@
           <ui-panel slot="right" label="Inspector details" size="80" min="60" max="180" resizable>•••</ui-panel>
         </ui-layout>
 
-        <ui-panel slot="bottom" label="Status" size="64">Ready · drag a separator to resize</ui-panel>
+        <ui-panel slot="bottom" label="Status" size="64" min="40" max="200" resizable>Ready · drag any separator — including the ones above and below</ui-panel>
       </ui-layout>
 
       <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
@@ -232,17 +234,20 @@ explorerLayout.reset();             // restores that subtree only</code></pre>
 
       <ui-disclosure summary="Keyboard reference" variant="ghost">
         <ul>
-          <li><code>←</code> / <code>→</code> — resize by the configured step</li>
+          <li><code>←</code> / <code>→</code> — resize a side panel by the configured step</li>
+          <li><code>↑</code> / <code>↓</code> — resize the top or bottom panel</li>
           <li><code>Home</code> — collapse the panel to its minimum</li>
           <li><code>End</code> — expand the panel to its maximum</li>
           <li><code>Enter</code> — collapse or restore the panel</li>
           <li>Double-click — reset both adjacent panels to their authored size</li>
         </ul>
         <p>
-          Each separator is a <code>role="separator"</code> with
+          Every separator is a <code>role="separator"</code> carrying
+          <code>aria-orientation</code> — <code>vertical</code> for the ones between
+          left/centre/right, <code>horizontal</code> for top/centre/bottom — plus
           <code>aria-valuenow</code>, <code>aria-valuemin</code> and
-          <code>aria-valuemax</code>, so assistive tech announces the live size
-          rather than leaving the drag as an unlabelled gesture.
+          <code>aria-valuemax</code> when a bound is enforced, so assistive tech
+          announces the live size rather than leaving the drag an unlabelled gesture.
         </p>
       </ui-disclosure>
     </div>

@@ -20,7 +20,7 @@ Early, and deliberately incremental. Shipped:
 | `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
 | `ui-button` | [`demo/button.html`](demo/button.html) | 5 variants, 3 sizes, loading and disabled states |
 | `ui-tooltip` | [`demo/tooltip.html`](demo/tooltip.html) | Hover + focus, viewport flipping, `Escape` to dismiss |
-| `ui-layout` | [`demo/layout.html`](demo/layout.html) | Resizable top/left/right/center/bottom, recursive, keyboard + pointer splitters |
+| `ui-layout` | [`demo/layout.html`](demo/layout.html) | All five regions resizable, recursive, keyboard + pointer splitters |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
@@ -57,10 +57,19 @@ import 'ui4u';
 
 ```html
 <ui-layout>
+  <ui-panel slot="top" label="Header" size="3.5rem" min="2rem" max="10rem" resizable>…</ui-panel>
   <ui-panel slot="left" size="16rem" min="10rem" resizable>…</ui-panel>
   <ui-panel slot="center">…</ui-panel>
+  <ui-panel slot="bottom" label="Status" size="4rem" resizable>…</ui-panel>
 </ui-layout>
 ```
+
+Every region gets its own handle. Column separators (left / centre / right) are
+`aria-orientation="vertical"` and respond to <kbd>←</kbd> <kbd>→</kbd>; row separators
+(top / centre / bottom) are `aria-orientation="horizontal"` and respond to
+<kbd>↑</kbd> <kbd>↓</kbd>. Both carry `aria-valuenow` plus `aria-valuemin`/`aria-valuemax`
+when a bound is actually enforced. <kbd>Home</kbd>/<kbd>End</kbd> jump to the limits,
+<kbd>Enter</kbd> collapses, double-click resets.
 
 Layouts nest — any slot can hold another `ui-layout`, so a sidebar can be a
 workspace of its own with its own centre, left/right and top/bottom:

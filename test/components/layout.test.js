@@ -34,7 +34,7 @@ after(() => {
 
 const FULL = `
   <ui-layout>
-    <ui-panel slot="top" label="Header" size="40">Header</ui-panel>
+    <ui-panel slot="top" label="Header" size="40" min="20" max="120" resizable>Header</ui-panel>
     <ui-panel slot="left" label="Sidebar" size="240" min="160" max="400" resizable collapsible>Nav</ui-panel>
     <ui-panel slot="center" label="Workspace">Main</ui-panel>
     <ui-panel slot="right" label="Inspector" size="200" min="120" max="320" resizable>Aside</ui-panel>
@@ -45,6 +45,11 @@ const FULL = `
 /** @returns {HTMLElement[]} every separator in the layout */
 function splittersOf(layout) {
   return [...layout.querySelectorAll('[role="separator"]')];
+}
+
+/** @param {HTMLElement} layout @param {'column'|'row'} axis */
+function splittersOn(layout, axis) {
+  return [...layout.querySelectorAll(`:scope > .ui4u-layout__splitter--${axis}`)];
 }
 
 describe('ui-layout registration', () => {
@@ -70,9 +75,12 @@ describe('ui-layout grid generation', () => {
     const layout = mount(FULL).querySelector('ui-layout');
     const areas = layout.style.gridTemplateAreas;
 
-    assert.equal(areas.split('"').length - 1, 6, 'three quoted rows');
+    // top | gutter | middle | gutter | bottom
+    assert.equal(areas.split('"').length - 1, 10, 'five quoted rows');
     assert.match(areas, /"top top top top top"/);
+    assert.match(areas, /"sp-t sp-t sp-t sp-t sp-t"/);
     assert.match(areas, /"left sp-l center sp-r right"/);
+    assert.match(areas, /"sp-b sp-b sp-b sp-b sp-b"/);
     assert.match(areas, /"bottom bottom bottom bottom bottom"/);
   });
 
@@ -132,26 +140,103 @@ describe('ui-layout splitters', () => {
 
   afterEach(() => cleanup());
 
-  it('creates one focusable separator between the three horizontal panels', () => {
-    assert.equal(splitters.length, 2);
+  it('creates one separator per gap on both axes', () => {
+    // left | center | right -> two column separators
+    assert.equal(splittersOn(layout, 'column').length, 2);
+    // top | center | bottom -> two row separators
+    assert.equal(splittersOn(layout, 'row').length, 2);
+    assert.equal(splitters.length, 4);
+  });
 
+  it('makes every separator a focusable, correctly-oriented element', () => {
     for (const splitter of splitters) {
       assert.equal(splitter.tagName, 'DIV');
       assert.equal(splitter.tabIndex, 0);
-      assert.equal(splitter.getAttribute('aria-orientation'), 'vertical');
       assert.ok(splitter.getAttribute('aria-label'));
       assert.ok(splitter.getAttribute('aria-valuenow'));
     }
+
+    for (const splitter of splittersOn(layout, 'column')) {
+      assert.equal(splitter.getAttribute('aria-orientation'), 'vertical');
+    }
+    for (const splitter of splittersOn(layout, 'row')) {
+      assert.equal(splitter.getAttribute('aria-orientation'), 'horizontal');
+    }
   });
 
-  it('positions each separator in the gutter between its panels', () => {
-    assert.equal(splitters[0].style.gridArea, 'sp-l');
-    assert.equal(splitters[1].style.gridArea, 'sp-r');
+  it('positions each separator in the gutter between its regions', () => {
+    assert.deepEqual(
+      splittersOn(layout, 'column').map((s) => s.style.gridArea),
+      ['sp-l', 'sp-r']
+    );
+    assert.deepEqual(
+      splittersOn(layout, 'row').map((s) => s.style.gridArea),
+      ['sp-t', 'sp-b']
+    );
   });
 
   it('exposes the current size through aria-valuenow', () => {
+    assert.equal(splittersOn(layout, 'column')[0].getAttribute('aria-valuenow'), '240');
+    assert.equal(splittersOn(layout, 'row')[0].getAttribute('aria-valuenow'), '40');
+  });
+});
 
-    assert.equal(splitters[0].getAttribute('aria-valuenow'), String(layout.sizeOf('left')));
+describe('ui-layout row separators', () => {
+  let layout;
+
+  beforeEach(() => {
+    layout = mount(FULL).querySelector('ui-layout');
+  });
+
+  afterEach(() => cleanup());
+
+  const topHeight = () => layout.panel('top').current;
+  const bottomHeight = () => layout.panel('bottom').current;
+
+  it('grows the top panel with ArrowDown', () => {
+    const before = topHeight();
+    press(splittersOn(layout, 'row')[0], 'ArrowDown');
+    assert.equal(topHeight(), before + 16);
+  });
+
+  it('shrinks the top panel with ArrowUp', () => {
+    const before = topHeight();
+    press(splittersOn(layout, 'row')[0], 'ArrowUp');
+    assert.equal(topHeight(), before - 16);
+  });
+
+  it('ignores the horizontal arrows on a row separator', () => {
+    const before = topHeight();
+    press(splittersOn(layout, 'row')[0], 'ArrowRight');
+    assert.equal(topHeight(), before, 'a row handle must not respond to ArrowRight');
+  });
+
+  it('ignores the vertical arrows on a column separator', () => {
+    const before = layout.panel('left').current;
+    press(splittersOn(layout, 'column')[0], 'ArrowDown');
+    assert.equal(layout.panel('left').current, before);
+  });
+
+  it('shrinks the bottom panel as its separator moves down', () => {
+    const before = bottomHeight();
+    press(splittersOn(layout, 'row')[1], 'ArrowDown');
+    assert.equal(bottomHeight(), before - 16);
+  });
+
+  it('clamps the top panel at its bounds', () => {
+    const host = mount(`
+      <ui-layout>
+        <ui-panel slot="top" label="Header" size="40" min="20" max="120" resizable>H</ui-panel>
+        <ui-panel slot="center">C</ui-panel>
+        <ui-panel slot="bottom" label="Status" size="40" resizable>B</ui-panel>
+      </ui-layout>
+    `).querySelector('ui-layout');
+
+    for (let i = 0; i < 30; i += 1) press(splittersOn(host, 'row')[0], 'ArrowDown');
+    assert.equal(host.panel('top').current, 120);
+
+    for (let i = 0; i < 30; i += 1) press(splittersOn(host, 'row')[0], 'ArrowUp');
+    assert.equal(host.panel('top').current, 20);
   });
 });
 
@@ -162,7 +247,7 @@ describe('ui-layout keyboard resizing', () => {
 
   beforeEach(() => {
     layout = mount(FULL).querySelector('ui-layout');
-    [leftSplitter, rightSplitter] = splittersOf(layout);
+    [leftSplitter, rightSplitter] = splittersOn(layout, 'column');
   });
 
   afterEach(() => cleanup());
@@ -440,8 +525,10 @@ describe('ui-layout nesting', () => {
     const host = mount(NESTED);
     const inner = host.querySelector('#outer ui-layout');
 
-    // rail + body -> one separator, independent of the outer one
-    assert.equal(inner.querySelectorAll(':scope > [role="separator"]').length, 1);
+    // rail + body -> one column separator; body + filters -> one row separator,
+    // both independent of the outer layout's.
+    assert.equal(splittersOn(inner, 'column').length, 1);
+    assert.equal(splittersOn(inner, 'row').length, 1);
   });
 
   it('resizes the outer layout and the nested layout independently', () => {

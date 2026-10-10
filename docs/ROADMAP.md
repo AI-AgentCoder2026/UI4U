@@ -171,12 +171,16 @@ re-exported from `dom.js` so nothing breaks.
   top/bottom. Each level keeps its own separators, sizes and keyboard step;
   `reset()` restores only that subtree. Events bubble, and both `ui4u:resize` and
   `ui4u:collapse` carry the emitting `layout` in `detail`.
-- **Splitters** — `role="separator"` with `aria-orientation`,
-  `aria-valuenow/min/max`, and full keyboard support: arrows resize by step,
-  `Home`/`End` jump to the limits, `Enter` collapses and restores.
-  Double-click resets to the default size.
+- **Splitters** — every region gets a handle. Column separators
+  (left | centre | right) are `role="separator" aria-orientation="vertical"` and
+  respond to <kbd>←</kbd> <kbd>→</kbd>; row separators (top | centre | bottom) are
+  `aria-orientation="horizontal"` and respond to <kbd>↑</kbd> <kbd>↓</kbd>. Both
+  carry `aria-valuenow`, plus `aria-valuemin`/`aria-valuemax` only when a bound is
+  actually enforced. `Home`/`End` jump to the limits, `Enter` collapses and restores,
+  double-click resets to the authored size.
 - **Pointer input** — unified mouse/touch/pen drag through pointer capture, so
-  a drag that leaves the splitter does not stick.
+  a drag that leaves the splitter does not stick. A pointer-down focuses the handle,
+  so the arrow keys work straight after clicking it.
 - **A11y** — panels carry `aria-label` from their `label` attribute; the layout
   is a labelled `region`.
 - **Responsive** — mobile-first: narrow viewports stack the panels and disable

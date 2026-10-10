@@ -83,6 +83,14 @@ ui-layout .ui4u-layout__splitter {
   transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
 }
 
+ui-layout .ui4u-layout__splitter--column {
+  cursor: col-resize;
+}
+
+ui-layout .ui4u-layout__splitter--row {
+  cursor: row-resize;
+}
+
 ui-layout .ui4u-layout__splitter:hover,
 ui-layout .ui4u-layout__splitter:focus-visible {
   background: var(--ui4u-layout-splitter-hover);
@@ -95,12 +103,21 @@ ui-layout .ui4u-layout__splitter::after {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 2px;
-  height: 2rem;
   border-radius: var(--ui4u-radius-full);
   background: var(--ui4u-text-subtle);
   transform: translate(-50%, -50%);
   transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+/* The grip runs across the axis the handle moves along. */
+ui-layout .ui4u-layout__splitter--column::after {
+  width: 2px;
+  height: 2rem;
+}
+
+ui-layout .ui4u-layout__splitter--row::after {
+  width: 2rem;
+  height: 2px;
 }
 
 ui-layout .ui4u-layout__splitter:hover::after,

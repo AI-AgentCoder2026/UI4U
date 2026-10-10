@@ -48,9 +48,11 @@ test('a nested layout can stand in for a panel in any slot', async ({ page }) =>
   await expect(explorer).toHaveAttribute('role', 'region');
   await expect(explorer).toHaveAttribute('aria-valuenow', null).catch(() => {});
 
-  // The nested layout brought its own panels and its own separator.
+  // The nested layout brought its own panels and its own separators: one column
+  // (rail | body) and one row (body | filters).
   await expect(explorer.locator(':scope > ui-panel')).toHaveCount(3);
-  await expect(explorer.locator(':scope > [role="separator"]')).toHaveCount(1);
+  await expect(explorer.locator(':scope > .ui4u-layout__splitter--column')).toHaveCount(1);
+  await expect(explorer.locator(':scope > .ui4u-layout__splitter--row')).toHaveCount(1);
 });
 
 test('labels the panels', async ({ page }) => {
@@ -67,7 +69,8 @@ test('labels the panels', async ({ page }) => {
 test('lays the regions out as a real grid on desktop', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  await expect(page.locator(OUTER)).toHaveCount(2);
+  // two column separators (left|centre, centre|right) and two row (top|centre, centre|bottom)
+  await expect(page.locator(OUTER)).toHaveCount(4);
 
   const left = await page.locator(EXPLORER).boundingBox();
   const center = await page.locator(`${MAIN} > ui-panel[slot="center"]`).boundingBox();
@@ -100,7 +103,7 @@ test('stacks every layout and drops the separators on mobile', async ({ page, is
   skipOnDesktop(isMobile);
 
   const outerSeparators = page.locator(OUTER);
-  await expect(outerSeparators).toHaveCount(2);
+  await expect(outerSeparators).toHaveCount(4);
   await expect(outerSeparators.first()).toBeHidden();
   await expect(outerSeparators.last()).toBeHidden();
 
@@ -260,6 +263,65 @@ test('changing the step changes how far a keypress moves', async ({ page, isMobi
   await page.keyboard.press('ArrowRight');
 
   expect((await explorer.boundingBox()).width - before).toBeGreaterThanOrEqual(36);
+});
+
+test('gives every region a handle, including top and bottom', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const top = page.locator(`${MAIN} > ui-panel[slot="top"]`);
+  const bottom = page.locator(`${MAIN} > ui-panel[slot="bottom"]`);
+
+  const topBefore = (await top.boundingBox()).height;
+  const bottomBefore = (await bottom.boundingBox()).height;
+
+  // Row separators respond to the vertical arrows.
+  await page.locator(`${MAIN} > .ui4u-layout__splitter--row`).first().focus();
+  await page.keyboard.press('ArrowDown');
+  expect((await top.boundingBox()).height).toBeGreaterThan(topBefore);
+
+  await page.keyboard.press('ArrowUp');
+  expect((await top.boundingBox()).height).toBeCloseTo(topBefore, 0);
+
+  // The last row separator governs the bottom panel.
+  await page.locator(`${MAIN} > .ui4u-layout__splitter--row`).last().focus();
+  await page.keyboard.press('ArrowUp');
+  expect((await bottom.boundingBox()).height).toBeGreaterThan(bottomBefore);
+});
+
+test('row separators are horizontal, column separators are vertical', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  for (const sep of await page.locator(`${MAIN} > .ui4u-layout__splitter--row`).all()) {
+    await expect(sep).toHaveAttribute('aria-orientation', 'horizontal');
+  }
+  for (const sep of await page.locator(`${MAIN} > .ui4u-layout__splitter--column`).all()) {
+    await expect(sep).toHaveAttribute('aria-orientation', 'vertical');
+  }
+});
+
+test('a row separator ignores the horizontal arrows', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const top = page.locator(`${MAIN} > ui-panel[slot="top"]`);
+  const before = (await top.boundingBox()).height;
+
+  await page.locator(`${MAIN} > .ui4u-layout__splitter--row`).first().focus();
+  await page.keyboard.press('ArrowRight');
+
+  expect((await top.boundingBox()).height).toBeCloseTo(before, 0);
+});
+
+test('the top panel clamps at its declared maximum', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const sep = page.locator(`${MAIN} > .ui4u-layout__splitter--row`).first();
+  const max = Number(await sep.getAttribute('aria-valuemax'));
+  const top = page.locator(`${MAIN} > ui-panel[slot="top"]`);
+
+  await sep.focus();
+  for (let i = 0; i < 40; i += 1) await page.keyboard.press('ArrowDown');
+
+  expect((await top.boundingBox()).height).toBeLessThanOrEqual(max + 1);
 });
 
 test('the Source samples live in a collapsed ui-disclosure', async ({ page }) => {
