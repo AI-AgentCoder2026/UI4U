@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Popup</title>
+    <meta
+      name="description"
+      content="ui-popup — a modal with a real focus trap, plus popover and drawer modes."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-popup</code></h1>
+          <p class="lede">
+            A modal, a popover and a drawer from one component. Open the modal and press
+            <kbd>Tab</kbd> repeatedly — focus stays inside. <kbd>Esc</kbd> closes it.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Mode</span>
+          <ui-tabs id="opt-mode" variant="underline" label="Popup mode">
+            <ui-tab label="modal"></ui-tab>
+            <ui-tab label="popover"></ui-tab>
+            <ui-tab label="drawer"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Drawer side</span>
+          <ui-tabs id="opt-side" variant="underline" label="Drawer side">
+            <!-- `right` first, so the picker's default matches the component's. -->
+            <ui-tab label="right"></ui-tab>
+            <ui-tab label="left"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Dismissible</span>
+          <ui-tabs id="opt-dismissible" variant="underline" label="Dismissible">
+            <ui-tab label="true"></ui-tab>
+            <ui-tab label="false"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-button id="open" variant="primary">Open popup</ui-button>
+        <ui-button id="toggle" variant="secondary">Toggle</ui-button>
+        <ui-button id="close" variant="ghost">Close</ui-button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for an event…</div>
+
+      <ui-disclosure summary="Source">
+        <p>Markup, modes and the event surface.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-popup label="Confirm" mode="modal"&gt;
+  &lt;p&gt;Delete this project? This cannot be undone.&lt;/p&gt;
+  &lt;ui-button variant="danger"&gt;Delete&lt;/ui-button&gt;
+&lt;/ui-popup&gt;
+
+&lt;!-- popover does not trap focus; drawer slides in from an edge. --&gt;
+&lt;ui-popup label="Filters" mode="drawer" side="left"&gt;…&lt;/ui-popup&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const popup = document.querySelector('ui-popup');
+
+popup.configure({ mode: 'modal', dismissible: true, side: 'right', label: 'Confirm' });
+
+popup.openPopup();
+popup.closePopup();
+popup.toggle();
+
+popup.addEventListener('ui4u:open', () =&gt; console.log('opened'));
+popup.addEventListener('ui4u:close', () =&gt; console.log('closed'));
+popup.addEventListener('ui4u:cancel', () =&gt; console.log('dismissed by Esc or backdrop'));</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Focus behaviour" variant="ghost">
+        <p>
+          In <code>modal</code> mode focus is trapped: <kbd>Tab</kbd> and
+          <kbd>Shift</kbd>+<kbd>Tab</kbd> cycle within the dialog, and focus cannot be
+          pulled out by clicking the backdrop. Closing returns focus to whatever was
+          focused beforehand — usually the button that opened it.
+        </p>
+        <p>
+          <code>popover</code> and <code>drawer</code> deliberately do <em>not</em> trap
+          focus; a drawer is a side panel you carry on working with. Only
+          <code>modal</code> sets <code>aria-modal="true"</code>.
+        </p>
+        <p>
+          The surface is portalled to <code>&lt;body&gt;</code>. Without that, an ancestor
+          with a <code>backdrop-filter</code> or <code>transform</code> would become the
+          containing block for its <code>position: fixed</code> coordinates and the dialog
+          would open somewhere unrelated.
+        </p>
+      </ui-disclosure>
+    </div>
+
+    <ui-popup label="Confirm" mode="modal">
+      <h2 style="margin-top: 0">Delete this project?</h2>
+      <p>This removes the project and every build attached to it. It cannot be undone.</p>
+      <div class="controls" style="margin-bottom: 0">
+        <ui-button id="confirm" variant="danger">Delete</ui-button>
+        <ui-button id="cancel" variant="secondary">Cancel</ui-button>
+      </div>
+    </ui-popup>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const popup = document.querySelector('ui-popup');
+      const log = document.getElementById('log');
+
+      document.getElementById('opt-mode').addEventListener('ui4u:change', (event) => {
+        popup.configure({ mode: event.detail.label });
+      });
+
+      document.getElementById('opt-side').addEventListener('ui4u:change', (event) => {
+        popup.configure({ side: event.detail.label });
+      });
+
+      document.getElementById('opt-dismissible').addEventListener('ui4u:change', (event) => {
+        popup.configure({ dismissible: event.detail.label === 'true' });
+      });
+
+      document.getElementById('open').addEventListener('click', () => popup.openPopup());
+      document.getElementById('toggle').addEventListener('click', () => popup.toggle());
+      document.getElementById('close').addEventListener('click', () => popup.closePopup());
+
+      // These live inside the portalled dialog surface.
+      document.getElementById('confirm').addEventListener('click', () => popup.closePopup());
+      document.getElementById('cancel').addEventListener('click', () => popup.closePopup());
+
+      for (const type of ['ui4u:open', 'ui4u:close', 'ui4u:cancel']) {
+        popup.addEventListener(type, () => {
+          // Append rather than replace: `cancel` fires before `close`, and
+          // overwriting would hide the fact that both happened.
+          const seen = log.textContent.startsWith('ui4u:') ? log.textContent : '';
+          log.textContent = seen ? `${seen} → ${type}` : `${type} · mode=${popup.mode}`;
+        });
+      }
+    </script>
+  </body>
+</html>

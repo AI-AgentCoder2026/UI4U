@@ -1,0 +1,45 @@
+/**
+ * ui-grid
+ *
+ * The component owns no geometry. It resolves its options into
+ * `--ui4u-grid-*` custom properties — inline, so one element can differ from
+ * its neighbours — and this file turns those into a template.
+ *
+ * Every value is a `--ui4u-*` token or a local property derived from one.
+ */
+
+ui-grid {
+  /* Local scale. Override these on the element to retune the grid without
+     touching the tokens. */
+  --ui4u-grid-gap: var(--ui4u-space-4);
+  --ui4u-grid-min: 16rem;
+  --ui4u-grid-columns: 1;
+  --ui4u-grid-align: stretch;
+  --ui4u-grid-justify: stretch;
+
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--ui4u-grid-gap);
+  align-items: var(--ui4u-grid-align);
+  justify-items: var(--ui4u-grid-justify);
+}
+
+/* Fluid mode — the default. The column count is whatever the width allows, so
+   nothing has to be measured in JavaScript. `min(100%, …)` keeps a single
+   track from overflowing a container narrower than the minimum. */
+ui-grid[data-mode='fluid'] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--ui4u-grid-min)), 1fr));
+}
+
+/* Fixed mode — an authored column count holds at every width. `minmax(0, 1fr)`
+   rather than `1fr` so a wide child can shrink instead of blowing out the
+   track. */
+ui-grid[data-mode='fixed'] {
+  grid-template-columns: repeat(var(--ui4u-grid-columns), minmax(0, 1fr));
+}
+
+/* Dense packing fills the gaps left by uneven rows. */
+ui-grid[dense] {
+  grid-auto-flow: row dense;
+}

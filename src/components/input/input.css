@@ -1,0 +1,155 @@
+/**
+ * ui-input
+ *
+ * Every value is a `--ui4u-*` token. The measurements that have no global token
+ * — field heights, border width — are declared once on the element itself as
+ * `--ui4u-input-*`, so overriding them is a token override, never a fork of
+ * this file.
+ *
+ * Mobile-first: the base field is sized for touch, and the wide-screen rule
+ * only widens the horizontal padding.
+ */
+
+ui-input {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-input-height-sm: 2rem;
+  --ui4u-input-height-md: 2.5rem;
+  --ui4u-input-height-lg: 3rem;
+  --ui4u-input-padding-x: var(--ui4u-space-4);
+  --ui4u-input-font-sm: var(--ui4u-font-size-sm);
+  --ui4u-input-font-md: var(--ui4u-font-size-md);
+  --ui4u-input-font-lg: var(--ui4u-font-size-lg);
+  --ui4u-input-radius: var(--ui4u-radius-md);
+  --ui4u-input-border-width: 1px;
+  --ui4u-input-disabled-opacity: 0.55;
+}
+
+/* --- label ---------------------------------------------------------------- */
+
+ui-input .ui4u-input__label {
+  display: block;
+  margin-block-end: var(--ui4u-space-2);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text-muted);
+}
+
+ui-input .ui4u-input__label[hidden] {
+  display: none;
+}
+
+/* --- the native control --------------------------------------------------- */
+
+ui-input .ui4u-input__native {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--ui4u-input-height-md);
+  padding-inline: var(--ui4u-input-padding-x);
+  border: var(--ui4u-input-border-width) solid var(--ui4u-border);
+  border-radius: var(--ui4u-input-radius);
+  font-family: inherit;
+  font-size: var(--ui4u-input-font-md);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  background: var(--ui4u-surface-glass-strong);
+  box-shadow: var(--ui4u-shadow-inset);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-base) var(--ui4u-ease-out),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    opacity var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-input .ui4u-input__native::placeholder {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-input .ui4u-input__native:hover:not(:disabled) {
+  border-color: var(--ui4u-border-strong);
+}
+
+ui-input .ui4u-input__native:focus-visible {
+  outline: none;
+  border-color: var(--ui4u-focus-ring-color);
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-input .ui4u-input__native:disabled {
+  opacity: var(--ui4u-input-disabled-opacity);
+  background: var(--ui4u-surface-3);
+  cursor: not-allowed;
+}
+
+ui-input .ui4u-input__native:read-only:not(:disabled) {
+  background: var(--ui4u-surface-2);
+  cursor: default;
+}
+
+/* The error treatment is driven by the ARIA state, so it can never disagree
+   with what assistive technology announces. */
+ui-input .ui4u-input__native[aria-invalid='true'] {
+  border-color: var(--ui4u-danger);
+}
+
+ui-input .ui4u-input__native[aria-invalid='true']:focus-visible {
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+/* --- size ----------------------------------------------------------------- */
+
+ui-input[data-size='sm'] .ui4u-input__native {
+  min-height: var(--ui4u-input-height-sm);
+  font-size: var(--ui4u-input-font-sm);
+}
+
+ui-input[data-size='lg'] .ui4u-input__native {
+  min-height: var(--ui4u-input-height-lg);
+  font-size: var(--ui4u-input-font-lg);
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-input .ui4u-input__hint,
+ui-input .ui4u-input__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-input .ui4u-input__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-input .ui4u-input__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-input .ui4u-input__hint[hidden],
+ui-input .ui4u-input__error[hidden] {
+  display: none;
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-input {
+    --ui4u-input-padding-x: var(--ui4u-space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-input .ui4u-input__native {
+    transition: none;
+  }
+}

@@ -21,10 +21,13 @@ Early, and deliberately incremental. Shipped:
 | `ui-button` | [`demo/button.html`](demo/button.html) | 5 variants, 3 sizes, loading and disabled states |
 | `ui-tooltip` | [`demo/tooltip.html`](demo/tooltip.html) | Hover + focus, viewport flipping, `Escape` to dismiss |
 | `ui-layout` | [`demo/layout.html`](demo/layout.html) | All five regions resizable, recursive, keyboard + pointer splitters |
+| `ui-popup` | [`demo/popup.html`](demo/popup.html) | Modal with a real focus trap, plus popover and drawer modes |
+| `ui-input` | [`demo/input.html`](demo/input.html) | Native input preserved, label/hint/error wiring, validation surface |
+| `ui-grid` | [`demo/grid.html`](demo/grid.html) | Fluid auto-fit columns driven entirely by CSS |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
-Planned, in roadmap order: `ui-popup` · `ui-input` · `ui-form` · `ui-grid` · `ui-sidebar`.
+Planned, in roadmap order: `ui-form` · `ui-sidebar`.
 The full delivery plan lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Install

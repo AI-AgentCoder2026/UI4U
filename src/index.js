@@ -40,6 +40,9 @@ import {
 import { Button, BUTTON_STYLE_ID, buttonCss } from './components/button/index.js';
 import { Tooltip, TOOLTIP_STYLE_ID, tooltipCss } from './components/tooltip/index.js';
 import { Layout, Panel, LAYOUT_STYLE_ID, layoutCss } from './components/layout/index.js';
+import { Popup, POPUP_STYLE_ID, popupCss } from './components/popup/index.js';
+import { Input, INPUT_STYLE_ID, inputCss } from './components/input/index.js';
+import { Grid, GRID_STYLE_ID, gridCss } from './components/grid/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -70,6 +73,15 @@ export {
   Panel,
   LAYOUT_STYLE_ID,
   layoutCss,
+  Popup,
+  POPUP_STYLE_ID,
+  popupCss,
+  Input,
+  INPUT_STYLE_ID,
+  inputCss,
+  Grid,
+  GRID_STYLE_ID,
+  gridCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -100,6 +112,9 @@ export const components = [
     styleId: LAYOUT_STYLE_ID,
     css: layoutCss,
   },
+  { tag: 'ui-popup', ctor: Popup, styleId: POPUP_STYLE_ID, css: popupCss },
+  { tag: 'ui-input', ctor: Input, styleId: INPUT_STYLE_ID, css: inputCss },
+  { tag: 'ui-grid', ctor: Grid, styleId: GRID_STYLE_ID, css: gridCss },
 ];
 
 /**
@@ -137,6 +152,9 @@ export const UI4U = {
   Tooltip,
   Layout,
   Panel,
+  Popup,
+  Input,
+  Grid,
   UI4UElement,
   Emitter,
   define: defineElement,

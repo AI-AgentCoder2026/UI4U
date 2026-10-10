@@ -39,9 +39,9 @@ Every component follows the same shape — keep new ones consistent:
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout`
+Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout` · `popup` · `input` · `grid`
 
-Roadmap: `popup` (modal/dialog) · `input` · `form` (validation) · `grid` · `sidebar`
+Roadmap: `form` (validation) · `sidebar`
 
 The delivery plan, with per-component API and acceptance criteria, lives in `docs/ROADMAP.md`.
 

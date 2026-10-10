@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Grid</title>
+    <meta
+      name="description"
+      content="ui-grid — a responsive grid container that is CSS-first: auto-fit when fluid, an authored column count when fixed."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-grid</code></h1>
+          <p class="lede">
+            A responsive grid container that measures nothing. Options resolve to
+            <code>--ui4u-grid-*</code> custom properties and
+            <code>grid-template-columns</code> does the rest — resize the window and the
+            column count changes with no JavaScript involved.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Gap</span>
+          <ui-tabs id="opt-gap" variant="underline" label="Gap step" active="2">
+            <ui-tab label="xs"></ui-tab>
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+            <ui-tab label="xl"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Columns</span>
+          <ui-tabs id="opt-columns" variant="underline" label="Column mode">
+            <ui-tab label="fluid"></ui-tab>
+            <ui-tab label="1"></ui-tab>
+            <ui-tab label="2"></ui-tab>
+            <ui-tab label="3"></ui-tab>
+            <ui-tab label="4"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Track size</span>
+          <ui-tabs id="opt-min" variant="underline" label="Minimum track size">
+            <ui-tab label="16rem"></ui-tab>
+            <ui-tab label="20rem"></ui-tab>
+            <ui-tab label="26rem"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="toggle-dense" type="button">Dense: off</button>
+        <button id="toggle-label" type="button">Label region: off</button>
+      </div>
+
+      <h2>Fluid grid</h2>
+      <p>
+        <code>min="16rem"</code> with no <code>columns</code>: the grid is
+        <code>repeat(auto-fit, minmax(16rem, 1fr))</code>. Twelve cards below, so the
+        reflow is obvious at any width.
+      </p>
+
+      <ui-grid id="demo-grid" min="16rem" gap="md" label="Component cards">
+        <a class="demo-card" href="#g-tabs"><code>ui-tabs</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-disclosure"><code>ui-disclosure</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-button"><code>ui-button</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-tooltip"><code>ui-tooltip</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-layout"><code>ui-layout</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-popup"><code>ui-popup</code><span>Next</span></a>
+        <a class="demo-card" href="#g-input"><code>ui-input</code><span>Planned</span></a>
+        <a class="demo-card" href="#g-form"><code>ui-form</code><span>Planned</span></a>
+        <a class="demo-card" href="#g-grid"><code>ui-grid</code><span>Shipped</span></a>
+        <a class="demo-card" href="#g-sidebar"><code>ui-sidebar</code><span>Planned</span></a>
+        <a class="demo-card" href="#g-a11y"
+          ><code>a11y</code><span>Roles and keyboard order asserted in tests</span></a
+        >
+        <a class="demo-card" href="#g-theming"
+          ><code>theming</code><span>Every value is a --ui4u-* token</span></a
+        >
+      </ui-grid>
+
+      <h2>Fixed grid</h2>
+      <p>
+        <code>columns="3"</code> pins the track count at every width. It wins when both
+        <code>columns</code> and <code>min</code> are authored — a grid that must hold a
+        known number of columns cannot also be fluid.
+      </p>
+
+      <ui-grid id="fixed-grid" columns="3" gap="sm">
+        <article class="demo-card"><code>one</code><span>fixed track</span></article>
+        <article class="demo-card"><code>two</code><span>fixed track</span></article>
+        <article class="demo-card"><code>three</code><span>fixed track</span></article>
+        <article class="demo-card"><code>four</code><span>fixed track</span></article>
+      </ui-grid>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
+
+      <ui-disclosure summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;!-- Fluid: the column count follows the width. --&gt;
+&lt;ui-grid min="16rem" gap="md"&gt;
+  &lt;article&gt;…&lt;/article&gt;
+&lt;/ui-grid&gt;
+
+&lt;!-- Fixed: an authored track count holds at every width. --&gt;
+&lt;ui-grid columns="3" gap="lg"&gt;
+  &lt;article&gt;…&lt;/article&gt;
+&lt;/ui-grid&gt;
+
+&lt;!-- label opts the container into a single labelled region. --&gt;
+&lt;ui-grid label="Feature cards" dense&gt;…&lt;/ui-grid&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const grid = document.querySelector('ui-grid');
+
+// One options object — never a long positional argument list.
+grid.configure({ min: '18rem', gap: 'lg', dense: true });
+
+// Pass null to clear an option and fall back to fluid.
+grid.configure({ columns: 3 });
+grid.configure({ columns: null });
+
+grid.addEventListener('ui4u:change', (event) =&gt; {
+  const { mode, columns, min, gap } = event.detail;
+  console.log(mode, columns, min, gap);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* The gap scale is token-driven — override, never fork. */
+ui-grid {
+  --ui4u-grid-gap: var(--ui4u-space-6);
+  --ui4u-grid-min: 20rem;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const log = document.getElementById('log');
+      const grid = document.getElementById('demo-grid');
+
+      grid.addEventListener('ui4u:change', (event) => {
+        const { mode, columns, min, gap, dense } = event.detail;
+        log.textContent = `ui4u:change → mode: ${mode} columns: ${columns || '—'} min: ${
+          min || '—'
+        } gap: ${gap} dense: ${dense}`;
+      });
+
+      // Gap is a token name, so the component resolves it to a spacing token.
+      document.getElementById('opt-gap').addEventListener('ui4u:change', (event) => {
+        grid.configure({ gap: event.detail.label });
+      });
+
+      // `fluid` clears `columns`; anything else pins the track count.
+      document.getElementById('opt-columns').addEventListener('ui4u:change', (event) => {
+        const choice = event.detail.label;
+        grid.configure({ columns: choice === 'fluid' ? null : Number(choice) });
+      });
+
+      // Only meaningful in fluid mode — a fixed count ignores the minimum.
+      document.getElementById('opt-min').addEventListener('ui4u:change', (event) => {
+        grid.configure({ min: event.detail.label });
+      });
+
+      const dense = document.getElementById('toggle-dense');
+      dense.addEventListener('click', () => {
+        const next = !grid.dense;
+        grid.configure({ dense: next });
+        dense.textContent = `Dense: ${next ? 'on' : 'off'}`;
+      });
+
+      const label = document.getElementById('toggle-label');
+      label.addEventListener('click', () => {
+        const next = !grid.hasAttribute('label');
+        if (next) grid.setAttribute('label', 'Component cards');
+        else grid.removeAttribute('label');
+        label.textContent = `Label region: ${next ? 'on' : 'off'}`;
+      });
+    </script>
+  </body>
+</html>

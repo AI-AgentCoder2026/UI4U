@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Input</title>
+    <meta
+      name="description"
+      content="ui-input — a text field that wraps a real native input, with a linked label, hint, error state and native validation."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-input</code></h1>
+          <p class="lede">
+            A text field that wraps a <strong>real</strong>
+            <code>&lt;input&gt;</code>. Native autofill, IME composition, mobile keyboards and
+            password managers all keep working because the control is never re-rendered from a
+            property.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Size</span>
+          <ui-tabs id="opt-size" variant="underline" label="Size">
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Type</span>
+          <ui-tabs id="opt-type" variant="underline" label="Type">
+            <ui-tab label="text"></ui-tab>
+            <ui-tab label="email"></ui-tab>
+            <ui-tab label="password"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-input
+          id="demo"
+          label="Email"
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          hint="We never share it."
+          required
+        ></ui-input>
+      </div>
+
+      <div class="controls">
+        <button id="toggle-required" type="button">Toggle required</button>
+        <button id="toggle-readonly" type="button">Toggle readonly</button>
+        <button id="toggle-disabled" type="button">Toggle disabled</button>
+        <button id="toggle-sr-only" type="button">Toggle screen-reader-only label</button>
+        <button id="toggle-error" type="button">Toggle error</button>
+      </div>
+
+      <div class="controls">
+        <button id="validate" type="button">Validate</button>
+        <button id="clear" type="button">Clear validity</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for input…</div>
+
+      <div class="controls">
+        <ui-input label="Full name" size="sm" placeholder="Ada Lovelace"></ui-input>
+        <ui-input label="Password" type="password" autocomplete="new-password"></ui-input>
+        <ui-input label="Nickname" sr-only hint="Only your friends see this."></ui-input>
+        <ui-input label="Archived" value="Locked" readonly></ui-input>
+      </div>
+
+      <div class="controls">
+        <ui-input label="Locked out" value="You cannot type here" disabled></ui-input>
+      </div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-input label="Email" type="email" required hint="We never share it."&gt;&lt;/ui-input&gt;
+&lt;ui-input label="Name" value="Ada" error="That name is taken" size="lg"&gt;&lt;/ui-input&gt;
+
+&lt;!-- sr-only keeps the label in the accessibility tree but out of
+     the layout, and disabled / readonly mirror onto the real control. --&gt;
+&lt;ui-input label="Search" sr-only&gt;&lt;/ui-input&gt;
+&lt;ui-input label="Locked" value="read only" readonly&gt;&lt;/ui-input&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const field = document.querySelector('ui-input');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+field.configure({
+  label: 'Email',
+  type: 'email',
+  hint: 'We never share it.',
+  size: 'lg',
+  required: true,
+});
+
+// Native validation, surfaced as a plain result object — this is the
+// surface ui-form will consume.
+const { valid, message, value, name } = field.checkValidity();
+field.reportValidity();  // sets `error` and shows the browser bubble
+field.clearValidity();   // drops the error state again
+
+// The native control is reachable, never proxied.
+field.input.focus();
+field.focus();
+
+// Every public event is namespaced so it cannot collide with yours.
+field.addEventListener('ui4u:input', (event) =&gt; {
+  const { value, name } = event.detail;
+  console.log(`${name} → ${value}`);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-input-* custom properties. */
+ui-input {
+  --ui4u-input-height-md: 3rem;
+  --ui4u-input-radius: var(--ui4u-radius-full);
+  --ui4u-danger: #f43f5e;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const field = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real field.
+      for (const [id, option] of [
+        ['opt-size', 'size'],
+        ['opt-type', 'type'],
+      ]) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          field.configure({ [option]: event.detail.label });
+        });
+      }
+
+      const toggles = [
+        ['toggle-required', 'required'],
+        ['toggle-readonly', 'readonly'],
+        ['toggle-disabled', 'disabled'],
+        ['toggle-sr-only', 'srOnly'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('click', () => {
+          field[option] = !field[option];
+        });
+      }
+
+      document.getElementById('toggle-error').addEventListener('click', () => {
+        field.configure({ error: field.error ? '' : 'That address is already registered.' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        field.reportValidity();
+        const result = field.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        field.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        field
+          .configure({ value: '', error: '', hint: 'We never share it.', size: 'md' })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      field.addEventListener('ui4u:input', (event) => {
+        const { value, name } = event.detail;
+        log.textContent = `ui4u:input → ${name || '(unnamed)'} = "${value}"`;
+        // Clear a stale error as soon as the author edits the field again.
+        field.clearValidity();
+      });
+
+      field.addEventListener('ui4u:change', (event) => {
+        log.textContent = `ui4u:change → ${event.detail.name || '(unnamed)'} = "${
+          event.detail.value
+        }"`;
+      });
+    </script>
+  </body>
+</html>

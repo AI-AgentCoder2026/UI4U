@@ -9,17 +9,17 @@ page and tests exist — see the component contract in [`AGENTS.md`](../AGENTS.m
 | --- | --- | --- |
 | 1 | `ui-button` | ✅ shipped |
 | 1 | `ui-tooltip` | ✅ shipped (also brought in `core/position.js`) |
-| 1 | `ui-popup` | ⏳ next — needs `core/focus-trap.js` |
-| 2 | `ui-input` | ⏳ planned |
-| 2 | `ui-form` | ⏳ planned |
-| 3 | `ui-grid` | ⏳ planned |
+| 1 | `ui-popup` | ✅ shipped (also brought in `core/focus-trap.js`) |
+| 2 | `ui-input` | ✅ shipped |
+| 2 | `ui-form` | ⏳ next |
+| 3 | `ui-grid` | ✅ shipped |
 | 3 | `ui-sidebar` | ⏳ planned |
 | 3 | `ui-layout` | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
 
 Shared helpers extracted so far: `core/position.js`, `core/pointer.js`,
-`core/size.js`. Still to extract: `core/focus-trap.js` (`ui-popup`, then
-`ui-sidebar`). `dom.js` currently still owns `focusables()`; it moves when
-`ui-popup` lands.
+`core/size.js`, `core/focus-trap.js`. `dom.js` still owns `focusables()` and
+re-exports it; `ui-sidebar` should consume the trap rather than growing a
+second one.
 
 ## Build order
 
