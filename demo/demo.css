@@ -1,0 +1,300 @@
+/**
+ * Shared styling for every UI4U demo page.
+ *
+ * Kept in one file so component demos stay focused on their component. Every
+ * value is a `--ui4u-*` token — the demo chrome is themed exactly like the
+ * library itself.
+ */
+
+body {
+  min-height: 100dvh;
+  background-color: var(--ui4u-bg);
+  background-image: var(--ui4u-bg-pattern);
+  background-attachment: fixed;
+  color: var(--ui4u-text);
+  font-family: var(--ui4u-font-sans);
+  line-height: var(--ui4u-line-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 62rem;
+  margin-inline: auto;
+  padding: var(--ui4u-space-7) var(--ui4u-space-4) var(--ui4u-space-8);
+}
+
+.page > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui4u-space-4);
+  margin-bottom: var(--ui4u-space-7);
+}
+
+h1 {
+  font-size: var(--ui4u-font-size-3xl);
+  font-weight: var(--ui4u-weight-bold);
+  letter-spacing: var(--ui4u-tracking-tight);
+  line-height: var(--ui4u-line-tight);
+}
+
+h2 {
+  font-size: var(--ui4u-font-size-lg);
+  font-weight: var(--ui4u-weight-semibold);
+  margin-bottom: var(--ui4u-space-3);
+}
+
+.lede {
+  max-width: 44rem;
+  margin-top: var(--ui4u-space-2);
+  color: var(--ui4u-text-muted);
+}
+
+section {
+  margin-top: var(--ui4u-space-7);
+}
+
+section > p {
+  max-width: 46rem;
+  margin-bottom: var(--ui4u-space-4);
+  color: var(--ui4u-text-muted);
+}
+
+/* --- controls ----------------------------------------------------------- */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui4u-space-3);
+  align-items: center;
+  margin-bottom: var(--ui4u-space-5);
+  padding: var(--ui4u-space-4);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-radius-lg);
+  background: var(--ui4u-surface-glass);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+}
+
+.controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui4u-space-2);
+  font-size: var(--ui4u-font-size-sm);
+  color: var(--ui4u-text-muted);
+}
+
+select,
+button {
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  /* surface-3 sits a clear step above the glass panel, so controls stay
+     legible in the light theme instead of dissolving into it. */
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-3);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--ui4u-primary);
+  background: var(--ui4u-primary-soft);
+  color: var(--ui4u-primary);
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+.log {
+  margin-top: var(--ui4u-space-4);
+  padding: var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-radius-md);
+  background: var(--ui4u-surface-sunken);
+  font-family: var(--ui4u-font-mono);
+  font-size: var(--ui4u-font-size-sm);
+  color: var(--ui4u-text-muted);
+  min-height: 3rem;
+}
+
+/* --- inline code -------------------------------------------------------- */
+
+code {
+  font-family: var(--ui4u-font-mono);
+  font-size: 0.9em;
+  color: var(--ui4u-primary);
+}
+
+kbd {
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--ui4u-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--ui4u-radius-xs);
+  background: var(--ui4u-surface-2);
+  font-family: var(--ui4u-font-mono);
+  font-size: 0.85em;
+}
+
+/* --- code blocks -------------------------------------------------------- */
+
+.demo-code {
+  margin: 0 0 var(--ui4u-space-5);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-radius-lg);
+  background: var(--ui4u-surface-sunken);
+  overflow: hidden;
+}
+
+.demo-code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui4u-space-3);
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border-bottom: 1px solid var(--ui4u-border);
+  background: var(--ui4u-surface-2);
+}
+
+.demo-code__lang {
+  font-family: var(--ui4u-font-mono);
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-widest);
+  text-transform: uppercase;
+  color: var(--ui4u-text-subtle);
+}
+
+.demo-code__copy {
+  padding: var(--ui4u-space-1) var(--ui4u-space-3);
+  font-size: var(--ui4u-font-size-xs);
+}
+
+.demo-code pre {
+  margin: 0;
+  padding: var(--ui4u-space-4);
+  overflow-x: auto;
+  font-family: var(--ui4u-font-mono);
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-loose);
+  color: var(--ui4u-text);
+  tab-size: 2;
+}
+
+.demo-code code {
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Syntax colours are tokens too, so a theme switch recolours the samples. */
+.tok-comment {
+  color: var(--ui4u-text-subtle);
+  font-style: italic;
+}
+.tok-string {
+  color: var(--ui4u-success);
+}
+.tok-keyword {
+  color: var(--ui4u-accent);
+}
+.tok-tag {
+  color: var(--ui4u-primary);
+}
+.tok-attr {
+  color: var(--ui4u-text-muted);
+}
+.tok-number {
+  color: var(--ui4u-warning);
+}
+.tok-punct {
+  color: var(--ui4u-text-subtle);
+}
+
+/* --- demo index --------------------------------------------------------- */
+
+.demo-hero {
+  font-size: var(--ui4u-font-size-3xl);
+  font-weight: var(--ui4u-weight-bold);
+  letter-spacing: var(--ui4u-tracking-tight);
+  background: linear-gradient(120deg, var(--ui4u-primary), var(--ui4u-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.demo-cards {
+  display: grid;
+  gap: var(--ui4u-space-3);
+  padding: 0;
+  margin: var(--ui4u-space-7) 0 0;
+  list-style: none;
+}
+
+.demo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui4u-space-4);
+  padding: var(--ui4u-space-5);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-radius-lg);
+  background: var(--ui4u-surface-glass);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+  text-decoration: none;
+  color: var(--ui4u-text);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    transform var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+.demo-card:hover,
+.demo-card:focus-visible {
+  border-color: var(--ui4u-primary);
+  transform: translateY(-2px);
+}
+
+.demo-card code {
+  font-size: var(--ui4u-font-size-lg);
+  color: var(--ui4u-primary);
+}
+
+.demo-card span {
+  color: var(--ui4u-text-muted);
+  font-size: var(--ui4u-font-size-sm);
+  text-align: right;
+}
+
+.demo-todo {
+  margin-top: var(--ui4u-space-6);
+  padding: var(--ui4u-space-4);
+  border: 1px dashed var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-md);
+  color: var(--ui4u-text-subtle);
+  font-size: var(--ui4u-font-size-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  select,
+  button,
+  .demo-card {
+    transition: none;
+  }
+
+  .demo-card:hover,
+  .demo-card:focus-visible {
+    transform: none;
+  }
+}

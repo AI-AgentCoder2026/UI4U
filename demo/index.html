@@ -4,96 +4,77 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>UI4U — Component demos</title>
+    <meta
+      name="description"
+      content="UI4U — a framework-agnostic, mobile-first UI library built from vanilla ES6 modules."
+    />
     <link rel="stylesheet" href="/dist/ui4u.css" />
     <link rel="stylesheet" href="/src/styles/reset.css" />
-    <style>
-      .page {
-        max-width: 56rem;
-        margin-inline: auto;
-        padding: var(--ui4u-space-8) var(--ui4u-space-4);
-      }
-      h1 {
-        font-size: var(--ui4u-font-size-3xl);
-        letter-spacing: var(--ui4u-tracking-tight);
-        background: linear-gradient(120deg, var(--ui4u-primary), var(--ui4u-accent));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-      p.lede {
-        color: var(--ui4u-text-muted);
-        margin: var(--ui4u-space-3) 0 var(--ui4u-space-7);
-      }
-      ul {
-        display: grid;
-        gap: var(--ui4u-space-3);
-        padding: 0;
-        list-style: none;
-      }
-      a.card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ui4u-space-4);
-        padding: var(--ui4u-space-5);
-        border: 1px solid var(--ui4u-border);
-        border-radius: var(--ui4u-radius-lg);
-        background: var(--ui4u-surface-glass);
-        -webkit-backdrop-filter: var(--ui4u-glass-blur);
-        backdrop-filter: var(--ui4u-glass-blur);
-        text-decoration: none;
-        color: var(--ui4u-text);
-        transition:
-          border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
-          transform var(--ui4u-duration-fast) var(--ui4u-ease-standard);
-      }
-      a.card:hover {
-        border-color: var(--ui4u-primary);
-        transform: translateY(-2px);
-      }
-      a.card code {
-        font-family: var(--ui4u-font-mono);
-        font-size: var(--ui4u-font-size-lg);
-        color: var(--ui4u-primary);
-      }
-      a.card span {
-        color: var(--ui4u-text-muted);
-        font-size: var(--ui4u-font-size-sm);
-        text-align: right;
-      }
-      .todo {
-        color: var(--ui4u-text-subtle);
-        font-size: var(--ui4u-font-size-sm);
-        padding: var(--ui4u-space-4);
-        border: 1px dashed var(--ui4u-border-strong);
-        border-radius: var(--ui4u-radius-md);
-      }
-    </style>
+    <link rel="stylesheet" href="/demo/demo.css" />
   </head>
   <body>
     <div class="page">
-      <h1>UI4U</h1>
-      <p class="lede">
-        A framework-agnostic, mobile-first UI library. Vanilla ES6 modules, zero runtime
-        dependencies, themed entirely through <code>--ui4u-*</code> custom properties.
-      </p>
+      <header>
+        <div>
+          <h1 class="demo-hero">UI4U</h1>
+          <p class="lede">
+            A framework-agnostic, mobile-first UI library. Vanilla ES6 modules, zero runtime
+            dependencies, themed entirely through <code>--ui4u-*</code> custom properties.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
 
-      <ul>
+      <ul class="demo-cards">
         <li>
-          <a class="card" href="/demo/tabs.html">
+          <a class="demo-card" href="/demo/tabs.html">
             <code>ui-tabs</code>
             <span>Keyboard navigation, automatic + manual activation, three variants</span>
           </a>
         </li>
       </ul>
 
-      <p class="todo" style="margin-top: var(--ui4u-space-6)">
+      <p class="demo-todo">
         Planned: <code>ui-layout</code> · <code>ui-sidebar</code> · <code>ui-grid</code> ·
         <code>ui-input</code> · <code>ui-form</code> · <code>ui-popup</code> ·
         <code>ui-tooltip</code>
       </p>
+
+      <section>
+        <h2>Get started</h2>
+        <p>
+          Each component ships with a demo, a unit suite and a browser smoke suite. Import the
+          entry to register everything, or import a single component and call
+          <code>define()</code> yourself.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">npm install ui4u
+
+// Registers every custom element and injects the stylesheets.
+import 'ui4u';</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-tabs label="Project sections"&gt;
+  &lt;ui-tab label="Overview"&gt;Overview panel&lt;/ui-tab&gt;
+  &lt;ui-tab label="Activity"&gt;Activity panel&lt;/ui-tab&gt;
+&lt;/ui-tabs&gt;</code></pre>
+        </figure>
+      </section>
     </div>
 
-    <script type="module" src="/dist/ui4u.esm.js"></script>
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+    </script>
   </body>
 </html>

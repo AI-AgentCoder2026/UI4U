@@ -21,7 +21,12 @@ const REWRITES = new Map([
   ['/dist/ui4u.esm.js', './ui4u.esm.js'],
   ['/dist/ui4u.css', './ui4u.css'],
   ['/src/styles/reset.css', './reset.css'],
+  ['/demo/demo.css', './demo.css'],
+  ['/demo/demo.js', './demo.js'],
 ]);
+
+/** Non-HTML files from `demo/` that pages reference but are not themselves pages. */
+const DEMO_ASSETS = ['demo.css', 'demo.js'];
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
@@ -69,6 +74,12 @@ for (const name of pages) {
   const outName = name === 'index.html' ? 'index.html' : name;
   await writeFile(resolve(outDir, outName), html, 'utf8');
   console.log(`  demo/${name} -> .pages/${outName}`);
+}
+
+// Shared demo chrome (styles + behaviour) travels with the flattened pages.
+for (const name of DEMO_ASSETS) {
+  await copyFile(resolve(demoDir, name), resolve(outDir, name));
+  console.log(`  demo/${name} -> .pages/${name}`);
 }
 
 // Stops Jekyll from hiding any underscore-prefixed paths.

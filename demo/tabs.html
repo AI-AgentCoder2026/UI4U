@@ -4,89 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>UI4U — Tabs</title>
+    <meta
+      name="description"
+      content="ui-tabs — keyboard-navigable tabs with automatic or manual activation, built for mobile and desktop."
+    />
     <link rel="stylesheet" href="/dist/ui4u.css" />
     <link rel="stylesheet" href="/src/styles/reset.css" />
-    <style>
-      .page {
-        max-width: 60rem;
-        margin-inline: auto;
-        padding: var(--ui4u-space-7) var(--ui4u-space-4) var(--ui4u-space-8);
-      }
-      .page > header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--ui4u-space-4);
-        margin-bottom: var(--ui4u-space-7);
-      }
-      h1 {
-        font-size: var(--ui4u-font-size-3xl);
-        letter-spacing: var(--ui4u-tracking-tight);
-      }
-      .lede {
-        color: var(--ui4u-text-muted);
-        margin-top: var(--ui4u-space-2);
-      }
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--ui4u-space-3);
-        align-items: center;
-        margin-bottom: var(--ui4u-space-5);
-        padding: var(--ui4u-space-4);
-        border: 1px solid var(--ui4u-border);
-        border-radius: var(--ui4u-radius-lg);
-        background: var(--ui4u-surface-glass);
-      }
-      .controls label {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--ui4u-space-2);
-        font-size: var(--ui4u-font-size-sm);
-        color: var(--ui4u-text-muted);
-      }
-      select,
-      button {
-        padding: var(--ui4u-space-2) var(--ui4u-space-3);
-        border: 1px solid var(--ui4u-border-strong);
-        border-radius: var(--ui4u-radius-sm);
-        background: var(--ui4u-surface-2);
-        color: var(--ui4u-text);
-        font: inherit;
-        font-size: var(--ui4u-font-size-sm);
-      }
-      button {
-        cursor: pointer;
-      }
-      button:hover {
-        border-color: var(--ui4u-primary);
-      }
-      section {
-        margin-top: var(--ui4u-space-7);
-      }
-      h2 {
-        font-size: var(--ui4u-font-size-lg);
-        margin-bottom: var(--ui4u-space-3);
-        color: var(--ui4u-text);
-      }
-      .log {
-        margin-top: var(--ui4u-space-4);
-        padding: var(--ui4u-space-3);
-        border-radius: var(--ui4u-radius-md);
-        background: var(--ui4u-surface-sunken);
-        border: 1px solid var(--ui4u-border);
-        font-family: var(--ui4u-font-mono);
-        font-size: var(--ui4u-font-size-sm);
-        color: var(--ui4u-text-muted);
-        min-height: 3rem;
-      }
-      code {
-        font-family: var(--ui4u-font-mono);
-        font-size: 0.9em;
-        color: var(--ui4u-primary);
-      }
-    </style>
+    <link rel="stylesheet" href="/demo/demo.css" />
   </head>
   <body>
     <div class="page">
@@ -98,7 +22,7 @@
             <kbd>←</kbd> <kbd>→</kbd>, <kbd>Home</kbd> and <kbd>End</kbd>.
           </p>
         </div>
-        <button id="theme" type="button">Toggle theme</button>
+        <button type="button" data-theme-toggle>Toggle theme</button>
       </header>
 
       <div class="controls">
@@ -150,8 +74,8 @@
       <section>
         <h2>Theming</h2>
         <p>
-          Switch theme, or override any token directly:
-          <code>ui-tabs { --ui4u-primary: #f43f5e; }</code>
+          Switch theme, or override any token directly on the element. A theme is only ever
+          a set of <code>--ui4u-*</code> overrides — never a fork of component CSS.
         </p>
         <div class="controls" id="accent-demo">
           <button type="button" data-accent="var(--ui4u-primary)">primary</button>
@@ -160,10 +84,95 @@
           <button type="button" data-accent="var(--ui4u-danger)">danger</button>
         </div>
       </section>
+
+      <section>
+        <h2>Source</h2>
+        <p>
+          Everything below is the whole integration — markup, behaviour, theming and
+          install. The blocks are copyable.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-tabs label="Project sections" variant="glass"&gt;
+  &lt;ui-tab label="Overview"&gt;Overview panel&lt;/ui-tab&gt;
+  &lt;ui-tab label="Activity"&gt;Activity panel&lt;/ui-tab&gt;
+  &lt;ui-tab label="Settings"&gt;Settings panel&lt;/ui-tab&gt;
+&lt;/ui-tabs&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">// Importing the entry registers every element and injects the styles.
+import 'ui4u';
+
+const tabs = document.querySelector('ui-tabs');
+
+// Options object — never a long positional argument list.
+tabs.configure({
+  active: 1,
+  orientation: 'horizontal',
+  activation: 'automatic',
+  variant: 'glass',
+  label: 'Project sections',
+});
+
+// Every public event is namespaced so it cannot collide with yours.
+tabs.addEventListener('ui4u:change', (event) =&gt; {
+  const { index, label, tab } = event.detail;
+  console.log(`tab ${index} ("${label}") activated`, tab);
+});
+
+tabs.next();
+tabs.previous();</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Recolour a single component by overriding its tokens. */
+ui-tabs {
+  --ui4u-primary: #f43f5e;
+  --ui4u-radius-lg: 4px;
+}
+
+/* A theme is a token override on any ancestor — including &lt;html&gt;. */
+[data-theme='dark'] {
+  --ui4u-bg: #05070f;
+  --ui4u-primary: #38bdf8;
+}</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">Install</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">npm install ui4u
+
+# Or drop in the prebuilt bundle and stylesheet:
+#   &lt;link rel="stylesheet" href="ui4u.css" /&gt;
+#   &lt;script src="ui4u.global.js"&gt;&lt;/script&gt;</code></pre>
+        </figure>
+      </section>
     </div>
 
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
     <script type="module">
       import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
 
       const tabs = document.getElementById('demo');
       const log = document.getElementById('log');
@@ -179,13 +188,6 @@
 
       tabs.addEventListener('ui4u:change', (event) => {
         log.textContent = `ui4u:change → index ${event.detail.index} ("${event.detail.label}")`;
-      });
-
-      document.getElementById('theme').addEventListener('click', () => {
-        const root = document.documentElement;
-        const order = ['dark', 'light', 'contrast'];
-        const current = order.indexOf(root.dataset.theme);
-        root.dataset.theme = order[(current + 1) % order.length];
       });
 
       document.getElementById('accent-demo').addEventListener('click', (event) => {

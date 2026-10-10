@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+// Clipboard access is denied by default, which would make the copy-button
+// assertion fail for reasons that have nothing to do with the component.
+test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
 /**
  * Browser smoke tests for ui-tabs.
  *
@@ -77,4 +81,41 @@ test('the theme switcher updates data-theme', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('button', { name: 'Toggle theme' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+/**
+ * Regression guard.
+ *
+ * `<script>` content is raw text: HTML entities are not decoded, so writing
+ * `=&gt;` inside an inline module throws `Unexpected token '&'` and silently
+ * stops every import below it — the page looks fine but the component never
+ * upgrades. Assert the absence of script errors rather than trusting the
+ * rendered output.
+ */
+test('the demo page runs its scripts without errors', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+
+  await page.goto('/demo/tabs.html', { waitUntil: 'networkidle' });
+  await expect(page.getByRole('tab')).toHaveCount(3);
+
+  expect(errors).toEqual([]);
+});
+
+test('source samples are syntax highlighted and copyable', async ({ page }) => {
+  const blocks = page.locator('[data-highlight]');
+  await expect(blocks).toHaveCount(4);
+
+  // Highlighting ran: every block contains at least one token span.
+  for (const block of await blocks.all()) {
+    expect(await block.locator('span[class^="tok-"]').count()).toBeGreaterThan(0);
+  }
+
+  // Highlighting must not corrupt the sample text.
+  const html = await blocks.first().innerText();
+  expect(html).toContain('<ui-tabs');
+  expect(html).toContain('</ui-tabs>');
+
+  await page.locator('[data-copy]').first().click();
+  await expect(page.locator('[data-copy]').first()).toHaveText('Copied');
 });

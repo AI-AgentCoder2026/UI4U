@@ -63,6 +63,21 @@ export default [
   },
 
   {
+    files: ['demo/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+
+  {
     files: ['e2e/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,

@@ -45,8 +45,12 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 ## Demo pages
 
 - `demo/*.html` doubles as local playground **and** the published GitHub Pages site
+- Shared demo chrome lives in `demo/demo.css` and `demo/demo.js` — do not duplicate page styles per demo
+- Add a `<figure class="demo-code">` with `<code data-highlight="html|js|css">` for copyable samples; `demo.js` tokenises and injects them with no dependency
 - Reference assets with absolute paths (`/dist/…`, `/src/…`); `scripts/build-pages.mjs` flattens and rewrites them to relative for Pages
 - If you add a new asset reference, add it to `REWRITES` in `scripts/build-pages.mjs` or it will 404 on the published site
+- `<script>` content is raw text — write `=>` literally. `=&gt;` belongs only inside `<pre>` samples, and getting it wrong breaks every import in the block with no visible error
+- `e2e/tabs.spec.js` asserts demo pages raise no script errors; keep that assertion green
 - Verify a new demo locally with `npm run build:pages`, then confirm it renders before pushing
 
 ## Code style
