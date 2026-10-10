@@ -166,6 +166,11 @@ re-exported from `dom.js` so nothing breaks.
 
 - **API** — `configure({ gutter, resizable, collapsible })`; per panel
   `size` / `min` / `max` / `resizable`.
+- **Recursive** — any slot accepts a nested `ui-layout` as well as a `ui-panel`,
+  so a sidebar can be a workspace of its own with its own centre, left/right and
+  top/bottom. Each level keeps its own separators, sizes and keyboard step;
+  `reset()` restores only that subtree. Events bubble, and both `ui4u:resize` and
+  `ui4u:collapse` carry the emitting `layout` in `detail`.
 - **Splitters** — `role="separator"` with `aria-orientation`,
   `aria-valuenow/min/max`, and full keyboard support: arrows resize by step,
   `Home`/`End` jump to the limits, `Enter` collapses and restores.

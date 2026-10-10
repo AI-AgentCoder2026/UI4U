@@ -77,22 +77,23 @@
 
       <div class="controls">
         <button id="reset-all" type="button">Reset all</button>
-        <button id="collapse-left" type="button">Collapse sidebar</button>
-        <button id="restore-left" type="button">Restore sidebar</button>
+        <button id="collapse-left" type="button">Collapse explorer</button>
+        <button id="restore-left" type="button">Restore explorer</button>
       </div>
 
       <ui-layout id="demo" step="16">
         <ui-panel slot="top" label="Header" size="56">UI4U workspace</ui-panel>
 
-        <ui-panel slot="left" label="Sidebar" size="240" min="160" max="420" resizable collapsible>
-          <nav>
-            <strong>Navigation</strong>
-            <span>Dashboard</span>
-            <span>Components</span>
-            <span>Tokens</span>
-            <span>Settings</span>
-          </nav>
-        </ui-panel>
+        <!--
+          A slot can hold a nested layout instead of a panel, which is what makes
+          the component recursive: this sidebar is a workspace of its own, with
+          its own rail, its own centre and its own bottom bar.
+        -->
+        <ui-layout slot="left" label="Explorer" size="260" min="180" max="420" resizable collapsible step="12">
+          <ui-panel slot="left" label="Explorer rail" size="92" min="64" max="200" resizable>Rail</ui-panel>
+          <ui-panel slot="center" label="Explorer body">Explorer body</ui-panel>
+          <ui-panel slot="bottom" label="Explorer filters" size="44">Filters</ui-panel>
+        </ui-layout>
 
         <ui-panel slot="center" label="Workspace">
           <h3>Centre</h3>
@@ -101,18 +102,19 @@
             <code>minmax(0, 1fr)</code> track. Resize the separators either side of
             it and watch this region absorb the change.
           </p>
+          <p>
+            The sidebar on the left is not a panel: it is another
+            <code>ui-layout</code> with a rail, a body and a filter bar. Drag its
+            internal separator without touching this layout's — they resize
+            independently.
+          </p>
         </ui-panel>
 
-        <ui-panel slot="right" label="Inspector" size="200" min="120" max="360" resizable collapsible>
-          <dl>
-            <dt>Slot</dt>
-            <dd>right</dd>
-            <dt>Resizable</dt>
-            <dd>yes</dd>
-            <dt>Range</dt>
-            <dd>120 – 360px</dd>
-          </dl>
-        </ui-panel>
+        <!-- A nested layout can equally sit on the right, with its own centre. -->
+        <ui-layout slot="right" label="Inspector" size="240" min="180" max="420" resizable step="12">
+          <ui-panel slot="center" label="Inspector body">Inspector</ui-panel>
+          <ui-panel slot="right" label="Inspector details" size="80" min="60" max="180" resizable>•••</ui-panel>
+        </ui-layout>
 
         <ui-panel slot="bottom" label="Status" size="64">Ready · drag a separator to resize</ui-panel>
       </ui-layout>
@@ -175,6 +177,59 @@ ui-layout {
         </figure>
       </ui-disclosure>
 
+      <ui-disclosure summary="Recursion" variant="ghost">
+        <p>
+          Any slot can hold a <code>ui-layout</code> instead of a
+          <code>ui-panel</code>, so a sidebar can be a workspace of its own —
+          with its own rail, centre and bottom bar — to any depth. The example
+          above nests three deep: an outer workspace, an explorer inside its left
+          slot, and an inspector inside its right slot.
+        </p>
+        <p>
+          Each nested layout keeps its own separators, sizes and keyboard step,
+          and resizing one does not disturb the others. Events still bubble, so
+          every <code>ui4u:resize</code> carries the
+          <code>layout</code> that emitted it.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-layout&gt;
+  &lt;ui-panel slot="top" label="Header" size="56"&gt;Header&lt;/ui-panel&gt;
+
+  &lt;!-- A nested layout can stand in for a panel in any slot. --&gt;
+  &lt;ui-layout slot="left" label="Explorer" size="260" min="180" resizable&gt;
+    &lt;ui-panel slot="left" size="92" resizable&gt;Rail&lt;/ui-panel&gt;
+    &lt;ui-panel slot="center"&gt;Explorer body&lt;/ui-panel&gt;
+    &lt;ui-panel slot="bottom" size="44"&gt;Filters&lt;/ui-panel&gt;
+  &lt;/ui-layout&gt;
+
+  &lt;ui-panel slot="center"&gt;Editor&lt;/ui-panel&gt;
+  &lt;ui-panel slot="bottom" size="64"&gt;Status&lt;/ui-panel&gt;
+&lt;/ui-layout&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">// Events bubble, so identify the emitting layout before acting.
+layout.addEventListener('ui4u:resize', (event) =&gt; {
+  if (event.detail.layout !== layout) return; // a nested layout resized
+  console.log(event.detail.slot, event.detail.size);
+});
+
+// Reading from any layout in the tree:
+layout.sizeOf('left');              // outer explorer width
+explorerLayout.sizeOf('left');      // the rail inside it
+explorerLayout.reset();             // restores that subtree only</code></pre>
+        </figure>
+      </ui-disclosure>
+
       <ui-disclosure summary="Keyboard reference" variant="ghost">
         <ul>
           <li><code>←</code> / <code>→</code> — resize by the configured step</li>
@@ -225,7 +280,9 @@ ui-layout {
       });
 
       layout.addEventListener('ui4u:resize', (event) => {
-        log.textContent = `ui4u:resize → ${event.detail.slot} is now ${Math.round(event.detail.size)}px`;
+        // Events bubble, so `detail.layout` says which layout emitted this one.
+        const depth = event.detail.layout === layout ? '' : ' (nested)';
+        log.textContent = `ui4u:resize → ${event.detail.slot} is now ${Math.round(event.detail.size)}px${depth}`;
       });
 
       layout.addEventListener('ui4u:collapse', (event) => {

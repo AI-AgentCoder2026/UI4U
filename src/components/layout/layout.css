@@ -11,10 +11,14 @@ ui-layout {
   --ui4u-layout-splitter-hover: var(--ui4u-primary);
   --ui4u-layout-panel-padding: var(--ui4u-space-4);
   --ui4u-layout-radius: var(--ui4u-radius-lg);
+  --ui4u-layout-min-height: 20rem;
 
   display: grid;
   width: 100%;
-  min-height: 20rem;
+  min-height: var(--ui4u-layout-min-height);
+  /* A nested layout is sized by its parent's track, so it must be free to
+     shrink below its content instead of forcing the parent to scroll. */
+  min-width: 0;
   border: 1px solid var(--ui4u-border);
   border-radius: var(--ui4u-layout-radius);
   background: var(--ui4u-surface-glass);
@@ -22,6 +26,18 @@ ui-layout {
   backdrop-filter: var(--ui4u-glass-blur);
   box-shadow: var(--ui4u-shadow-sm);
   overflow: hidden;
+}
+
+/* Recursive composition: a layout inside a layout takes its height from the
+   track its parent gives it, not from a top-level minimum. */
+ui-layout ui-layout {
+  --ui4u-layout-min-height: 0;
+  border-radius: 0;
+  border-width: 0;
+  box-shadow: none;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 ui-panel {

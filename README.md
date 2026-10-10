@@ -20,7 +20,7 @@ Early, and deliberately incremental. Shipped:
 | `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
 | `ui-button` | [`demo/button.html`](demo/button.html) | 5 variants, 3 sizes, loading and disabled states |
 | `ui-tooltip` | [`demo/tooltip.html`](demo/tooltip.html) | Hover + focus, viewport flipping, `Escape` to dismiss |
-| `ui-layout` | [`demo/layout.html`](demo/layout.html) | Resizable top/left/right/center/bottom, keyboard + pointer splitters |
+| `ui-layout` | [`demo/layout.html`](demo/layout.html) | Resizable top/left/right/center/bottom, recursive, keyboard + pointer splitters |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
@@ -60,6 +60,32 @@ import 'ui4u';
   <ui-panel slot="left" size="16rem" min="10rem" resizable>…</ui-panel>
   <ui-panel slot="center">…</ui-panel>
 </ui-layout>
+```
+
+Layouts nest — any slot can hold another `ui-layout`, so a sidebar can be a
+workspace of its own with its own centre, left/right and top/bottom:
+
+```html
+<ui-layout>
+  <ui-layout slot="left" label="Explorer" size="260" min="180" resizable>
+    <ui-panel slot="left" size="92" resizable>Rail</ui-panel>
+    <ui-panel slot="center">Explorer body</ui-panel>
+    <ui-panel slot="bottom" size="44">Filters</ui-panel>
+  </ui-layout>
+
+  <ui-panel slot="center">Editor</ui-panel>
+  <ui-panel slot="bottom" size="4rem">Status</ui-panel>
+</ui-layout>
+```
+
+Each nested layout keeps its own separators, sizes and keyboard step, and
+`reset()` restores only that subtree. Events bubble, so `ui4u:resize` and
+`ui4u:collapse` each carry the `layout` that emitted them:
+
+```js
+layout.addEventListener('ui4u:resize', (e) => {
+  if (e.detail.layout !== layout) return; // a nested layout resized
+});
 ```
 
 ### Script tag

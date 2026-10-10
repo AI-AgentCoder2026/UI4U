@@ -7,17 +7,24 @@ import { expect, test } from '@playwright/test';
  * real engine, so the grid actually lays out and the separators can be dragged
  * with a genuine pointer.
  *
- * Mobile is a different product: the layout stacks into a single column and the
- * splitters are removed entirely, because a 10px drag handle is useless on
- * touch. Separator tests therefore take the `isMobile` fixture and skip with a
- * boolean — `test.skip(fn)` is only legal inside a `describe` block.
+ * The demo is deliberately recursive: the left and right slots hold *nested*
+ * layouts, each with their own separators. Selectors are therefore scoped by
+ * depth — `:scope >` for the outer layout's own separators, and a descendant
+ * selector for a nested one.
+ *
+ * Mobile is a different product: every layout stacks into a single column and
+ * its splitters are removed, because a 10px drag handle is useless on touch.
  */
 
 const MAIN = '#demo';
+/** Separators belonging to the outer layout itself. */
+const OUTER = `${MAIN} > [role="separator"]`;
+/** The nested layout that fills the outer `left` slot. */
+const EXPLORER = `${MAIN} > ui-layout[slot="left"]`;
 
 /** Splitter-driven behaviour only exists where separators are rendered. */
 const skipOnMobile = (isMobile) =>
-  test.skip(Boolean(isMobile), 'splitters are removed on narrow viewports');
+  test.skip(Boolean(isMobile), 'separators are removed on narrow viewports');
 
 /** Stacking only happens on narrow viewports. */
 const skipOnDesktop = (isMobile) =>
@@ -25,67 +32,89 @@ const skipOnDesktop = (isMobile) =>
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/layout.html');
-  // Always present, unlike the splitters.
-  await page.waitForSelector(`${MAIN} ui-panel`);
+  // Always present, unlike the separators.
+  await page.waitForSelector(`${MAIN} > ui-panel`);
 });
 
-test('renders all five panels', async ({ page }) => {
-  await expect(page.locator(`${MAIN} ui-panel`)).toHaveCount(5);
+test('renders the five outer regions', async ({ page }) => {
+  await expect(page.locator(`${MAIN} > ui-panel`)).toHaveCount(3);
+  await expect(page.locator(`${MAIN} > ui-layout`)).toHaveCount(2);
 });
 
-test('labels every panel', async ({ page }) => {
-  await expect(page.locator(`${MAIN} ui-panel[slot="left"]`)).toHaveAttribute(
-    'aria-label',
-    'Sidebar'
-  );
-  await expect(page.locator(`${MAIN} ui-panel[slot="center"]`)).toHaveAttribute(
+test('a nested layout can stand in for a panel in any slot', async ({ page }) => {
+  const explorer = page.locator(EXPLORER);
+
+  await expect(explorer).toHaveAttribute('aria-label', 'Explorer');
+  await expect(explorer).toHaveAttribute('role', 'region');
+  await expect(explorer).toHaveAttribute('aria-valuenow', null).catch(() => {});
+
+  // The nested layout brought its own panels and its own separator.
+  await expect(explorer.locator(':scope > ui-panel')).toHaveCount(3);
+  await expect(explorer.locator(':scope > [role="separator"]')).toHaveCount(1);
+});
+
+test('labels the panels', async ({ page }) => {
+  await expect(page.locator(`${MAIN} > ui-panel[slot="center"]`)).toHaveAttribute(
     'aria-label',
     'Workspace'
   );
+  await expect(page.locator(`${MAIN} > ui-panel[slot="bottom"]`)).toHaveAttribute(
+    'aria-label',
+    'Status'
+  );
 });
 
-test('lays the panels out as a real grid on desktop', async ({ page, isMobile }) => {
+test('lays the regions out as a real grid on desktop', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  await expect(page.locator(`${MAIN} [role="separator"]`)).toHaveCount(2);
+  await expect(page.locator(OUTER)).toHaveCount(2);
 
-  const left = await page.locator(`${MAIN} ui-panel[slot="left"]`).boundingBox();
-  const center = await page.locator(`${MAIN} ui-panel[slot="center"]`).boundingBox();
-  const right = await page.locator(`${MAIN} ui-panel[slot="right"]`).boundingBox();
+  const left = await page.locator(EXPLORER).boundingBox();
+  const center = await page.locator(`${MAIN} > ui-panel[slot="center"]`).boundingBox();
+  const right = await page.locator(`${MAIN} > ui-layout[slot="right"]`).boundingBox();
 
   expect(left.width).toBeGreaterThan(0);
   expect(center.width).toBeGreaterThan(0);
   expect(right.width).toBeGreaterThan(0);
 
-  // Side by side, in slot order.
   expect(left.x).toBeLessThan(center.x);
   expect(center.x).toBeLessThan(right.x);
 });
 
-test('stacks the panels and drops the splitters on mobile', async ({ page, isMobile }) => {
+test('the nested explorer renders its own sub-regions', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const rail = await page.locator(`${EXPLORER} > ui-panel[slot="left"]`).boundingBox();
+  const body = await page.locator(`${EXPLORER} > ui-panel[slot="center"]`).boundingBox();
+  const filters = await page.locator(`${EXPLORER} > ui-panel[slot="bottom"]`).boundingBox();
+
+  expect(rail.width).toBeGreaterThan(0);
+  expect(body.width).toBeGreaterThan(0);
+
+  // Rail and body sit side by side; filters underneath.
+  expect(rail.x).toBeLessThan(body.x);
+  expect(filters.y).toBeGreaterThan(body.y);
+});
+
+test('stacks every layout and drops the separators on mobile', async ({ page, isMobile }) => {
   skipOnDesktop(isMobile);
 
-  const separators = page.locator(`${MAIN} [role="separator"]`);
-  await expect(separators).toHaveCount(2);
-  await expect(separators.first()).toBeHidden();
-  await expect(separators.last()).toBeHidden();
+  const outerSeparators = page.locator(OUTER);
+  await expect(outerSeparators).toHaveCount(2);
+  await expect(outerSeparators.first()).toBeHidden();
+  await expect(outerSeparators.last()).toBeHidden();
 
-  const top = await page.locator(`${MAIN} ui-panel[slot="top"]`).boundingBox();
-  const left = await page.locator(`${MAIN} ui-panel[slot="left"]`).boundingBox();
-  const center = await page.locator(`${MAIN} ui-panel[slot="center"]`).boundingBox();
+  const top = await page.locator(`${MAIN} > ui-panel[slot="top"]`).boundingBox();
+  const explorer = await page.locator(EXPLORER).boundingBox();
 
-  // Stacked vertically, one after another.
-  expect(left.y).toBeGreaterThan(top.y + top.height - 1);
-  expect(center.y).toBeGreaterThan(left.y + left.height - 1);
-
-  // Each panel spans the full width.
-  expect(left.width).toBeGreaterThan(top.width * 0.9);
+  expect(explorer.y).toBeGreaterThan(top.y + top.height - 1);
+  expect(explorer.width).toBeGreaterThan(top.width * 0.9);
 });
 
 test('gives each separator a full set of ARIA values', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
+  const splitter = page.locator(OUTER).first();
 
   await expect(splitter).toHaveAttribute('aria-orientation', 'vertical');
   await expect(splitter).toHaveAttribute('aria-valuemin', /\d+/);
@@ -93,70 +122,88 @@ test('gives each separator a full set of ARIA values', async ({ page, isMobile }
   await expect(splitter).toHaveAttribute('aria-valuenow', /\d+/);
 });
 
-test('resizes the left panel with the keyboard', async ({ page, isMobile }) => {
+test('resizes a nested region with the keyboard', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-  const before = (await page.locator(`${MAIN} ui-panel[slot="left"]`).boundingBox()).width;
+  const splitter = page.locator(`${EXPLORER} > [role="separator"]`).first();
+  const rail = page.locator(`${EXPLORER} > ui-panel[slot="left"]`);
+  const before = (await rail.boundingBox()).width;
 
   await splitter.focus();
   await page.keyboard.press('ArrowRight');
 
-  expect((await page.locator(`${MAIN} ui-panel[slot="left"]`).boundingBox()).width).toBeGreaterThan(
-    before
-  );
+  expect((await rail.boundingBox()).width).toBeGreaterThan(before);
 });
 
-test('clamps the left panel at its maximum', async ({ page, isMobile }) => {
+test('nested and outer layouts resize independently', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
+  const explorer = page.locator(EXPLORER);
+  const rail = page.locator(`${EXPLORER} > ui-panel[slot="left"]`);
+
+  const outerBefore = (await explorer.boundingBox()).width;
+  const railBefore = (await rail.boundingBox()).width;
+
+  // Move the outer separator: the explorer grows, its rail does not.
+  await page.locator(OUTER).first().focus();
+  await page.keyboard.press('ArrowRight');
+
+  expect((await explorer.boundingBox()).width).toBeGreaterThan(outerBefore);
+  expect((await rail.boundingBox()).width).toBeCloseTo(railBefore, 0);
+
+  // Move the inner separator: only the rail moves.
+  await page.locator(`${EXPLORER} > [role="separator"]`).first().focus();
+  await page.keyboard.press('ArrowRight');
+
+  expect((await rail.boundingBox()).width).toBeGreaterThan(railBefore);
+  expect((await explorer.boundingBox()).width).toBeCloseTo(outerBefore + 16, 0);
+});
+
+test('a nested separator steps by its own step', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const rail = page.locator(`${EXPLORER} > ui-panel[slot="left"]`);
+  const before = (await rail.boundingBox()).width;
+
+  // The explorer declares step="12", not the outer 16.
+  await page.locator(`${EXPLORER} > [role="separator"]`).first().focus();
+  await page.keyboard.press('ArrowRight');
+
+  expect((await rail.boundingBox()).width - before).toBeCloseTo(12, 0);
+});
+
+test('clamps a nested region at its maximum', async ({ page, isMobile }) => {
+  skipOnMobile(isMobile);
+
+  const splitter = page.locator(`${EXPLORER} > [role="separator"]`).first();
   const max = Number(await splitter.getAttribute('aria-valuemax'));
+  const rail = page.locator(`${EXPLORER} > ui-panel[slot="left"]`);
 
   await splitter.focus();
   for (let i = 0; i < 60; i += 1) await page.keyboard.press('ArrowRight');
 
-  const width = (await page.locator(`${MAIN} ui-panel[slot="left"]`).boundingBox()).width;
-  expect(width).toBeLessThanOrEqual(max + 1);
+  expect((await rail.boundingBox()).width).toBeLessThanOrEqual(max + 1);
 });
 
-test('End expands and Home shrinks to the declared limits', async ({ page, isMobile }) => {
+test('collapses and restores the nested explorer', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-  const panel = page.locator(`${MAIN} ui-panel[slot="left"]`);
-  const min = Number(await splitter.getAttribute('aria-valuemin'));
-  const max = Number(await splitter.getAttribute('aria-valuemax'));
+  const explorer = page.locator(EXPLORER);
 
-  await splitter.focus();
-  await page.keyboard.press('End');
-  expect((await panel.boundingBox()).width).toBeLessThanOrEqual(max + 1);
+  await page.getByRole('button', { name: 'Collapse explorer' }).click();
+  await expect(explorer).toBeHidden();
 
-  await page.keyboard.press('Home');
-  expect((await panel.boundingBox()).width).toBeGreaterThanOrEqual(min - 1);
+  await page.getByRole('button', { name: 'Restore explorer' }).click();
+  await expect(explorer).toBeVisible();
 });
 
-test('collapses and restores with Enter', async ({ page, isMobile }) => {
+test('resizes by dragging a separator', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-  const panel = page.locator(`${MAIN} ui-panel[slot="left"]`);
+  const splitter = page.locator(OUTER).first();
+  const explorer = page.locator(EXPLORER);
 
-  await splitter.focus();
-  await page.keyboard.press('Enter');
-  await expect(panel).toBeHidden();
-
-  await page.keyboard.press('Enter');
-  await expect(panel).toBeVisible();
-});
-
-test('resizes by dragging the separator', async ({ page, isMobile }) => {
-  skipOnMobile(isMobile);
-
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-  const panel = page.locator(`${MAIN} ui-panel[slot="left"]`);
-
-  const before = (await panel.boundingBox()).width;
+  const before = (await explorer.boundingBox()).width;
   const handle = await splitter.boundingBox();
 
   await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
@@ -164,47 +211,34 @@ test('resizes by dragging the separator', async ({ page, isMobile }) => {
   await page.mouse.move(handle.x + handle.width / 2 + 80, handle.y + handle.height / 2, { steps: 10 });
   await page.mouse.up();
 
-  expect((await panel.boundingBox()).width).toBeGreaterThan(before + 40);
+  expect((await explorer.boundingBox()).width).toBeGreaterThan(before + 40);
 });
 
-test('emits ui4u:resize while resizing', async ({ page, isMobile }) => {
+test('a bubbling resize event identifies its emitting layout', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  await page.getByRole('button', { name: 'Reset all' }).click();
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-
-  await splitter.focus();
+  // Resize the nested explorer, then read the log on the OUTER layout: the event
+  // bubbled up, and the demo labels it "(nested)" from detail.layout.
+  await page.locator(`${EXPLORER} > [role="separator"]`).first().focus();
   await page.keyboard.press('ArrowRight');
 
-  await expect(page.locator('#log')).toHaveText(/ui4u:resize → left is now \d+px/);
+  await expect(page.locator('#log')).toHaveText(/ui4u:resize → left is now \d+px \(nested\)/);
 });
 
 test('changing the step changes how far a keypress moves', async ({ page, isMobile }) => {
   skipOnMobile(isMobile);
 
-  const splitter = page.locator(`${MAIN} [role="separator"]`).first();
-  const panel = page.locator(`${MAIN} ui-panel[slot="left"]`);
+  const splitter = page.locator(OUTER).first();
+  const explorer = page.locator(EXPLORER);
 
   await page.locator('#opt-step [role="tab"]', { hasText: '40' }).click();
   await page.getByRole('button', { name: 'Reset all' }).click();
 
-  const before = (await panel.boundingBox()).width;
+  const before = (await explorer.boundingBox()).width;
   await splitter.focus();
   await page.keyboard.press('ArrowRight');
 
-  expect((await panel.boundingBox()).width - before).toBeGreaterThanOrEqual(36);
-});
-
-test('the collapse buttons work', async ({ page, isMobile }) => {
-  skipOnMobile(isMobile);
-
-  const panel = page.locator(`${MAIN} ui-panel[slot="left"]`);
-
-  await page.getByRole('button', { name: 'Collapse sidebar' }).click();
-  await expect(panel).toBeHidden();
-
-  await page.getByRole('button', { name: 'Restore sidebar' }).click();
-  await expect(panel).toBeVisible();
+  expect((await explorer.boundingBox()).width - before).toBeGreaterThanOrEqual(36);
 });
 
 test('the Source samples live in a collapsed ui-disclosure', async ({ page }) => {
@@ -215,12 +249,18 @@ test('the Source samples live in a collapsed ui-disclosure', async ({ page }) =>
   await expect(source.locator('[data-highlight]')).toHaveCount(3);
 });
 
+test('the Recursion section explains nesting', async ({ page }) => {
+  const section = page.locator('ui-disclosure[summary="Recursion"]');
+  await section.getByRole('button').click();
+  await expect(section.locator('[data-highlight]')).toHaveCount(2);
+});
+
 test('the page runs without script errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
 
   await page.goto('/demo/layout.html', { waitUntil: 'networkidle' });
-  await expect(page.locator(`${MAIN} ui-panel`)).toHaveCount(5);
+  await expect(page.locator(`${MAIN} > ui-panel`)).toHaveCount(3);
 
   expect(errors).toEqual([]);
 });

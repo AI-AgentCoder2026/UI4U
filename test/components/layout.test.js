@@ -399,6 +399,136 @@ describe('ui-layout options', () => {
   });
 });
 
+describe('ui-layout nesting', () => {
+  afterEach(() => cleanup());
+
+  const NESTED = `
+    <ui-layout id="outer">
+      <ui-panel slot="top" label="Header" size="40">Header</ui-panel>
+
+      <ui-layout slot="left" label="Explorer" size="260" min="180" resizable>
+        <ui-panel slot="left" label="Explorer rail" size="90" resizable>Rail</ui-panel>
+        <ui-panel slot="center" label="Explorer body">Explorer body</ui-panel>
+        <ui-panel slot="bottom" label="Explorer filters" size="40">Filters</ui-panel>
+      </ui-layout>
+
+      <ui-panel slot="center" label="Editor">Editor</ui-panel>
+      <ui-panel slot="bottom" label="Status" size="48">Status</ui-panel>
+    </ui-layout>
+  `;
+
+  it('accepts a nested layout in a slot, not just a panel', () => {
+    const host = mount(NESTED);
+    const outer = host.querySelector('#outer');
+    const inner = outer.querySelector('ui-layout');
+
+    assert.equal(inner.style.gridArea, 'left', 'the nested layout takes the slot');
+    assert.ok(outer.slots.includes('left'));
+    assert.equal(outer.slots.includes('top'), true);
+    assert.equal(outer.slots.includes('bottom'), true);
+  });
+
+  it('gives the nested layout its own labelled region', () => {
+    const outer = mount(NESTED).querySelector('#outer');
+    const inner = outer.querySelector('ui-layout');
+
+    assert.equal(inner.getAttribute('role'), 'region');
+    assert.equal(inner.getAttribute('aria-label'), 'Explorer');
+  });
+
+  it('gives the nested layout its own separators', () => {
+    const host = mount(NESTED);
+    const inner = host.querySelector('#outer ui-layout');
+
+    // rail + body -> one separator, independent of the outer one
+    assert.equal(inner.querySelectorAll(':scope > [role="separator"]').length, 1);
+  });
+
+  it('resizes the outer layout and the nested layout independently', () => {
+    const host = mount(NESTED);
+    const outer = host.querySelector('#outer');
+    const inner = outer.querySelector('ui-layout');
+
+    const outerSplitter = outer.querySelector(':scope > [role="separator"]');
+    const innerSplitter = inner.querySelector('[role="separator"]');
+
+    const nestedBefore = inner.sizeOf('left');
+
+    outerSplitter.dispatchEvent(
+      new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    );
+
+    assert.equal(outer.sizeOf('left'), 276, 'outer slot grew');
+    assert.equal(inner.sizeOf('left'), nestedBefore, 'inner rail untouched');
+
+    innerSplitter.dispatchEvent(
+      new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+    );
+
+    assert.equal(inner.sizeOf('left'), nestedBefore + 16, 'inner rail grew on its own');
+    assert.equal(outer.sizeOf('left'), 276, 'outer slot unaffected by the inner resize');
+  });
+
+  it('reports which layout emitted a resize, since events bubble', () => {
+    const host = mount(NESTED);
+    const outer = host.querySelector('#outer');
+    const inner = outer.querySelector('ui-layout');
+
+    /** @type {any[]} */
+    const seen = [];
+    outer.addEventListener('ui4u:resize', (event) => seen.push(event.detail));
+
+    inner
+      .querySelector('[role="separator"]')
+      .dispatchEvent(
+        new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+      );
+
+    // The listener on `outer` also sees the inner event, because it bubbles.
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].layout, inner, 'detail identifies the emitting layout');
+  });
+
+  it('leaves an unsized slot fluid until something gives it a size', () => {
+    const host = mount(`
+      <ui-layout>
+        <ui-layout slot="left" label="Nested"><ui-panel slot="center">A</ui-panel></ui-layout>
+        <ui-panel slot="center">B</ui-panel>
+      </ui-layout>
+    `);
+    const outer = host.querySelector('ui-layout');
+    assert.match(outer.style.gridTemplateColumns, /auto/);
+  });
+
+  it('defaults an invalid slot to center', () => {
+    const host = mount(`
+      <ui-layout>
+        <ui-panel slot="nowhere">ignored</ui-panel>
+        <ui-panel slot="center">centre</ui-panel>
+      </ui-layout>
+    `);
+    const outer = host.querySelector('ui-layout');
+    assert.deepEqual(outer.slots, ['center']);
+  });
+
+  it('restores nested layouts on disconnect without detaching them', () => {
+    const host = mount(NESTED);
+    const outer = host.querySelector('#outer');
+    const inner = outer.querySelector('ui-layout');
+
+    outer.remove();
+
+    assert.equal(outer.querySelectorAll(':scope > [role="separator"]').length, 0, 'outer separators gone');
+    assert.equal(outer.querySelectorAll(':scope > ui-panel').length, 3, 'outer panels kept');
+    assert.ok(inner.isConnected === false);
+    assert.equal(
+      inner.querySelectorAll(':scope > ui-panel').length,
+      3,
+      'nested panels still intact'
+    );
+  });
+});
+
 describe('ui-panel', () => {
   afterEach(() => cleanup());
 

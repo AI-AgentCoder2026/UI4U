@@ -11,6 +11,8 @@ import { clamp, toPx } from '../../core/size.js';
  * @property {string} label
  * @property {number} initial Initial track size in px, used by double-click reset.
  * @property {number} current Current track size in px.
+ * @property {boolean} sized Whether a size has been authored or dragged. Unsized
+ *   slots stay fluid (`auto`), which is what nested layouts want.
  * @property {number|null} min
  * @property {number|null} max
  * @property {boolean} resizable
@@ -21,6 +23,21 @@ import { clamp, toPx } from '../../core/size.js';
  * @property {string} [gutter] Splitter thickness. Default `'var(--ui4u-layout-splitter-size)'`.
  * @property {number} [step] Keyboard resize step in px. Default `16`.
  */
+
+/** Every valid slot name. @type {PanelSlot[]} */
+export const SLOTS = ['top', 'left', 'right', 'center', 'bottom'];
+
+/**
+ * Reads the slot from a panel or a nested layout. Defaults to `center`, which
+ * is the flexible region.
+ *
+ * @param {Element} node
+ * @returns {PanelSlot}
+ */
+export function readSlot(node) {
+  const value = node.getAttribute('slot');
+  return SLOTS.includes(/** @type {PanelSlot} */ (value)) ? /** @type {PanelSlot} */ (value) : 'center';
+}
 
 /**
  * A resizable five-region layout: top, left, right, center and bottom.
@@ -37,6 +54,25 @@ import { clamp, toPx } from '../../core/size.js';
  *
  * `center` is the flexible region — it takes whatever the others do not. Panels
  * are positioned by their `slot` attribute; absent slots simply do not exist.
+ *
+ * **Layouts nest.** Any slot can hold another `ui-layout` instead of a panel, so
+ * a sidebar can be a workspace of its own — with its own centre and further
+ * left/right regions, and its own top and bottom — to any depth:
+ *
+ * ```html
+ * <ui-layout>
+ *   <ui-layout slot="left" label="Explorer">
+ *     <ui-panel slot="left" size="8rem" resizable>Rail</ui-panel>
+ *     <ui-panel slot="center">Explorer body</ui-panel>
+ *     <ui-panel slot="bottom" size="3rem">Filters</ui-panel>
+ *   </ui-layout>
+ *   <ui-panel slot="center">Editor</ui-panel>
+ *   <ui-panel slot="bottom" size="4rem">Status</ui-panel>
+ * </ui-layout>
+ * ```
+ *
+ * Events bubble, and each carries the `layout` that emitted it, so a listener
+ * on an outer layout can tell its own events from a nested one's.
  *
  * Listens for `ui4u:resize` and `ui4u:collapse`.
  */
@@ -186,16 +222,23 @@ export class Layout extends UI4UElement {
   /* --------------------------------------------------------------- build */
 
   #build() {
-    const nodes = /** @type {HTMLElement[]} */ ([...this.children].filter((c) => c.localName === 'ui-panel'));
+    // Any slot may be filled by a panel *or* by another layout, which is what
+    // makes the component recursive: a sidebar can be a nested layout with its
+    // own centre and further left/right regions, to any depth.
+    const nodes = /** @type {HTMLElement[]} */ (
+      [...this.children].filter((c) => c.localName === 'ui-panel' || c.localName === 'ui-layout')
+    );
     if (nodes.length === 0) return;
 
     for (const node of nodes) {
-      const slot = /** @type {PanelSlot} */ (node.getAttribute('slot') ?? 'center');
-      if (!['top', 'left', 'right', 'center', 'bottom'].includes(slot)) continue;
+      const slot = readSlot(node);
+      if (!SLOTS.includes(slot)) continue;
 
       node.style.gridArea = slot;
       if (node.hasAttribute('label')) node.setAttribute('aria-label', node.getAttribute('label') ?? '');
-      else if (!node.hasAttribute('aria-label')) node.setAttribute('aria-label', `${slot} panel`);
+      else if (!node.hasAttribute('aria-label')) {
+        node.setAttribute('aria-label', `${slot} ${node.localName === 'ui-layout' ? 'region' : 'panel'}`);
+      }
 
       this.#panels.set(slot, this.#readSpec(node));
     }
@@ -217,6 +260,9 @@ export class Layout extends UI4UElement {
       label: node.getAttribute('label') ?? '',
       initial: current,
       current,
+      // A slot with no authored size — typically a nested layout — stays fluid
+      // until it is actually given one or dragged.
+      sized: size !== null,
       min: toPx(node.getAttribute('min')),
       max: toPx(node.getAttribute('max')),
       resizable: node.hasAttribute('resizable'),
@@ -288,7 +334,7 @@ export class Layout extends UI4UElement {
   /* ------------------------------------------------------------ behaviour */
 
   /**
-   * Sets a panel's track size, clamped to its min/max.
+   * Sets a slot's track size, clamped to its min/max.
    *
    * @param {PanelSlot} slot
    * @param {number} px
@@ -299,10 +345,14 @@ export class Layout extends UI4UElement {
     if (!spec || !spec.resizable || spec.collapsed) return;
 
     const next = clamp(px, spec.min, spec.max);
-    if (next === spec.current) return;
+    if (next === spec.current && spec.sized) return;
 
     spec.current = next;
-    if (!silent) this.emit('ui4u:resize', { slot, size: next, min: spec.min, max: spec.max });
+    // First explicit size turns a fluid slot into a fixed track.
+    spec.sized = true;
+    if (!silent) {
+      this.emit('ui4u:resize', { slot, size: next, min: spec.min, max: spec.max, layout: this });
+    }
   }
 
   /** @param {PanelSlot} slot */
@@ -332,7 +382,7 @@ export class Layout extends UI4UElement {
     }
 
     this.#apply();
-    this.emit('ui4u:collapse', { slot, collapsed: spec.collapsed });
+    this.emit('ui4u:collapse', { slot, collapsed: spec.collapsed, layout: this });
   }
 
   /** @param {KeyboardEvent} event @param {PanelSlot} before @param {PanelSlot} after */
@@ -387,7 +437,11 @@ export class Layout extends UI4UElement {
     const size = (slot) => {
       const spec = this.#panels.get(slot);
       if (!spec) return 'auto';
-      return spec.collapsed ? '0px' : `${Math.round(spec.current)}px`;
+      if (spec.collapsed) return '0px';
+      // No authored size and nothing dragged yet: stay fluid. A nested layout
+      // is the usual case here.
+      if (!spec.sized) return 'auto';
+      return `${Math.round(spec.current)}px`;
     };
 
     const gutter = this.gutter || 'var(--ui4u-layout-splitter-size)';
@@ -452,18 +506,34 @@ export class Layout extends UI4UElement {
   #updateSplitterAria(splitter, before, after) {
     const spec = this.#panels.get(before) ?? this.#panels.get(after);
     if (!spec) return;
+
     splitter.setAttribute('aria-valuenow', String(Math.round(spec.current)));
-    splitter.setAttribute('aria-valuemin', String(Math.round(spec.min ?? 0)));
-    splitter.setAttribute('aria-valuemax', String(Math.round(spec.max ?? spec.current)));
+
+    // Only advertise bounds that are actually enforced. Reporting a bound the
+    // component does not clamp to would tell assistive tech a limit the user
+    // can pass straight through.
+    if (typeof spec.min === 'number') {
+      splitter.setAttribute('aria-valuemin', String(Math.round(spec.min)));
+    } else {
+      splitter.removeAttribute('aria-valuemin');
+    }
+
+    if (typeof spec.max === 'number') {
+      splitter.setAttribute('aria-valuemax', String(Math.round(spec.max)));
+    } else {
+      splitter.removeAttribute('aria-valuemax');
+    }
   }
 }
 
 /**
  * A layout region. Positioning comes from `slot`; sizing from `size`/`min`/`max`.
+ *
+ * A `ui-layout` may stand in for a panel in any slot — see {@link Layout}.
  */
 export class Panel extends UI4UElement {
   /** @returns {PanelSlot} */
   get slot() {
-    return /** @type {PanelSlot} */ (this.getAttribute('slot') ?? 'center');
+    return readSlot(this);
   }
 }
