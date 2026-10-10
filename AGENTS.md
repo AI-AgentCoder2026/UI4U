@@ -33,14 +33,17 @@ Every component follows the same shape — keep new ones consistent:
 - Zero runtime dependencies; no global CSS — styles live in the component folder, scoped to the element
 - One options object, never long positional argument lists; every option documented in JSDoc
 - Theming only through CSS custom properties prefixed `--ui4u-`; never hardcode color, spacing, radius, or shadow values in component CSS
+- Anything positioned with `position: fixed` (tooltip, popup) must be portalled to `<body>` — an ancestor with `transform`, `filter` or `backdrop-filter` otherwise becomes its containing block
 - Mobile-first: base styles target small screens, desktop refinements go in container/`@media` queries
 - Public API carries JSDoc `@param`/`@returns` plus one runnable `@example`
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure`
+Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout`
 
-Roadmap: `layout` (resizable Top/Left/Right/Middle/Bottom panels) · `sidebar` · `grid` · `input` · `form` (validation) · `popup` (modal/dialog) · `tooltip` · `button`
+Roadmap: `popup` (modal/dialog) · `input` · `form` (validation) · `grid` · `sidebar`
+
+The delivery plan, with per-component API and acceptance criteria, lives in `docs/ROADMAP.md`.
 
 Ship a component only when its demo page and tests exist; add the rest as the project grows.
 

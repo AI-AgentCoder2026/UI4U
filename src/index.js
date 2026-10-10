@@ -37,6 +37,9 @@ import {
   DISCLOSURE_STYLE_ID,
   disclosureCss,
 } from './components/disclosure/index.js';
+import { Button, BUTTON_STYLE_ID, buttonCss } from './components/button/index.js';
+import { Tooltip, TOOLTIP_STYLE_ID, tooltipCss } from './components/tooltip/index.js';
+import { Layout, Panel, LAYOUT_STYLE_ID, layoutCss } from './components/layout/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -57,6 +60,16 @@ export {
   Disclosure,
   DISCLOSURE_STYLE_ID,
   disclosureCss,
+  Button,
+  BUTTON_STYLE_ID,
+  buttonCss,
+  Tooltip,
+  TOOLTIP_STYLE_ID,
+  tooltipCss,
+  Layout,
+  Panel,
+  LAYOUT_STYLE_ID,
+  layoutCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -77,6 +90,15 @@ export const components = [
     ctor: Disclosure,
     styleId: DISCLOSURE_STYLE_ID,
     css: disclosureCss,
+  },
+  { tag: 'ui-button', ctor: Button, styleId: BUTTON_STYLE_ID, css: buttonCss },
+  { tag: 'ui-tooltip', ctor: Tooltip, styleId: TOOLTIP_STYLE_ID, css: tooltipCss },
+  { tag: 'ui-panel', ctor: Panel },
+  {
+    tag: 'ui-layout',
+    ctor: Layout,
+    styleId: LAYOUT_STYLE_ID,
+    css: layoutCss,
   },
 ];
 
@@ -111,6 +133,10 @@ export const UI4U = {
   Tabs,
   Tab,
   Disclosure,
+  Button,
+  Tooltip,
+  Layout,
+  Panel,
   UI4UElement,
   Emitter,
   define: defineElement,

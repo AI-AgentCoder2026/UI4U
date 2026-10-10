@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Tooltip</title>
+    <meta
+      name="description"
+      content="ui-tooltip — a hint anchored to its light DOM trigger, shown on hover and on keyboard focus, with automatic viewport flipping."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-tooltip</code></h1>
+          <p class="lede">
+            A hint anchored to its light DOM trigger. Hover it, or
+            <kbd>Tab</kbd> to it and the surface appears too — keyboard users get the
+            same information, just not at the cost of a delay. Press
+            <kbd>Esc</kbd> to dismiss.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Placement</span>
+          <ui-tabs id="opt-placement" variant="underline" label="Placement">
+            <ui-tab label="top"></ui-tab>
+            <ui-tab label="right"></ui-tab>
+            <ui-tab label="bottom"></ui-tab>
+            <ui-tab label="left"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Delay (ms)</span>
+          <ui-tabs id="opt-delay" variant="underline" label="Delay">
+            <ui-tab label="0"></ui-tab>
+            <ui-tab label="300"></ui-tab>
+            <ui-tab label="800"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="show-all" type="button">Show</button>
+        <button id="hide-all" type="button">Hide</button>
+        <button id="toggle-disabled" type="button" aria-pressed="false">Disable tooltips</button>
+      </div>
+
+      <section>
+        <h2>Triggers</h2>
+        <p>
+          The button below is the trigger and stays yours. The component adds
+          <code>aria-describedby</code> pointing at the surface it generated, and removes it
+          again on disconnect.
+        </p>
+
+        <div class="controls" id="demo-triggers">
+          <ui-tooltip
+            id="rebuild"
+            content="Rebuild the index — Ctrl+Shift+R"
+            placement="top"
+          >
+            <button type="button">Rebuild</button>
+          </ui-tooltip>
+
+          <ui-tooltip id="deploy" content="Deploy to production" placement="bottom">
+            <button type="button">Deploy</button>
+          </ui-tooltip>
+
+          <!-- A trigger that is not natively focusable still gets a tab stop. -->
+          <ui-tooltip id="token" content="Copy token to clipboard" placement="right">
+            <span>Plain text trigger</span>
+          </ui-tooltip>
+        </div>
+      </section>
+
+      <section>
+        <h2>Flipping</h2>
+        <p>
+          The four edge triggers are pinned close to the viewport boundary. Each asks for
+          <code>top</code> or <code>left</code>, where it would overflow — the positioning
+          helper flips it to the opposite side, or clamps it back inside when neither side
+          fits.
+        </p>
+
+        <div class="controls">
+          <ui-tooltip id="edge-left" content="Flipped away from the left edge" placement="left">
+            <button type="button">Left edge</button>
+          </ui-tooltip>
+
+          <ui-tooltip id="edge-right" content="Flipped away from the right edge" placement="right">
+            <button type="button">Right edge</button>
+          </ui-tooltip>
+        </div>
+      </section>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a tooltip…</div>
+
+      <ui-disclosure summary="Theming">
+        <p>
+          Every value is a <code>--ui4u-*</code> token. Override one on the element to theme
+          a single tooltip — including its own
+          <code>--ui4u-tooltip-bg</code> and <code>--ui4u-tooltip-radius</code>.
+        </p>
+        <div class="controls" id="accent-demo">
+          <button type="button" data-accent="var(--ui4u-primary)">primary</button>
+          <button type="button" data-accent="var(--ui4u-accent)">accent</button>
+          <button type="button" data-accent="var(--ui4u-success)">success</button>
+          <button type="button" data-accent="var(--ui4u-danger)">danger</button>
+        </div>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Source">
+        <p>Markup, behaviour and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-tooltip content="Rebuild the index" placement="top"&gt;
+  &lt;button type="button"&gt;Rebuild&lt;/button&gt;
+&lt;/ui-tooltip&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const tooltip = document.querySelector('ui-tooltip');
+
+// One options object — never a long positional argument list.
+tooltip.configure({
+  content: 'Rebuild the index',
+  placement: 'top',
+  delay: 0,
+  disabled: false,
+});
+
+tooltip.show();
+tooltip.hide();
+tooltip.toggle();
+
+// Namespaced events cannot collide with yours.
+tooltip.addEventListener('ui4u:show', (event) =&gt; {
+  console.log('opened on', event.detail.placement);
+});
+
+tooltip.addEventListener('ui4u:hide', (event) =&gt; {
+  console.log('closed');
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Theme one tooltip, or one page — override, never fork. */
+ui-tooltip {
+  --ui4u-tooltip-bg: rgba(9, 16, 32, 0.92);
+  --ui4u-tooltip-radius: 4px;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const log = document.getElementById('log');
+      const tooltips = [...document.querySelectorAll('ui-tooltip')];
+      const triggers = [...document.querySelectorAll('#demo-triggers ui-tooltip')];
+
+      for (const tooltip of tooltips) {
+        tooltip.addEventListener('ui4u:show', (event) => {
+          const id = tooltip.id || tooltip.getAttribute('content') || 'tooltip';
+          log.textContent = `ui4u:show → ${id} (${event.detail.placement})`;
+        });
+
+        tooltip.addEventListener('ui4u:hide', (event) => {
+          const id = tooltip.id || tooltip.getAttribute('content') || 'tooltip';
+          log.textContent = `ui4u:hide → ${id} (${event.detail.placement})`;
+        });
+      }
+
+      // Each option group is a ui-tabs; its ui4u:change drives the demo triggers.
+      const options = [
+        ['opt-placement', 'placement'],
+        ['opt-delay', 'delay'],
+      ];
+
+      for (const [id, option] of options) {
+        const group = document.getElementById(id);
+        group.addEventListener('ui4u:change', (event) => {
+          for (const tooltip of triggers) {
+            tooltip.setAttribute(option, event.detail.label);
+          }
+        });
+      }
+
+      const disabledToggle = document.getElementById('toggle-disabled');
+
+      disabledToggle.addEventListener('click', () => {
+        const next = disabledToggle.getAttribute('aria-pressed') !== 'true';
+        disabledToggle.setAttribute('aria-pressed', String(next));
+        disabledToggle.textContent = next ? 'Enable tooltips' : 'Disable tooltips';
+
+        for (const tooltip of tooltips) {
+          if (next) tooltip.setAttribute('disabled', '');
+          else tooltip.removeAttribute('disabled');
+        }
+      });
+
+      document.getElementById('show-all').addEventListener('click', () => {
+        for (const tooltip of tooltips) tooltip.show();
+      });
+
+      document.getElementById('hide-all').addEventListener('click', () => {
+        for (const tooltip of tooltips) tooltip.hide();
+      });
+
+      document.getElementById('accent-demo').addEventListener('click', (event) => {
+        const accent = event.target.dataset.accent;
+        if (accent) {
+          for (const tooltip of triggers) {
+            tooltip.style.setProperty('--ui4u-tooltip-border', accent);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

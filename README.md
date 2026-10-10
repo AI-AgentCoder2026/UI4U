@@ -18,11 +18,14 @@ Early, and deliberately incremental. Shipped:
 | --- | --- | --- |
 | `ui-tabs` | [`demo/tabs.html`](demo/tabs.html) | Keyboard nav, automatic + manual activation, 3 variants |
 | `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
+| `ui-button` | [`demo/button.html`](demo/button.html) | 5 variants, 3 sizes, loading and disabled states |
+| `ui-tooltip` | [`demo/tooltip.html`](demo/tooltip.html) | Hover + focus, viewport flipping, `Escape` to dismiss |
+| `ui-layout` | [`demo/layout.html`](demo/layout.html) | Resizable top/left/right/center/bottom, keyboard + pointer splitters |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
-Planned, in roadmap order: `ui-layout` (resizable top/left/right/middle/bottom) ·
-`ui-sidebar` · `ui-grid` · `ui-input` · `ui-form` · `ui-popup` · `ui-tooltip` · `ui-button`.
+Planned, in roadmap order: `ui-popup` · `ui-input` · `ui-form` · `ui-grid` · `ui-sidebar`.
+The full delivery plan lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Install
 
@@ -48,6 +51,15 @@ import 'ui4u';
 <ui-disclosure summary="Advanced">
   <p>Anything can go in here.</p>
 </ui-disclosure>
+
+<ui-button variant="primary" type="submit">Save</ui-button>
+```
+
+```html
+<ui-layout>
+  <ui-panel slot="left" size="16rem" min="10rem" resizable>…</ui-panel>
+  <ui-panel slot="center">…</ui-panel>
+</ui-layout>
 ```
 
 ### Script tag

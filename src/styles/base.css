@@ -14,8 +14,10 @@ ui-tab,
 ui-sidebar,
 ui-grid,
 ui-layout,
+ui-panel,
 ui-popup,
-ui-tooltip {
+ui-tooltip,
+ui-button {
   box-sizing: border-box;
 }
 
@@ -24,8 +26,10 @@ ui-tab,
 ui-sidebar,
 ui-grid,
 ui-layout,
+ui-panel,
 ui-popup,
-ui-tooltip {
+ui-tooltip,
+ui-button {
   font-family: var(--ui4u-font-sans);
   color: var(--ui4u-text);
 }

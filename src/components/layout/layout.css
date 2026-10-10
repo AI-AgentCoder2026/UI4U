@@ -1,0 +1,134 @@
+/**
+ * ui-layout / ui-panel
+ *
+ * The grid template is generated in JavaScript from the slots that are actually
+ * present, so this file only owns appearance. Every value is a `--ui4u-*` token
+ * or a local property derived from one.
+ */
+
+ui-layout {
+  --ui4u-layout-splitter-size: 10px;
+  --ui4u-layout-splitter-hover: var(--ui4u-primary);
+  --ui4u-layout-panel-padding: var(--ui4u-space-4);
+  --ui4u-layout-radius: var(--ui4u-radius-lg);
+
+  display: grid;
+  width: 100%;
+  min-height: 20rem;
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-layout-radius);
+  background: var(--ui4u-surface-glass);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+  box-shadow: var(--ui4u-shadow-sm);
+  overflow: hidden;
+}
+
+ui-panel {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--ui4u-layout-panel-padding);
+  color: var(--ui4u-text);
+  font-family: var(--ui4u-font-sans);
+  line-height: var(--ui4u-line-normal);
+  overflow: auto;
+}
+
+ui-panel[slot='top'],
+ui-panel[slot='bottom'] {
+  display: flex;
+  align-items: center;
+  gap: var(--ui4u-space-3);
+  background: var(--ui4u-surface-2);
+  font-weight: var(--ui4u-weight-semibold);
+  border-color: var(--ui4u-divider);
+}
+
+ui-panel[slot='left'],
+ui-panel[slot='right'] {
+  background: var(--ui4u-surface-sunken);
+}
+
+ui-panel[slot='center'] {
+  background: transparent;
+}
+
+/* Author styles set `display`, so the UA `[hidden]` rule must be restated. */
+ui-panel[hidden] {
+  display: none;
+}
+
+/* --- splitters ---------------------------------------------------------- */
+
+ui-layout .ui4u-layout__splitter {
+  position: relative;
+  background: var(--ui4u-border);
+  touch-action: none;
+  transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-layout .ui4u-layout__splitter:hover,
+ui-layout .ui4u-layout__splitter:focus-visible {
+  background: var(--ui4u-layout-splitter-hover);
+  outline: none;
+}
+
+/* A visible grip so the drag target reads as draggable, not as a rule. */
+ui-layout .ui4u-layout__splitter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2rem;
+  border-radius: var(--ui4u-radius-full);
+  background: var(--ui4u-text-subtle);
+  transform: translate(-50%, -50%);
+  transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-layout .ui4u-layout__splitter:hover::after,
+ui-layout .ui4u-layout__splitter:focus-visible::after {
+  background: var(--ui4u-primary-contrast);
+}
+
+/* --- narrow viewports ----------------------------------------------------
+ * A 10px drag handle is unusable on touch and pointless when panels are
+ * stacked, so dragging switches off below the compact breakpoint and the
+ * layout falls back to a readable single column.
+ */
+
+@container (max-width: 48rem) {
+  ui-layout {
+    container-type: inline-size;
+  }
+}
+
+@media (max-width: 48rem) {
+  ui-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto auto auto !important;
+    grid-template-areas:
+      'top'
+      'left'
+      'center'
+      'right'
+      'bottom' !important;
+  }
+
+  ui-layout .ui4u-layout__splitter {
+    display: none;
+  }
+
+  ui-layout ui-panel[slot='left'],
+  ui-layout ui-panel[slot='right'] {
+    max-height: 12rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-layout .ui4u-layout__splitter,
+  ui-layout .ui4u-layout__splitter::after {
+    transition: none;
+  }
+}

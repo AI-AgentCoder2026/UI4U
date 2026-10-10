@@ -1,0 +1,80 @@
+/**
+ * ui-tooltip
+ *
+ * A positioned hint anchored to the light DOM trigger. Every value is a
+ * `--ui4u-*` token — override the token, never fork the component CSS.
+ *
+ * The surface carries its own token overrides so a consumer can theme one
+ * tooltip without touching the rest of the page:
+ *
+ * ```css
+ * ui-tooltip {
+ *   --ui4u-tooltip-bg: rgba(9, 16, 32, 0.92);
+ *   --ui4u-tooltip-radius: 4px;
+ * }
+ * ```
+ */
+
+ui-tooltip {
+  display: inline-block;
+  position: relative;
+
+  --ui4u-tooltip-bg: var(--ui4u-surface-glass-strong);
+  --ui4u-tooltip-text: var(--ui4u-text);
+  --ui4u-tooltip-radius: var(--ui4u-radius-md);
+  --ui4u-tooltip-border: var(--ui4u-border);
+  --ui4u-tooltip-shadow: var(--ui4u-shadow-md);
+  --ui4u-tooltip-blur: var(--ui4u-glass-blur);
+  --ui4u-tooltip-gap: var(--ui4u-space-2);
+}
+
+/* The surface sits above the page chrome but must never steal a pointer:
+   the pointer belongs to the trigger until the tooltip is gone. */
+ui-tooltip .ui4u-tooltip__surface {
+  position: fixed;
+  z-index: var(--ui4u-z-tooltip);
+  max-width: 20rem;
+  margin: 0;
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-tooltip-border);
+  border-radius: var(--ui4u-tooltip-radius);
+  background: var(--ui4u-tooltip-bg);
+  -webkit-backdrop-filter: var(--ui4u-tooltip-blur);
+  backdrop-filter: var(--ui4u-tooltip-blur);
+  box-shadow: var(--ui4u-tooltip-shadow);
+  color: var(--ui4u-tooltip-text);
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-medium);
+  line-height: var(--ui4u-line-normal);
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.98);
+  transition:
+    opacity var(--ui4u-duration-fast) var(--ui4u-ease-out),
+    transform var(--ui4u-duration-fast) var(--ui4u-ease-out);
+}
+
+/* `hidden` keeps it out of the accessibility tree, not merely invisible. */
+ui-tooltip .ui4u-tooltip__surface[hidden] {
+  display: none;
+}
+
+ui-tooltip .ui4u-tooltip__surface:not([hidden]) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* A trigger that became focusable purely to carry the tooltip still needs the
+   library's focus ring, not the UA default. */
+ui-tooltip[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-tooltip .ui4u-tooltip__surface {
+    transition: none;
+  }
+}

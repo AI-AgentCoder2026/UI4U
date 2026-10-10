@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Button</title>
+    <meta
+      name="description"
+      content="ui-button — a real button or anchor with variants, sizes, disabled and loading states."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-button</code></h1>
+          <p class="lede">
+            A real <code>&lt;button&gt;</code> — or a real <code>&lt;a href&gt;</code> when you set
+            <code>href</code>. Never a <code>&lt;div&gt;</code> with a click handler, so
+            <kbd>Tab</kbd>, <kbd>Enter</kbd>, <kbd>Space</kbd> and form submission all work without
+            a line of JavaScript.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Variant</span>
+          <ui-tabs id="opt-variant" variant="underline" label="Variant">
+            <ui-tab label="primary"></ui-tab>
+            <ui-tab label="secondary"></ui-tab>
+            <ui-tab label="ghost"></ui-tab>
+            <ui-tab label="danger"></ui-tab>
+            <ui-tab label="subtle"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Size</span>
+          <ui-tabs id="opt-size" variant="underline" label="Size">
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-button id="demo" variant="primary" size="md" type="button">Save changes</ui-button>
+      </div>
+
+      <div class="controls">
+        <button id="press" type="button">Press programmatically</button>
+        <button id="toggle-disabled" type="button">Toggle disabled</button>
+        <button id="toggle-loading" type="button">Toggle loading</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a press…</div>
+
+      <div class="controls">
+        <ui-button variant="primary" size="sm">small</ui-button>
+        <ui-button variant="secondary" size="md">secondary</ui-button>
+        <ui-button variant="ghost" size="md">ghost</ui-button>
+        <ui-button variant="danger" size="md">danger</ui-button>
+        <ui-button variant="subtle" size="md">subtle</ui-button>
+        <ui-button variant="primary" size="lg">large</ui-button>
+      </div>
+
+      <div class="controls">
+        <ui-button id="link-button" href="#source" variant="ghost">A real link</ui-button>
+        <ui-button href="#source" variant="ghost" disabled>A disabled link</ui-button>
+        <ui-button loading>Saving…</ui-button>
+      </div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and the states. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-button variant="primary" size="md" type="submit"&gt;Save&lt;/ui-button&gt;
+&lt;ui-button href="/docs" variant="ghost"&gt;Docs&lt;/ui-button&gt;
+&lt;ui-button loading&gt;Saving…&lt;/ui-button&gt;
+
+&lt;!-- disabled mirrors onto the native control; on an anchor it
+     becomes aria-disabled, because a link cannot be disabled. --&gt;
+&lt;ui-button href="/docs" disabled&gt;Docs&lt;/ui-button&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const button = document.querySelector('ui-button');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+button.configure({
+  variant: 'danger',
+  size: 'sm',
+  type: 'submit',
+  disabled: false,
+  loading: false,
+  href: '/save',
+});
+
+// Programmatic activation, honouring disabled and loading.
+button.click();
+
+// Every public event is namespaced so it cannot collide with yours.
+button.addEventListener('ui4u:press', (event) =&gt; {
+  const { variant, size, href, control } = event.detail;
+  console.log(`pressed ${variant}/${size} -&gt; ${href || 'native button'}`, control);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-button-* custom properties. */
+ui-button {
+  --ui4u-button-height-md: 3rem;
+  --ui4u-button-radius: var(--ui4u-radius-full);
+  --ui4u-primary: #f43f5e;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const button = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real button.
+      for (const [id, option] of [
+        ['opt-variant', 'variant'],
+        ['opt-size', 'size'],
+      ]) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          button.configure({ [option]: event.detail.label });
+        });
+      }
+
+      button.addEventListener('ui4u:press', (event) => {
+        log.textContent = `ui4u:press → ${event.detail.variant} / ${event.detail.size}`;
+      });
+
+      document.getElementById('press').addEventListener('click', () => button.click());
+
+      document.getElementById('toggle-disabled').addEventListener('click', () => {
+        button.disabled = !button.disabled;
+      });
+
+      document.getElementById('toggle-loading').addEventListener('click', () => {
+        button.loading = !button.loading;
+      });
+    </script>
+  </body>
+</html>

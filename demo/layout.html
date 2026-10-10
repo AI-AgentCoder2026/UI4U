@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Layout</title>
+    <meta
+      name="description"
+      content="ui-layout — a resizable five-region workspace with keyboard-accessible splitters."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+    <style>
+      ui-panel {
+        font-size: var(--ui4u-font-size-sm);
+      }
+      ui-panel[slot='left'] nav {
+        display: grid;
+        gap: var(--ui4u-space-2);
+      }
+      ui-panel[slot='center'] h3 {
+        margin-bottom: var(--ui4u-space-2);
+      }
+      ui-panel[slot='center'] p {
+        color: var(--ui4u-text-muted);
+      }
+      ui-panel[slot='right'] dl {
+        display: grid;
+        gap: var(--ui4u-space-2);
+        margin: 0;
+      }
+      ui-panel[slot='right'] dt {
+        color: var(--ui4u-text-subtle);
+        font-size: var(--ui4u-font-size-xs);
+        text-transform: uppercase;
+        letter-spacing: var(--ui4u-tracking-widest);
+      }
+      ui-panel[slot='right'] dd {
+        margin: 0;
+        font-weight: var(--ui4u-weight-medium);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-layout</code></h1>
+          <p class="lede">
+            A resizable workspace. Drag a separator, or focus one and use
+            <kbd>←</kbd> <kbd>→</kbd>, <kbd>Home</kbd>, <kbd>End</kbd>, and
+            <kbd>Enter</kbd> to collapse. Double-click a separator to reset it.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Keyboard step</span>
+          <ui-tabs id="opt-step" variant="underline" label="Keyboard step">
+            <ui-tab label="8"></ui-tab>
+            <ui-tab label="16"></ui-tab>
+            <ui-tab label="40"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Gutter</span>
+          <ui-tabs id="opt-gutter" variant="underline" label="Gutter">
+            <ui-tab label="4px"></ui-tab>
+            <ui-tab label="10px"></ui-tab>
+            <ui-tab label="18px"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="reset-all" type="button">Reset all</button>
+        <button id="collapse-left" type="button">Collapse sidebar</button>
+        <button id="restore-left" type="button">Restore sidebar</button>
+      </div>
+
+      <ui-layout id="demo" step="16">
+        <ui-panel slot="top" label="Header" size="56">UI4U workspace</ui-panel>
+
+        <ui-panel slot="left" label="Sidebar" size="240" min="160" max="420" resizable collapsible>
+          <nav>
+            <strong>Navigation</strong>
+            <span>Dashboard</span>
+            <span>Components</span>
+            <span>Tokens</span>
+            <span>Settings</span>
+          </nav>
+        </ui-panel>
+
+        <ui-panel slot="center" label="Workspace">
+          <h3>Centre</h3>
+          <p>
+            This panel takes whatever the others leave — it is the flexible
+            <code>minmax(0, 1fr)</code> track. Resize the separators either side of
+            it and watch this region absorb the change.
+          </p>
+        </ui-panel>
+
+        <ui-panel slot="right" label="Inspector" size="200" min="120" max="360" resizable collapsible>
+          <dl>
+            <dt>Slot</dt>
+            <dd>right</dd>
+            <dt>Resizable</dt>
+            <dd>yes</dd>
+            <dt>Range</dt>
+            <dd>120 – 360px</dd>
+          </dl>
+        </ui-panel>
+
+        <ui-panel slot="bottom" label="Status" size="64">Ready · drag a separator to resize</ui-panel>
+      </ui-layout>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
+
+      <ui-disclosure summary="Source">
+        <p>Markup, options and the public API.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-layout step="16"&gt;
+  &lt;ui-panel slot="top" label="Header" size="56"&gt;…&lt;/ui-panel&gt;
+  &lt;ui-panel slot="left" label="Sidebar" size="240" min="160" max="420"
+             resizable collapsible&gt;…&lt;/ui-panel&gt;
+  &lt;ui-panel slot="center" label="Workspace"&gt;…&lt;/ui-panel&gt;
+  &lt;ui-panel slot="right" label="Inspector" size="200" min="120"
+             max="360" resizable collapsible&gt;…&lt;/ui-panel&gt;
+  &lt;ui-panel slot="bottom" label="Status" size="64"&gt;…&lt;/ui-panel&gt;
+&lt;/ui-layout&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const layout = document.querySelector('ui-layout');
+
+layout.configure({ step: 24, gutter: '10px' });
+
+// Current rendered track size, in pixels.
+console.log(layout.sizeOf('left'));
+
+// Events are namespaced like every other UI4U event.
+layout.addEventListener('ui4u:resize', (event) =&gt; {
+  const { slot, size, min, max } = event.detail;
+  console.log(`${slot} is now ${size}px`, { min, max });
+});
+
+layout.addEventListener('ui4u:collapse', (event) =&gt; {
+  console.log(event.detail.slot, 'collapsed:', event.detail.collapsed);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Override the derived properties, never the grid template —
+   that one is generated from whichever slots are present. */
+ui-layout {
+  --ui4u-layout-splitter-size: 14px;
+  --ui4u-layout-splitter-hover: var(--ui4u-accent);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Keyboard reference" variant="ghost">
+        <ul>
+          <li><code>←</code> / <code>→</code> — resize by the configured step</li>
+          <li><code>Home</code> — collapse the panel to its minimum</li>
+          <li><code>End</code> — expand the panel to its maximum</li>
+          <li><code>Enter</code> — collapse or restore the panel</li>
+          <li>Double-click — reset both adjacent panels to their authored size</li>
+        </ul>
+        <p>
+          Each separator is a <code>role="separator"</code> with
+          <code>aria-valuenow</code>, <code>aria-valuemin</code> and
+          <code>aria-valuemax</code>, so assistive tech announces the live size
+          rather than leaving the drag as an unlabelled gesture.
+        </p>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const layout = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      document.getElementById('opt-step').addEventListener('ui4u:change', (event) => {
+        layout.configure({ step: Number(event.detail.label) });
+      });
+
+      document.getElementById('opt-gutter').addEventListener('ui4u:change', (event) => {
+        layout.configure({ gutter: event.detail.label });
+      });
+
+      document.getElementById('reset-all').addEventListener('click', () => {
+        for (const slot of layout.slots) layout.setSlotSize(slot, layout.panel(slot).initial);
+      });
+
+      document.getElementById('collapse-left').addEventListener('click', () => {
+        layout.setSlotCollapsed('left', true);
+      });
+
+      document.getElementById('restore-left').addEventListener('click', () => {
+        layout.setSlotCollapsed('left', false);
+      });
+
+      layout.addEventListener('ui4u:resize', (event) => {
+        log.textContent = `ui4u:resize → ${event.detail.slot} is now ${Math.round(event.detail.size)}px`;
+      });
+
+      layout.addEventListener('ui4u:collapse', (event) => {
+        log.textContent = `ui4u:collapse → ${event.detail.slot} collapsed: ${event.detail.collapsed}`;
+      });
+    </script>
+  </body>
+</html>
