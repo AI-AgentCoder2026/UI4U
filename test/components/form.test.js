@@ -543,3 +543,90 @@ describe('ui-form teardown', () => {
     assert.equal(nativeOf(form).querySelectorAll('.ui4u-form__summary').length, 1);
   });
 });
+
+/* --- other field types ----------------------------------------------------- */
+
+describe('ui-form field discovery', () => {
+  afterEach(() => cleanup());
+
+  it('finds a checkbox by name and validates it', async () => {
+    const { Checkbox: Cb } = await import('../../src/components/checkbox/checkbox.js');
+    define('ui-checkbox', Cb);
+
+    const form = mount(`
+      <ui-form>
+        <ui-checkbox name="terms" label="Accept the terms" required></ui-checkbox>
+      </ui-form>
+    `).querySelector('ui-form');
+
+    assert.equal(form.fields.length, 1);
+    assert.equal(form.fields[0].tagName.toLowerCase(), 'ui-checkbox');
+
+    const result = form.validate();
+    assert.equal(result.valid, false);
+    assert.equal(result.errors[0].name, 'terms');
+  });
+
+  it('finds a radio group by name and validates it', async () => {
+    const { Radio, RadioGroup } = await import('../../src/components/radio/radio.js');
+    define('ui-radio', Radio);
+    define('ui-radio-group', RadioGroup);
+
+    const form = mount(`
+      <ui-form>
+        <ui-radio-group name="plan" label="Plan" required>
+          <ui-radio value="free">Free</ui-radio>
+          <ui-radio value="pro">Pro</ui-radio>
+        </ui-radio-group>
+      </ui-form>
+    `).querySelector('ui-form');
+
+    assert.equal(form.fields.length, 1);
+    assert.equal(form.fields[0].tagName.toLowerCase(), 'ui-radio-group');
+
+    const result = form.validate();
+    assert.equal(result.valid, false, 'a required group with nothing chosen is invalid');
+
+    form.fields[0].value = 'pro';
+    assert.equal(form.validate().valid, true);
+  });
+
+  it('does not double-count a radio that also belongs to the group', async () => {
+    const { Radio, RadioGroup } = await import('../../src/components/radio/radio.js');
+    define('ui-radio', Radio);
+    define('ui-radio-group', RadioGroup);
+
+    const form = mount(`
+      <ui-form>
+        <ui-radio-group name="plan" required>
+          <ui-radio name="plan" value="free">Free</ui-radio>
+        </ui-radio-group>
+      </ui-form>
+    `).querySelector('ui-form');
+
+    // The group validates the whole set; counting its radios too would report
+    // the same problem twice.
+    assert.equal(form.fields.length, 1);
+  });
+
+  it('finds a dropdown by name', async () => {
+    const { Dropdown, DropdownOption } = await import('../../src/components/dropdown/dropdown.js');
+    define('ui-dropdown', Dropdown);
+    define('ui-dropdown-option', DropdownOption);
+
+    const form = mount(`
+      <ui-form>
+        <ui-dropdown name="country" label="Country" required>
+          <ui-dropdown-option value="my">Malaysia</ui-dropdown-option>
+        </ui-dropdown>
+      </ui-form>
+    `).querySelector('ui-form');
+
+    assert.equal(form.fields.length, 1);
+    assert.equal(form.fields[0].tagName.toLowerCase(), 'ui-dropdown');
+    assert.equal(form.validate().valid, false);
+
+    form.fields[0].value = 'my';
+    assert.equal(form.validate().valid, true);
+  });
+});

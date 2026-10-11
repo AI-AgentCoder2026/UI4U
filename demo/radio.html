@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Radio</title>
+    <meta
+      name="description"
+      content="ui-radio and ui-radio-group — real native radios with one shared name, a fieldset and legend, a single tab stop and arrow-key navigation."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-radio</code></h1>
+          <p class="lede">
+            One option is a <strong>real</strong> <code>&lt;input type="radio"&gt;</code>. The group
+            owns the semantics around it: a <code>&lt;fieldset&gt;</code> and
+            <code>&lt;legend&gt;</code>, one shared <code>name</code>, one selection — and a single
+            tab stop with arrow-key navigation inside, exactly as a keyboard user expects from a
+            radio group.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Required</span>
+          <ui-tabs id="opt-required" variant="underline" label="Required">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Disabled</span>
+          <ui-tabs id="opt-disabled" variant="underline" label="Disabled">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Screen-reader-only legend</span>
+          <ui-tabs id="opt-sr-only" variant="underline" label="Screen-reader-only legend">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Error</span>
+          <ui-tabs id="opt-error" variant="underline" label="Error">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-radio-group
+          id="demo"
+          label="Plan"
+          name="plan"
+          value="pro"
+          hint="You can change plan whenever you like."
+        >
+          <ui-radio value="free">Free — one project</ui-radio>
+          <ui-radio value="pro">Pro — unlimited projects</ui-radio>
+          <ui-radio value="team">Team — seats included</ui-radio>
+        </ui-radio-group>
+      </div>
+
+      <div class="controls">
+        <button id="validate" type="button">Validate</button>
+        <button id="clear" type="button">Clear validity</button>
+        <button id="clear-selection" type="button">Clear selection</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for input…</div>
+
+      <h2>Try the keyboard</h2>
+      <p class="lede">
+        Tab moves into the group once — never three times. Inside it, the arrow keys move and
+        select, <code>Home</code> and <code>End</code> jump to the ends, and Tab leaves the group
+        entirely. The button below is the next tab stop.
+      </p>
+
+      <div class="controls">
+        <button id="after" type="button">Next tab stop</button>
+      </div>
+
+      <h2>More</h2>
+      <div class="controls">
+        <ui-radio-group
+          label="Billing cycle"
+          name="cycle"
+          hint="An unread legend, for a heading drawn elsewhere."
+          sr-only
+          required
+        >
+          <ui-radio value="monthly">Monthly</ui-radio>
+          <ui-radio value="yearly">Yearly — two months free</ui-radio>
+          <ui-radio value="lifetime" disabled>Lifetime (sold out)</ui-radio>
+        </ui-radio-group>
+      </div>
+
+      <div class="controls">
+        <ui-radio value="standalone" name="standalone">A radio with no group</ui-radio>
+      </div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-radio-group label="Plan" name="plan" value="pro" hint="You can change plan whenever you like."&gt;
+  &lt;ui-radio value="free"&gt;Free — one project&lt;/ui-radio&gt;
+  &lt;ui-radio value="pro"&gt;Pro — unlimited projects&lt;/ui-radio&gt;
+  &lt;ui-radio value="team"&gt;Team — seats included&lt;/ui-radio&gt;
+&lt;/ui-radio-group&gt;
+
+&lt;!-- The option text is the visible label. A disabled option is skipped by
+     the arrow keys and can never hold the tab stop; sr-only keeps the legend
+     in the accessibility tree when a heading is drawn elsewhere. --&gt;
+&lt;ui-radio-group label="Billing cycle" sr-only required&gt;
+  &lt;ui-radio value="monthly"&gt;Monthly&lt;/ui-radio&gt;
+  &lt;ui-radio value="yearly" disabled&gt;Yearly (sold out)&lt;/ui-radio&gt;
+&lt;/ui-radio-group&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const group = document.querySelector('ui-radio-group');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+group.configure({ label: 'Plan', required: true, value: 'team' });
+
+// The group is what ui-form validates, and the result has the same shape
+// as every other UI4U field: { valid, message, value, name }.
+const { valid, message } = group.checkValidity();
+group.reportValidity();  // sets `error` and focuses the tab stop
+group.clearValidity();   // drops the error state again
+
+// Selection is the group's, and it is readable as a plain value.
+console.log(group.value);       // 'team'
+group.value = 'free';           // selects the matching option
+group.focus();                  // lands on the single tab stop
+
+// One bubbled event per selection — the options never double up.
+group.addEventListener('ui4u:change', (event) =&gt; {
+  const { value, name } = event.detail;
+  console.log(`${name} → ${value}`);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-radio-* custom properties. */
+ui-radio,
+ui-radio-group {
+  --ui4u-radio-size: 1.5rem;
+  --ui4u-radio-touch: 3rem;
+  --ui4u-radio-accent: var(--ui4u-accent);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes">
+        <ul>
+          <li>
+            Every option is a genuine <code>&lt;input type="radio"&gt;</code>, themed with
+            <code>accent-color</code> and given a real <code>:focus-visible</code> ring. The group
+            shares one <code>name</code>, so the browser treats them as one native group.
+          </li>
+          <li>
+            The group renders a <code>&lt;fieldset&gt;</code> with a <code>&lt;legend&gt;</code> —
+            that is the accessible name — and marks it <code>role="radiogroup"</code>, so assistive
+            technology announces one control to answer rather than a loose set of radios.
+          </li>
+          <li>
+            The group is <strong>one tab stop</strong>: the selected option, or the first enabled
+            one, holds <code>tabindex="0"</code> and the rest hold <code>-1</code>. Arrow keys move
+            and select, clamping at the ends; <code>Home</code> and <code>End</code> jump to the
+            first and last; Tab is never prevented, so it leaves the group.
+          </li>
+          <li>Disabled options are skipped by the arrow keys and can never hold the tab stop.</li>
+          <li>
+            <code>hint</code> and <code>error</code> are chained through
+            <code>aria-describedby</code> on the fieldset; an error sets <code>aria-invalid</code>,
+            and <code>required</code> sets <code>aria-required</code> on both the fieldset and the
+            native controls, so the form is actually blocked.
+          </li>
+          <li>Every option row is at least 44px tall, so each is a comfortable touch target.</li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const group = document.getElementById('demo');
+      const log = document.getElementById('log');
+      const errorMessage = 'Pick a plan before you continue.';
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real group.
+      const toggles = [
+        ['opt-required', 'required'],
+        ['opt-disabled', 'disabled'],
+        ['opt-sr-only', 'srOnly'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          group[option] = event.detail.label === 'on';
+        });
+      }
+
+      document.getElementById('opt-error').addEventListener('ui4u:change', (event) => {
+        group.configure({ error: event.detail.label === 'on' ? errorMessage : '' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        group.reportValidity();
+        const result = group.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        group.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('clear-selection').addEventListener('click', () => {
+        for (const radio of group.radios) radio.checked = false;
+        group.refresh();
+        log.textContent = 'Selection cleared — the first option takes the tab stop';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        group
+          .configure({
+            value: 'pro',
+            error: '',
+            required: false,
+            disabled: false,
+            hint: 'You can change plan whenever you like.',
+          })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      group.addEventListener('ui4u:change', (event) => {
+        const { value, name } = event.detail;
+        log.textContent = `ui4u:change → ${name || '(unnamed)'} = "${value}"`;
+        // Clear a stale error as soon as the author answers the question.
+        group.clearValidity();
+      });
+    </script>
+  </body>
+</html>

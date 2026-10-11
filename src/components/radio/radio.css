@@ -1,0 +1,165 @@
+/**
+ * ui-radio / ui-radio-group
+ *
+ * Every value is a `--ui4u-*` token. The measurements with no global token —
+ * the control size and the touch target — are declared once on the element as
+ * `--ui4u-radio-*`, so overriding them is a token override, never a fork of
+ * this file.
+ *
+ * The native inputs stay native: `accent-color` themes them and
+ * `:focus-visible` gives them a real focus ring. The tab stop is the component's
+ * business (roving `tabindex` in `radio.js`), not a drawing trick.
+ *
+ * Mobile-first: every option is a 44px-tall row on a small screen, and the
+ * wide-screen rule only widens the horizontal padding.
+ */
+
+ui-radio,
+ui-radio-group {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-radio-size: 1.25rem;
+  --ui4u-radio-gap: var(--ui4u-space-3);
+  --ui4u-radio-touch: 2.75rem;
+  --ui4u-radio-padding-x: var(--ui4u-space-3);
+  --ui4u-radio-radius: var(--ui4u-radius-sm);
+  --ui4u-radio-accent: var(--ui4u-primary);
+  --ui4u-radio-disabled-opacity: 0.55;
+}
+
+/* --- a single option ----------------------------------------------------- */
+
+ui-radio .ui4u-radio__row {
+  display: grid;
+  grid-template-columns: var(--ui4u-radio-size) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ui4u-radio-gap);
+  box-sizing: border-box;
+  min-height: var(--ui4u-radio-touch);
+  padding-block: var(--ui4u-space-2);
+  padding-inline: var(--ui4u-radio-padding-x);
+  border-radius: var(--ui4u-radio-radius);
+  transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+/* A selected option gets a restrained brand tint, driven by the real control
+   rather than a second, fake one drawn next to it. */
+ui-radio .ui4u-radio__row:has(.ui4u-radio__native:checked) {
+  background: var(--ui4u-primary-soft);
+}
+
+ui-radio[disabled] .ui4u-radio__row {
+  opacity: var(--ui4u-radio-disabled-opacity);
+  cursor: not-allowed;
+}
+
+ui-radio-group[disabled] ui-radio .ui4u-radio__row {
+  opacity: var(--ui4u-radio-disabled-opacity);
+  cursor: not-allowed;
+}
+
+ui-radio .ui4u-radio__native {
+  box-sizing: border-box;
+  width: var(--ui4u-radio-size);
+  height: var(--ui4u-radio-size);
+  margin: 0;
+  accent-color: var(--ui4u-radio-accent);
+  cursor: inherit;
+}
+
+ui-radio[disabled] .ui4u-radio__native,
+ui-radio-group[disabled] .ui4u-radio__native {
+  cursor: not-allowed;
+}
+
+ui-radio .ui4u-radio__native:focus-visible {
+  outline: var(--ui4u-focus-ring-width) solid var(--ui4u-focus-ring-color);
+  outline-offset: var(--ui4u-focus-ring-offset);
+}
+
+ui-radio .ui4u-radio__label {
+  font-size: var(--ui4u-font-size-md);
+  font-weight: var(--ui4u-weight-medium);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  cursor: inherit;
+  user-select: none;
+}
+
+/* --- the group ----------------------------------------------------------- */
+
+ui-radio-group .ui4u-radio-group__field {
+  display: block;
+  box-sizing: border-box;
+  /* A fieldset defaults to `min-inline-size: min-content`, which would refuse
+     to shrink on a narrow screen. */
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+ui-radio-group .ui4u-radio-group__legend {
+  display: block;
+  padding: 0;
+  margin-block-end: var(--ui4u-space-2);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text-muted);
+}
+
+ui-radio-group .ui4u-radio-group__legend[hidden] {
+  display: none;
+}
+
+ui-radio-group .ui4u-radio-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-space-2);
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-radio-group .ui4u-radio-group__hint,
+ui-radio-group .ui4u-radio-group__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-radio-group .ui4u-radio-group__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-radio-group .ui4u-radio-group__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-radio-group .ui4u-radio-group__hint[hidden],
+ui-radio-group .ui4u-radio-group__error[hidden] {
+  display: none;
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-radio,
+  ui-radio-group {
+    --ui4u-radio-padding-x: var(--ui4u-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-radio .ui4u-radio__row {
+    transition: none;
+  }
+}

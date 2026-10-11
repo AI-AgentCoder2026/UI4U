@@ -35,7 +35,10 @@ test('every component has a card and every card has a name', async ({ page }) =>
     .locator('.demo-card')
     .evaluateAll((nodes) => nodes.map((n) => n.querySelector('code')?.textContent ?? ''));
 
-  expect(cards.length).toBe(10);
+  // One card per registered component. A hard number, because a new component
+  // that nobody linked here would otherwise ship silently missing from the
+  // index — and nothing else would notice.
+  expect(cards.length).toBe(13);
   expect(cards.filter((name) => !name)).toEqual([]);
   expect(new Set(cards).size).toBe(cards.length, 'no duplicate component names');
 });

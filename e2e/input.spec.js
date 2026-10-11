@@ -158,3 +158,271 @@ test('the Source samples live inside a collapsed ui-disclosure', async ({ page }
   expect(await source.locator('span[class^="tok-"]').count()).toBeGreaterThan(0);
   expect(await blocks.first().innerText()).toContain('<ui-input');
 });
+
+/* --- amount mode ---------------------------------------------------------- */
+
+test.describe('ui-input type="amount"', () => {
+  const AMOUNT = '#amount-demo';
+
+  test.beforeEach(async ({ page }) => {
+    // The demo keeps these in collapsed disclosures, so open them first.
+    await page.locator('#amount .ui4u-disclosure__summary').click();
+    await page.waitForSelector(`${AMOUNT} .ui4u-input__native`);
+  });
+
+  test('parses a k shortcut as it is typed', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await input.fill('5k');
+    await expect(input).toHaveValue('5,000');
+    await expect(page.locator('#amount-log')).toContainText('is 5000');
+  });
+
+  test('parses m and b too', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await input.fill('2.5m');
+    await expect(page.locator('#amount-log')).toContainText('is 2500000');
+
+    await input.fill('1b');
+    await expect(page.locator('#amount-log')).toContainText('is 1000000000');
+  });
+
+  test('keeps the caret at the end so typing continues', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await input.fill('');
+    await input.type('5k', { delay: 30 });
+    // The "k" was consumed by the formatter, so the next keystroke must land
+    // after the last digit rather than in the middle of "5,000".
+    await input.type('500');
+
+    await expect(input).toHaveValue('5,000,500');
+  });
+
+  test('leaves a half-typed decimal alone', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await input.fill('12.');
+    await expect(input).toHaveValue('12.');
+  });
+
+  test('applies a fixed decimal count from the picker', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await page.locator('#opt-decimals [role="tab"]', { hasText: '2' }).click();
+    await input.fill('8421');
+
+    await expect(input).toHaveValue('8,421.00');
+  });
+
+  test('reports out-of-range values instead of silently clamping', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    // Turn the bounds on first, then type a value under them. Clamping the
+    // display instead would hide the problem the message exists to report.
+    await page.locator('#opt-bounds [role="tab"]', { hasText: '1k' }).click();
+    await input.fill('5');
+
+    await expect(input).toHaveValue('5');
+    const result = await page.evaluate(() =>
+      document.getElementById('amount-demo').checkValidity()
+    );
+    expect(result.valid).toBe(false);
+    expect(result.message).toContain('1,000');
+  });
+
+  test('rejects text that is not a number', async ({ page }) => {
+    const input = page.locator(`${AMOUNT} .ui4u-input__native`);
+
+    await input.fill('abc');
+    const result = await page.evaluate(() => {
+      const field = document.getElementById('amount-demo');
+      return field.checkValidity();
+    });
+    expect(result.valid).toBe(false);
+  });
+});
+
+/* --- date mode ------------------------------------------------------------ */
+
+test.describe('ui-input type="date"', () => {
+  const DATE = '#date-demo';
+
+  test.beforeEach(async ({ page }) => {
+    await page.locator('#date .ui4u-disclosure__summary').click();
+    await page.waitForSelector(`${DATE} .ui4u-input__native`);
+  });
+
+  test('shows the local format but keeps the ISO value', async ({ page }) => {
+    const input = page.locator(`${DATE} .ui4u-input__native`);
+    await expect(input).not.toHaveValue('2026-08-14');
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-08-14');
+  });
+
+  test('portals the panel to the body rather than inside the field', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    const inside = await page.evaluate(() =>
+      document.getElementById('date-demo').contains(document.querySelector('.ui4u-calendar'))
+    );
+    expect(inside).toBe(false);
+
+    await expect(page.locator('body > .ui4u-calendar')).toBeVisible();
+  });
+
+  test('opens with a single roving tab stop', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    // One stop inside the grid. The header title is a separate control — it
+    // drills up a level — so it legitimately has one of its own.
+    await expect(page.locator('.ui4u-calendar__day[tabindex="0"]')).toHaveCount(1);
+  });
+
+  test('picks a date and writes back the ISO value', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-20"]').click();
+
+    await expect(page.locator('body > .ui4u-calendar')).toHaveCount(0);
+    await expect(page.locator('#date-log')).toContainText('2026-08-20');
+  });
+
+  test('opens at the month view and drills down', async ({ page }) => {
+    await page.locator('#opt-view [role="tab"]', { hasText: 'month' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    await expect(page.locator('.ui4u-calendar__month')).toHaveCount(12);
+
+    await page.locator('.ui4u-calendar__month[data-month="7"]').click();
+    await expect(page.locator('.ui4u-calendar__day[data-date="2026-08-01"]')).toBeVisible();
+  });
+
+  test('opens at the year view and drills down twice', async ({ page }) => {
+    await page.locator('#opt-view [role="tab"]', { hasText: 'year' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    await expect(page.locator('.ui4u-calendar__year')).toHaveCount(12);
+
+    await page.locator('.ui4u-calendar__year[data-year="2026"]').click();
+    await expect(page.locator('.ui4u-calendar__month')).toHaveCount(12);
+
+    await page.locator('.ui4u-calendar__month[data-month="7"]').click();
+    await expect(page.locator('.ui4u-calendar__day')).not.toHaveCount(0);
+  });
+
+  test('arrow keys move the focused day', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    const focused = page.locator('.ui4u-calendar__day[tabindex="0"]');
+    await expect(focused).toHaveAttribute('data-date', '2026-08-14');
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.ui4u-calendar__day[tabindex="0"]')).toHaveAttribute(
+      'data-date',
+      '2026-08-15'
+    );
+
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.ui4u-calendar__day[tabindex="0"]')).toHaveAttribute(
+      'data-date',
+      '2026-08-22'
+    );
+
+    await expect(page.locator('.ui4u-calendar__day[tabindex="0"]')).toHaveCount(1);
+  });
+
+  test('completes a range and highlights the days between', async ({ page }) => {
+    await page.locator('#opt-range [role="tab"]', { hasText: 'range' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    // The field starts on 14 Aug with no end, so this click completes it.
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-10"]').click();
+
+    await expect(page.locator('.ui4u-calendar__day[data-date="2026-08-10"]')).toHaveAttribute(
+      'data-range-start',
+      ''
+    );
+    await expect(page.locator('.ui4u-calendar__day[data-date="2026-08-12"]')).toHaveAttribute(
+      'data-in-range',
+      ''
+    );
+    await expect(page.locator('.ui4u-calendar__day[data-date="2026-08-14"]')).toHaveAttribute(
+      'data-range-end',
+      ''
+    );
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-08-10/2026-08-14');
+  });
+
+  test('starts a fresh range after a complete one', async ({ page }) => {
+    await page.locator('#opt-range [role="tab"]', { hasText: 'range' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-10"]').click();
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-20"]').click();
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-08-20/', 'the new start replaces the finished range');
+  });
+
+  test('swaps the ends when the second click is earlier', async ({ page }) => {
+    await page.locator('#opt-range [role="tab"]', { hasText: 'range' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-05"]').click();
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-08-05/2026-08-14');
+  });
+
+  test('closes on Escape and on a click outside', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('body > .ui4u-calendar')).toHaveCount(0);
+
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await expect(page.locator('body > .ui4u-calendar')).toBeVisible();
+    await page.locator('h1').click();
+    await expect(page.locator('body > .ui4u-calendar')).toHaveCount(0);
+  });
+
+  test('disables days outside its bounds', async ({ page }) => {
+    await page.locator('#date-bounded .ui4u-input__native').click();
+
+    // The field opens on the current month, so page forward to January 2027 —
+    // past the end of the allowed year — to see the days lock up.
+    for (let i = 0; i < 3; i += 1) {
+      await page.locator('.ui4u-calendar__nav[aria-label="Next"]').click();
+    }
+
+    await expect(page.locator('.ui4u-calendar__day[data-date="2027-01-05"]')).toBeDisabled();
+    await expect(page.locator('.ui4u-calendar__day[data-date="2027-01-05"]')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+  });
+
+  test('changes the first day of the week', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    await page.locator('#opt-week [role="tab"]', { hasText: 'Sun' }).click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    const first = await page.locator('.ui4u-calendar__day').first().getAttribute('data-date');
+    expect(new Date(`${first}T00:00:00`).getDay()).toBe(0);
+  });
+
+  test('the page runs without script errors', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.goto('/demo/input.html', { waitUntil: 'networkidle' });
+    await page.locator('#date .ui4u-disclosure__summary').click();
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await page.locator('.ui4u-calendar__day[data-date="2026-08-20"]').click();
+
+    expect(errors).toEqual([]);
+  });
+});

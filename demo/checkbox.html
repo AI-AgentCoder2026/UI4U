@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Checkbox</title>
+    <meta
+      name="description"
+      content="ui-checkbox — a checkbox field that wraps a real native input, with a linked label, hint, error state, an indeterminate parent and native validation."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-checkbox</code></h1>
+          <p class="lede">
+            A checkbox field that wraps a <strong>real</strong>
+            <code>&lt;input type="checkbox"&gt;</code>. Native focus rings, form submission and
+            every assistive technology keep working, because the control is never re-rendered from a
+            property — and the mixed state of a “select all” parent is a first-class option, not a
+            painted imitation.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Checked</span>
+          <ui-tabs id="opt-checked" variant="underline" label="Checked">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Indeterminate</span>
+          <ui-tabs id="opt-indeterminate" variant="underline" label="Indeterminate">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Required</span>
+          <ui-tabs id="opt-required" variant="underline" label="Required">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Readonly</span>
+          <ui-tabs id="opt-readonly" variant="underline" label="Readonly">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Disabled</span>
+          <ui-tabs id="opt-disabled" variant="underline" label="Disabled">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-checkbox
+          id="demo"
+          label="Email me about releases"
+          name="releases"
+          hint="Roughly one message a month. Unsubscribe any time."
+          required
+        ></ui-checkbox>
+      </div>
+
+      <div class="controls">
+        <button id="toggle-required" type="button">Toggle required</button>
+        <button id="toggle-readonly" type="button">Toggle readonly</button>
+        <button id="toggle-disabled" type="button">Toggle disabled</button>
+        <button id="toggle-sr-only" type="button">Toggle screen-reader-only label</button>
+        <button id="toggle-indeterminate" type="button">Toggle indeterminate</button>
+        <button id="toggle-error" type="button">Toggle error</button>
+      </div>
+
+      <div class="controls">
+        <button id="validate" type="button">Validate</button>
+        <button id="clear" type="button">Clear validity</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for input…</div>
+
+      <h2>Select all</h2>
+      <p class="lede">
+        The mixed state is a real <code>indeterminate</code> on the native input, so a screen reader
+        announces “mixed” instead of “on” or “off”.
+      </p>
+
+      <div class="controls">
+        <ui-checkbox id="select-all" label="Select all" indeterminate></ui-checkbox>
+      </div>
+      <div class="controls">
+        <ui-checkbox label="Release notes" data-member checked></ui-checkbox>
+        <ui-checkbox label="Changelog" data-member></ui-checkbox>
+        <ui-checkbox label="Roadmap" data-member></ui-checkbox>
+      </div>
+
+      <h2>More</h2>
+      <div class="controls">
+        <ui-checkbox
+          label="Search the docs"
+          sr-only
+          hint="Only your reading list sees this."
+        ></ui-checkbox>
+        <ui-checkbox label="Locked choice" checked readonly></ui-checkbox>
+        <ui-checkbox label="Not available" disabled></ui-checkbox>
+        <ui-checkbox label="Terms accepted" error="You have to accept the terms."></ui-checkbox>
+      </div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-checkbox label="Email me about releases" name="releases" required hint="Roughly one message a month."&gt;&lt;/ui-checkbox&gt;
+&lt;ui-checkbox label="Select all" indeterminate&gt;&lt;/ui-checkbox&gt;
+
+&lt;!-- sr-only keeps the label in the accessibility tree but out of the
+     layout; readonly locks the current state; disabled and required mirror
+     onto the real control. --&gt;
+&lt;ui-checkbox label="Search the docs" sr-only&gt;&lt;/ui-checkbox&gt;
+&lt;ui-checkbox label="Locked choice" checked readonly&gt;&lt;/ui-checkbox&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const box = document.querySelector('ui-checkbox');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+box.configure({
+  label: 'Email me about releases',
+  hint: 'Roughly one message a month.',
+  required: true,
+});
+
+// checkValidity() has the same shape as ui-input, so ui-form can drive
+// every field identically: { valid, message, value, name }.
+const { valid, message } = box.checkValidity();
+box.reportValidity();  // sets `error` and shows the browser bubble
+box.clearValidity();   // drops the error state again
+
+// A "select all" parent is three lines, because indeterminate is a real
+// state on the control rather than something painted.
+const members = [...document.querySelectorAll('[data-member]')];
+all.indeterminate = members.some((m) =&gt; m.checked) &amp;&amp; !members.every((m) =&gt; m.checked);
+
+// Every public event is namespaced so it cannot collide with yours.
+box.addEventListener('ui4u:change', (event) =&gt; {
+  const { value, name, checked } = event.detail;
+  console.log(`${name} = "${value}" → ${checked}`);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-checkbox-* custom properties. */
+ui-checkbox {
+  --ui4u-checkbox-size: 1.5rem;
+  --ui4u-checkbox-touch: 3rem;
+  --ui4u-checkbox-accent: var(--ui4u-accent);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes">
+        <ul>
+          <li>
+            The control is a genuine <code>&lt;input type="checkbox"&gt;</code>. It is themed with
+            <code>accent-color</code> and given a real <code>:focus-visible</code> ring — never
+            hidden behind a drawn box, which would break submission, mobile keyboards and screen
+            readers.
+          </li>
+          <li>
+            The label is associated with <code>for</code>, and it contains text only. A label that
+            wraps another control swallows its clicks, so it never does.
+          </li>
+          <li>
+            <code>hint</code> and <code>error</code> are chained through
+            <code>aria-describedby</code>; an error sets <code>aria-invalid</code>, and
+            <code>required</code> sets <code>aria-required</code>.
+          </li>
+          <li>
+            Every row is at least 44px tall, so the control and its label are one comfortable touch
+            target rather than a 20px box.
+          </li>
+          <li>
+            <code>indeterminate</code> has no content attribute on the platform, so the component
+            keeps its own attribute as the source of truth and mirrors it onto the control — in both
+            directions.
+          </li>
+          <li>
+            <code>readonly</code> means what it says on a checkbox: the user cannot change the
+            state, and the authored <code>checked</code> is the state that survives.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const field = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real checkbox.
+      const options = [
+        ['opt-checked', 'checked'],
+        ['opt-indeterminate', 'indeterminate'],
+        ['opt-required', 'required'],
+        ['opt-readonly', 'readonly'],
+        ['opt-disabled', 'disabled'],
+      ];
+
+      for (const [id, option] of options) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          field[option] = event.detail.label === 'on';
+        });
+      }
+
+      const toggles = [
+        ['toggle-required', 'required'],
+        ['toggle-readonly', 'readonly'],
+        ['toggle-disabled', 'disabled'],
+        ['toggle-sr-only', 'srOnly'],
+        ['toggle-indeterminate', 'indeterminate'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('click', () => {
+          field[option] = !field[option];
+        });
+      }
+
+      document.getElementById('toggle-error').addEventListener('click', () => {
+        field.configure({ error: field.error ? '' : 'You have to tick this box.' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        field.reportValidity();
+        const result = field.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        field.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        field
+          .configure({
+            checked: false,
+            indeterminate: false,
+            error: '',
+            required: true,
+            hint: 'Roughly one message a month. Unsubscribe any time.',
+          })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      field.addEventListener('ui4u:change', (event) => {
+        const { value, name, checked } = event.detail;
+        log.textContent = `ui4u:change → ${name || '(unnamed)'} = "${value}" (${checked})`;
+        // Clear a stale error as soon as the author answers the field again.
+        field.clearValidity();
+      });
+
+      /* --- select all ---------------------------------------------------- */
+
+      const all = document.getElementById('select-all');
+      const members = [...document.querySelectorAll('[data-member]')];
+
+      const syncIndeterminate = () => {
+        const ticked = members.filter((member) => member.checked).length;
+        all.indeterminate = ticked > 0 && ticked < members.length;
+      };
+
+      all.addEventListener('ui4u:change', (event) => {
+        for (const member of members) member.checked = event.detail.checked;
+        log.textContent = `ui4u:change → select all = ${event.detail.checked}`;
+      });
+
+      for (const member of members) {
+        member.addEventListener('ui4u:change', () => {
+          syncIndeterminate();
+          const ticked = members.filter((item) => item.checked).length;
+          log.textContent = `select all → ${ticked} of ${members.length} ticked`;
+        });
+      }
+    </script>
+  </body>
+</html>

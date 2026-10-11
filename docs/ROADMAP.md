@@ -100,12 +100,39 @@ re-exported from `dom.js` so nothing breaks.
 <ui-input label="Email" type="email" required hint="We never share it."></ui-input>
 ```
 
-- **API** — `configure({ label, type, value, placeholder, hint, error, size, required, disabled, readonly })`
+- **API** — `configure({ label, type, value, placeholder, hint, error, size,
+required, disabled, readonly, name, autocomplete, decimals, min, max, locale,
+firstDayOfWeek, range, view })`
 - **Wraps a real `<input>`** — light DOM, so native autofill, IME composition
   and mobile keyboards keep working. Never a controlled imitation.
+- **`type="amount"`** — accepts the `k` / `m` / `b` magnitude shortcuts and
+  reformats as you type. `5k` becomes `5,000` immediately and the caret moves
+  to the end so typing continues; a half-typed decimal (`12.`) is left alone so
+  the caret is never moved mid-number. The text stays the user's, and the number
+  a consumer should store is on the `amount` getter and in the event detail.
+  Thousands separators are read on the way in, and `min` / `max` are reported by
+  `checkValidity()` rather than silently clamping what was typed.
+- **`type="date"`** — a Gregorian picker with three levels (day, month, year)
+  that drill up from the title and back down from the grid, plus an optional
+  `range` holding one start and one end. The attribute keeps the ISO
+  `YYYY-MM-DD` (or `from/to`) value while the field shows the locale's format,
+  so a consumer never stores a display string. `min` / `max` disable days
+  outright; a range completed by clicking backwards swaps its ends rather than
+  producing a negative range. Gregorian only — a non-Gregorian system needs its
+  own conversion layer, since its months do not line up with solar ones.
+- **Calendar panel** — portalled to `<body>` and positioned with
+  `core/position.js`, because an ancestor with `transform` or `backdrop-filter`
+  would otherwise become its containing block. One roving tab stop across the
+  grid, arrow keys to move, `PageUp` / `PageDown` by month and year, `Home` /
+  `End` within the week, `Escape` to close, and a document listener for a click
+  elsewhere — which focus events cannot cover once the panel is outside the
+  host.
 - **A11y** — `<label for>`, `aria-describedby` chaining hint and error,
   `aria-invalid` when erroring. Label is visually hidden when `srOnly` is set.
-- **Events** — `ui4u:input`, `ui4u:change`.
+  A date field is read-only, since the panel is the only way in and a
+  free-typed date has no way to show itself as invalid.
+- **Events** — `ui4u:input`, `ui4u:change`. An amount event carries `amount`
+  alongside `value`; a date event carries `date` as `{ from, to }`.
 
 ## 5. `ui-form`
 
@@ -268,6 +295,107 @@ direction, searchPlaceholder })`. Every option maps one-for-one onto an
   dragging rather than offering a 4px-wide unusable handle.
 
 ---
+
+## 9. `ui-checkbox`
+
+```html
+<ui-checkbox label="Email me about releases" name="releases"></ui-checkbox>
+<ui-checkbox label="Select all" indeterminate></ui-checkbox>
+```
+
+- **API** — `configure({ label, name, value, checked, indeterminate, hint,
+error, disabled, required, readonly })`, `focus()`, `blur()`,
+  `checkValidity()`, `clearValidity()`, `reportValidity()`.
+- **Wraps a real `<input type="checkbox">`** — styled with `accent-color` rather
+  than a hidden input and a drawn box, because the native control is what keeps
+  focus, form submission and assistive technology working.
+- **`indeterminate`** — a property with no content attribute, so the attribute
+  is the source of truth and is mirrored onto the control. The `change` handler
+  mirrors the browser's own clearing back onto the attribute, so a tick and a
+  half-tick cannot drift apart.
+- **`readonly`** is meaningless natively, so it is enforced: the authored
+  `checked` is the state, a user toggle is reverted, `aria-readonly` is set and
+  nothing is emitted.
+- **Validity** — valid unless `required` and unticked, matching the native rule.
+  An unticked optional checkbox is not an error.
+- **A11y** — `<label for>`, `aria-describedby` chaining hint and error,
+  `aria-invalid` when erroring. Touch target clears 44px.
+- **Events** — `ui4u:change` with `detail: { value, name, checked }`.
+
+## 10. `ui-radio` and `ui-radio-group`
+
+```html
+<ui-radio-group label="Plan" name="plan" value="pro">
+  <ui-radio value="free">Free</ui-radio>
+  <ui-radio value="pro">Pro</ui-radio>
+</ui-radio-group>
+```
+
+- **API** — `ui-radio` exposes `value`, `name`, `checked`, `disabled`,
+  `required`, `input`, `group`, `sync()`, `focus()`, `blur()`,
+  `checkValidity()`. `ui-radio-group` adds `radios`, `label`, `hint`, `error`,
+  `srOnly`, `fieldset`, `configure({…})`, `refresh()`, `focus()` and the same
+  three validity methods.
+- **Group semantics** — a real `<fieldset>` with a `<legend>`, carrying
+  `role="radiogroup"`. The group owns selection and the group's `name` is what
+  goes on the natives, so checking one clears its siblings natively.
+- **One tab stop, not N** — only the selected radio (or the first, when none is
+  selected) keeps `tabindex="0"`; the rest are `-1`. Arrow keys move **and**
+  check, `Home`/`End` jump to the ends, and movement clamps rather than wraps.
+  `Tab` leaves the group entirely and is never prevented.
+- **The clamp needs an explicit `preventDefault()`** — Chromium's native radio
+  handling wraps on arrow keys, so returning early at the end of the group would
+  let the browser move the selection anyway. jsdom has no native arrow
+  behaviour, so this is only observable in a browser; the unit test asserts
+  `defaultPrevented` so the contract is pinned in both.
+- **Effective properties** — `disabled`, `required` and `name` on a radio resolve
+  to its own attribute **or** its group's, so a radio behaves correctly even
+  before the group has built.
+- **Validity is computed, not delegated** — hosts disagree about whether a radio
+  group reports `valueMissing`, so the group works it out itself.
+- **Dynamic children** — a radio registers with its group through the lifecycle
+  hooks and calls `group.refresh()`; `refresh()` is public for anything the
+  component cannot see.
+- **Events** — `ui-radio` emits a non-bubbling `ui4u:change`, so a selection
+  inside a group surfaces exactly one event. The group emits one bubbled
+  `ui4u:change` with `detail: { value, name }`.
+
+## 11. `ui-dropdown`
+
+```html
+<ui-dropdown label="Country" name="country" placeholder="Choose a country">
+  <ui-dropdown-option value="my">Malaysia</ui-dropdown-option>
+  <ui-dropdown-option value="sg">Singapore</ui-dropdown-option>
+</ui-dropdown>
+```
+
+- **API** — `configure({ label, name, value, placeholder, hint, error, disabled,
+required, multiple, open })`, `open()`, `close()`, `toggle()`, `focus()`,
+  `checkValidity()`, `clearValidity()`, `reportValidity()`, and getters for
+  `label`, `name`, `value`, `options`, `isOpen`, `trigger` and `panel`.
+  `isOpen` is the boolean state because `open` is a method.
+- **A listbox, not a styled `<select>`** — a real `<button>` trigger and
+  `role="listbox"` options, so it can be styled, filtered and given
+  `aria-multiselectable` at all.
+- **Select-only combobox pattern (APG)** — focus never leaves the trigger and
+  the keyboard cursor is published through `aria-activedescendant`. That is what
+  makes a portalled panel workable: a focus trap would fight the fact that the
+  panel is not a descendant of the trigger, so `core/focus-trap.js` is
+  deliberately unused.
+- **Portalled** — the panel is appended to `<body>` and placed with
+  `core/position.js`, and re-placed on scroll and resize. Options are _moved_
+  into the panel on open and returned to the host on close, the way
+  `ui-popup` stashes its content, so there is one source of truth for the label
+  text and teardown is a plain removal.
+- **Keyboard** — Enter/Space/ArrowDown/ArrowUp open; arrows navigate, skipping
+  disabled options; Home/End jump; Enter commits; Escape closes; Tab closes
+  _without_ being prevented, so the user is never trapped. Type-ahead skips
+  disabled options and works while closed.
+- **Events** — `ui4u:open`, `ui4u:close`, and `ui4u:change` with
+  `detail: { value, name, option }`.
+- **`ui-form` integration** — `checkValidity()` returns the same
+  `{ valid, message, value, name }` shape as every other field, which is what
+  lets one selector in `ui-form` cover all of them.
 
 ## Definition of done, for every component
 

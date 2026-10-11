@@ -85,6 +85,95 @@
         <ui-input label="Locked out" value="You cannot type here" disabled></ui-input>
       </div>
 
+      <ui-disclosure id="amount" summary="Amount fields" variant="ghost">
+        <p>
+          Type <code>5k</code>, <code>2.5m</code> or <code>1b</code> — the field parses it as you
+          type, formats the number and leaves the caret at the end so you can keep going. Read the
+          result from <code>amount</code>, never from the text.
+        </p>
+
+        <div class="control-grid">
+          <div class="control-group">
+            <span class="control-group__label">Decimals</span>
+            <ui-tabs id="opt-decimals" variant="underline" label="Decimals">
+              <ui-tab label="auto"></ui-tab>
+              <ui-tab label="0"></ui-tab>
+              <ui-tab label="2"></ui-tab>
+            </ui-tabs>
+          </div>
+          <div class="control-group">
+            <span class="control-group__label">Bounds</span>
+            <ui-tabs id="opt-bounds" variant="underline" label="Bounds">
+              <ui-tab label="none"></ui-tab>
+              <ui-tab label="1k – 1m"></ui-tab>
+            </ui-tabs>
+          </div>
+        </div>
+
+        <div class="controls">
+          <ui-input
+            id="amount-demo"
+            label="Budget"
+            type="amount"
+            name="budget"
+            hint="Try 5k, 2.5m or 1b."
+          ></ui-input>
+          <ui-input id="amount-bounded" label="Seats" type="amount" min="100" max="1000"></ui-input>
+        </div>
+
+        <div class="log" id="amount-log" role="status" aria-live="polite">
+          Type a number to see the parsed value.
+        </div>
+      </ui-disclosure>
+
+      <ui-disclosure id="date" summary="Date fields" variant="ghost">
+        <p>
+          A Gregorian picker with three levels — day, month and year — and an optional range. The
+          attribute keeps the ISO value (<code>2026-08-14</code>) while the field shows your
+          locale's format.
+        </p>
+
+        <div class="control-grid">
+          <div class="control-group">
+            <span class="control-group__label">Opens at</span>
+            <ui-tabs id="opt-view" variant="underline" label="Opens at">
+              <ui-tab label="day"></ui-tab>
+              <ui-tab label="month"></ui-tab>
+              <ui-tab label="year"></ui-tab>
+            </ui-tabs>
+          </div>
+          <div class="control-group">
+            <span class="control-group__label">Mode</span>
+            <ui-tabs id="opt-range" variant="underline" label="Mode">
+              <ui-tab label="single"></ui-tab>
+              <ui-tab label="range"></ui-tab>
+            </ui-tabs>
+          </div>
+          <div class="control-group">
+            <span class="control-group__label">Week starts</span>
+            <ui-tabs id="opt-week" variant="underline" label="Week starts">
+              <ui-tab label="Mon"></ui-tab>
+              <ui-tab label="Sun"></ui-tab>
+            </ui-tabs>
+          </div>
+        </div>
+
+        <div class="controls">
+          <ui-input id="date-demo" label="Release date" type="date" value="2026-08-14"></ui-input>
+          <ui-input
+            id="date-bounded"
+            label="Within 2026 only"
+            type="date"
+            min="2026-01-01"
+            max="2026-12-31"
+          ></ui-input>
+        </div>
+
+        <div class="log" id="date-log" role="status" aria-live="polite">
+          Pick a date to see the ISO value.
+        </div>
+      </ui-disclosure>
+
       <ui-disclosure id="source" summary="Source">
         <p>Markup, options and theming. All three blocks are copyable.</p>
 
@@ -187,6 +276,50 @@ ui-input {
           field[option] = !field[option];
         });
       }
+
+      /* --- amount ---------------------------------------------------------- */
+
+      const amount = document.getElementById('amount-demo');
+      const amountLog = document.getElementById('amount-log');
+
+      document.getElementById('opt-decimals').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        amount.configure({ decimals: label === 'auto' ? null : Number(label) });
+      });
+
+      document.getElementById('opt-bounds').addEventListener('ui4u:change', (event) => {
+        const bounded = event.detail.label !== 'none';
+        amount.configure({ min: bounded ? 1000 : null, max: bounded ? 1000000 : null });
+      });
+
+      // The parsed number travels in the event detail — read it there rather
+      // than re-parsing the text the user can still be editing.
+      amount.addEventListener('ui4u:input', (event) => {
+        const { value, amount: number } = event.detail;
+        amountLog.textContent = `ui4u:input → "${value}" is ${number ?? 'not a number'}`;
+      });
+
+      /* --- date ----------------------------------------------------------- */
+
+      const date = document.getElementById('date-demo');
+      const dateLog = document.getElementById('date-log');
+
+      document.getElementById('opt-view').addEventListener('ui4u:change', (event) => {
+        date.configure({ view: event.detail.label });
+      });
+
+      document.getElementById('opt-range').addEventListener('ui4u:change', (event) => {
+        date.configure({ range: event.detail.label === 'range' });
+      });
+
+      document.getElementById('opt-week').addEventListener('ui4u:change', (event) => {
+        date.configure({ firstDayOfWeek: event.detail.label === 'Mon' ? 1 : 0 });
+      });
+
+      date.addEventListener('ui4u:change', (event) => {
+        const { value } = event.detail;
+        dateLog.textContent = `ui4u:change → value="${value}"`;
+      });
 
       document.getElementById('toggle-error').addEventListener('click', () => {
         field.configure({ error: field.error ? '' : 'That address is already registered.' });

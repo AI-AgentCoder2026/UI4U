@@ -7,7 +7,7 @@ import { append, clear, delegate, el, on, setText, uid } from '../../core/dom.js
  * @typedef {object} FormError
  * @property {string} name the field's `name`
  * @property {string} message the message the field reported
- * @property {HTMLElement} field the failing `ui-input`
+ * @property {HTMLElement} field the failing field element
  *
  * @typedef {object} FormValidityResult
  * @property {boolean} valid
@@ -28,9 +28,18 @@ const SUMMARY_TITLE_ONE = 'There is a problem with this form';
 const SUMMARY_TITLE_MANY = 'There are {count} problems with this form';
 
 /**
+ * Every control `ui-form` knows how to validate.
+ *
+ * `ui-radio` is deliberately absent: it is validated through its
+ * `ui-radio-group`, which is the element that carries the `name`.
+ */
+const FIELD_SELECTOR = 'ui-input, ui-checkbox, ui-radio-group, ui-dropdown';
+
+/**
  * A validating form wrapper around a REAL `<form>`. It discovers its descendant
- * `ui-input` fields by `name`, checks them through their own `checkValidity()`,
- * and refuses to submit while anything is invalid.
+ * field elements by `name` — `ui-input`, `ui-checkbox`, `ui-radio-group` and
+ * `ui-dropdown` — checks them through their own `checkValidity()`, and refuses
+ * to submit while anything is invalid.
  *
  * ```html
  * <ui-form validate-on="submit">
@@ -100,14 +109,20 @@ export class Form extends UI4UElement {
   }
 
   /**
-   * The fields this form validates: descendant `ui-input` elements that carry a
+   * The fields this form validates: descendant field elements that carry a
    * `name` and belong to this form rather than to a nested one.
+   *
+   * Every one of these exposes the same
+   * `{ valid, message, value, name }` contract from `checkValidity()`, which is
+   * what lets one selector cover all of them. A bare `ui-radio` is skipped: its
+   * group owns validation, and counting both would report the same problem
+   * twice.
    *
    * @returns {HTMLElement[]}
    */
   get fields() {
     return /** @type {HTMLElement[]} */ (
-      [...this.querySelectorAll('ui-input')].filter(
+      [...this.querySelectorAll(FIELD_SELECTOR)].filter(
         (field) => field.hasAttribute('name') && field.closest('ui-form') === this
       )
     );

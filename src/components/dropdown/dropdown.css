@@ -1,0 +1,318 @@
+/**
+ * ui-dropdown
+ *
+ * Every value is a `--ui4u-*` token. The measurements that have no global token
+ * — field height, border width, option padding — are declared once as
+ * `--ui4u-dropdown-*` custom properties, so overriding them is a token
+ * override, never a fork of this file.
+ *
+ * The panel is portalled to `<body>`, so the two halves of this file cannot be
+ * merged into one rule set: `.ui4u-dropdown__panel` is styled through its own
+ * class and data attributes ONLY. A selector rooted at the host — say
+ * `ui-dropdown[data-open] .ui4u-dropdown__panel` — would never match, because
+ * the panel is not a descendant of the host. That mistake shipped an unstyled
+ * popup once; the data attributes below are the state that crosses the portal.
+ *
+ * Mobile-first: the field is sized for touch and the panel may go full-width;
+ * wider screens only refine the paddings.
+ */
+
+ui-dropdown {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-dropdown-height: 2.5rem;
+  --ui4u-dropdown-padding-x: var(--ui4u-space-4);
+  --ui4u-dropdown-font: var(--ui4u-font-size-md);
+  --ui4u-dropdown-radius: var(--ui4u-radius-md);
+  --ui4u-dropdown-border-width: 1px;
+  --ui4u-dropdown-disabled-opacity: 0.55;
+  --ui4u-dropdown-option-padding-block: var(--ui4u-space-2);
+  --ui4u-dropdown-option-padding-inline: var(--ui4u-space-3);
+  --ui4u-dropdown-caret-size: 0.5rem;
+}
+
+/* The author's options live in the host only while the list is closed; the
+   component moves them into the panel when it opens. */
+ui-dropdown > ui-dropdown-option {
+  display: none;
+}
+
+/* --- label ---------------------------------------------------------------- */
+
+ui-dropdown .ui4u-dropdown__label {
+  display: block;
+  margin-block-end: var(--ui4u-space-2);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text-muted);
+}
+
+ui-dropdown .ui4u-dropdown__label[hidden] {
+  display: none;
+}
+
+ui-dropdown .ui4u-dropdown__label[data-required='true']::after {
+  content: ' *';
+  color: var(--ui4u-danger);
+}
+
+/* --- the trigger ---------------------------------------------------------- */
+
+ui-dropdown .ui4u-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui4u-space-2);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--ui4u-dropdown-height);
+  padding-inline: var(--ui4u-dropdown-padding-x);
+  border: var(--ui4u-dropdown-border-width) solid var(--ui4u-border);
+  border-radius: var(--ui4u-dropdown-radius);
+  font-family: inherit;
+  font-size: var(--ui4u-dropdown-font);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  background: var(--ui4u-surface-glass-strong);
+  box-shadow: var(--ui4u-shadow-inset);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-base) var(--ui4u-ease-out),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    opacity var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+/* The caret is a pseudo-element, never a text node: a glyph inside the button
+   would end up in its accessible name. */
+ui-dropdown .ui4u-dropdown__trigger::after {
+  content: '';
+  flex: none;
+  width: var(--ui4u-dropdown-caret-size);
+  height: var(--ui4u-dropdown-caret-size);
+  border-right: var(--ui4u-dropdown-border-width) solid currentcolor;
+  border-block-end: var(--ui4u-dropdown-border-width) solid currentcolor;
+  transform: rotate(45deg) translateY(-25%);
+  opacity: var(--ui4u-text-subtle);
+  transition: transform var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-dropdown .ui4u-dropdown__trigger[aria-expanded='true']::after {
+  transform: rotate(225deg) translateY(-25%);
+  opacity: var(--ui4u-text);
+}
+
+ui-dropdown .ui4u-dropdown__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+ui-dropdown .ui4u-dropdown__trigger[data-placeholder='true'] .ui4u-dropdown__value {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-dropdown .ui4u-dropdown__trigger:hover:not(:disabled) {
+  border-color: var(--ui4u-border-strong);
+}
+
+ui-dropdown .ui4u-dropdown__trigger:focus-visible {
+  outline: none;
+  border-color: var(--ui4u-focus-ring-color);
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-dropdown .ui4u-dropdown__trigger:disabled {
+  opacity: var(--ui4u-dropdown-disabled-opacity);
+  background: var(--ui4u-surface-3);
+  cursor: not-allowed;
+}
+
+/* The error treatment is driven by the ARIA state, so it can never disagree
+   with what assistive technology announces. */
+ui-dropdown .ui4u-dropdown__trigger[aria-invalid='true'] {
+  border-color: var(--ui4u-danger);
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-dropdown .ui4u-dropdown__hint,
+ui-dropdown .ui4u-dropdown__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-dropdown .ui4u-dropdown__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-dropdown .ui4u-dropdown__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-dropdown .ui4u-dropdown__hint[hidden],
+ui-dropdown .ui4u-dropdown__error[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
+   The portalled panel.
+
+   Everything from here down styles `.ui4u-dropdown__panel` through its own
+   class and its own data attributes, because this node lives under <body> and
+   is not inside the `ui-dropdown` subtree at all.
+   ========================================================================== */
+
+.ui4u-dropdown__panel {
+  /* Component knobs, restated: they cannot be inherited from the host across
+     the portal boundary. */
+  --ui4u-dropdown-anchor-width: 12rem;
+  --ui4u-dropdown-panel-max-height: 18rem;
+  --ui4u-dropdown-option-padding-block: var(--ui4u-space-2);
+  --ui4u-dropdown-option-padding-inline: var(--ui4u-space-3);
+  --ui4u-dropdown-caret-size: 0.5rem;
+
+  position: fixed;
+  z-index: var(--ui4u-z-dropdown);
+  box-sizing: border-box;
+  /* `position()` sets the exact left/top; the width only follows the trigger. */
+  min-width: var(--ui4u-dropdown-anchor-width);
+  max-width: calc(100vw - var(--ui4u-space-4) * 2);
+  max-height: min(var(--ui4u-dropdown-panel-max-height), calc(100dvh - var(--ui4u-space-8)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--ui4u-space-1);
+  border: var(--ui4u-dropdown-border-width) solid var(--ui4u-border);
+  border-radius: var(--ui4u-dropdown-radius);
+  /* Three token layers: the glass tint, the theme surface, and the opaque page
+     background underneath. A listbox has to be readable while page content
+     scrolls behind it, and the theme surfaces are translucent by design — so
+     this composites them into a solid surface without hardcoding a colour. */
+  background:
+    linear-gradient(var(--ui4u-surface-glass-strong), var(--ui4u-surface-glass-strong)),
+    var(--ui4u-surface), var(--ui4u-bg);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+  box-shadow: var(--ui4u-shadow-lg), var(--ui4u-shadow-inset);
+  color: var(--ui4u-text);
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-dropdown-font);
+  animation: ui4u-dropdown-in var(--ui4u-duration-fast) var(--ui4u-ease-out);
+}
+
+/* The panel is only in the DOM while open, so the animation replays on every
+   open — and costs nothing when motion is switched off. */
+@keyframes ui4u-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--ui4u-space-1) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ui4u-dropdown__panel[hidden] {
+  display: none;
+}
+
+/* --- options -------------------------------------------------------------- */
+
+.ui4u-dropdown__panel ui-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: var(--ui4u-space-2);
+  padding-block: var(--ui4u-dropdown-option-padding-block);
+  padding-inline: var(--ui4u-dropdown-option-padding-inline);
+  border-radius: var(--ui4u-radius-sm);
+  line-height: var(--ui4u-line-normal);
+  color: var(--ui4u-text);
+  cursor: pointer;
+  transition:
+    background-color var(--ui4u-duration-instant) var(--ui4u-ease-standard),
+    color var(--ui4u-duration-instant) var(--ui4u-ease-standard);
+}
+
+/* `data-active` is the keyboard cursor; `aria-selected` is what was committed.
+   They are different states and are styled differently on purpose. */
+.ui4u-dropdown__panel ui-dropdown-option[data-active='true'] {
+  background: var(--ui4u-primary-soft);
+  color: var(--ui4u-primary-hover);
+}
+
+.ui4u-dropdown__panel ui-dropdown-option[aria-selected='true'] {
+  font-weight: var(--ui4u-weight-semibold);
+  box-shadow: inset 0 0 0 var(--ui4u-focus-ring-width) var(--ui4u-focus-ring-color);
+}
+
+.ui4u-dropdown__panel ui-dropdown-option[aria-disabled='true'] {
+  color: var(--ui4u-text-subtle);
+  opacity: var(--ui4u-dropdown-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.ui4u-dropdown__panel ui-dropdown-option[aria-disabled='true'][data-active='true'] {
+  background: transparent;
+  color: var(--ui4u-text-subtle);
+}
+
+/* A checked row in a multiple listbox needs a tick the single mode does not. */
+.ui4u-dropdown__panel[aria-multiselectable='true'] ui-dropdown-option::before {
+  content: '';
+  flex: none;
+  width: var(--ui4u-dropdown-caret-size);
+  height: var(--ui4u-dropdown-caret-size);
+  border: var(--ui4u-dropdown-border-width) solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-xs);
+}
+
+.ui4u-dropdown__panel[aria-multiselectable='true']
+  ui-dropdown-option[aria-selected='true']::before {
+  background: var(--ui4u-primary);
+  border-color: var(--ui4u-primary);
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+
+@media (min-width: 48rem) {
+  ui-dropdown {
+    --ui4u-dropdown-padding-x: var(--ui4u-space-5);
+    --ui4u-dropdown-option-padding-block: var(--ui4u-space-3);
+    --ui4u-dropdown-option-padding-inline: var(--ui4u-space-4);
+  }
+}
+
+/* On a narrow screen the panel may span the viewport: a trigger inset from both
+   edges should not shrink its own list into an unreadable column. */
+@media (max-width: 30rem) {
+  .ui4u-dropdown__panel {
+    min-width: 0;
+    width: calc(100vw - var(--ui4u-space-4) * 2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-dropdown .ui4u-dropdown__trigger,
+  ui-dropdown .ui4u-dropdown__trigger::after,
+  .ui4u-dropdown__panel ui-dropdown-option {
+    transition: none;
+  }
+
+  .ui4u-dropdown__panel {
+    animation: none;
+  }
+}

@@ -522,3 +522,337 @@ describe('ui-input teardown', () => {
     assert.equal(field.checkValidity().valid, false);
   });
 });
+
+/* --- amount mode ---------------------------------------------------------- */
+
+describe('ui-input type="amount"', () => {
+  afterEach(() => cleanup());
+
+  /** Types into the control the way a user would. */
+  const type = (field, text) => {
+    const native = nativeOf(field);
+    native.value = text;
+    native.dispatchEvent(new window.Event('input', { bubbles: true }));
+  };
+
+  it('formats as the user types', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+
+    type(field, '5000');
+    assert.equal(nativeOf(field).value, '5,000');
+
+    type(field, '5000000');
+    assert.equal(nativeOf(field).value, '5,000,000');
+  });
+
+  it('parses the k, m and b shortcuts as you type', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+
+    type(field, '5k');
+    assert.equal(field.amount, 5000);
+    assert.equal(nativeOf(field).value, '5,000');
+
+    type(field, '3m');
+    assert.equal(field.amount, 3_000_000);
+
+    type(field, '2b');
+    assert.equal(field.amount, 2_000_000_000);
+  });
+
+  it('leaves a half-typed decimal alone so the caret is not disturbed', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+
+    type(field, '12.');
+    assert.equal(nativeOf(field).value, '12.', 'must not reformat mid-number');
+    assert.equal(field.amount, 12);
+  });
+
+  it('reports the parsed number alongside the text in its events', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+    /** @type {any[]} */
+    const seen = [];
+    field.addEventListener('ui4u:input', (event) => seen.push(event.detail));
+
+    type(field, '2.5k');
+
+    assert.equal(seen.at(-1).value, '2,500');
+    assert.equal(seen.at(-1).amount, 2500);
+  });
+
+  it('keeps the text control under the hood', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+    assert.equal(nativeOf(field).type, 'text', 'the browser has no amount type');
+    assert.equal(field.dataset.mode, 'amount');
+  });
+
+  it('honours a fixed decimal count', () => {
+    const field = mount('<ui-input type="amount" decimals="2"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    type(field, '8421');
+    assert.equal(nativeOf(field).value, '8,421.00');
+    assert.equal(field.amount, 8421);
+  });
+
+  it('rejects text that is not an amount', () => {
+    const field = mount('<ui-input type="amount"></ui-input>').querySelector('ui-input');
+
+    type(field, 'abc');
+    const result = field.checkValidity();
+    assert.equal(result.valid, false);
+    assert.match(result.message, /k, m or b/);
+  });
+
+  it('checks the min and max bounds', () => {
+    const field = mount('<ui-input type="amount" min="1000" max="9000"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    type(field, '500');
+    assert.equal(field.checkValidity().valid, false);
+
+    type(field, '5000');
+    assert.equal(field.checkValidity().valid, true);
+
+    type(field, '50000');
+    assert.equal(field.checkValidity().valid, false);
+  });
+
+  it('treats an empty required amount as invalid', () => {
+    const field = mount('<ui-input type="amount" required></ui-input>').querySelector('ui-input');
+
+    assert.equal(field.checkValidity().valid, false);
+  });
+});
+
+/* --- date mode ------------------------------------------------------------ */
+
+describe('ui-input type="date"', () => {
+  afterEach(() => cleanup());
+
+  /** @returns {Element|null} the portalled panel, or null when closed */
+  const panel = () => document.querySelector('.ui4u-calendar');
+
+  it('shows the local format while keeping the ISO value in the attribute', () => {
+    const field = mount(
+      '<ui-input type="date" value="2026-08-14" locale="en-GB"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.value, '2026-08-14', 'the value stays machine-readable');
+    assert.match(nativeOf(field).value, /2026/);
+    assert.equal(nativeOf(field).readOnly, true, 'the panel is the only way in');
+  });
+
+  it('marks the control as opening a dialog', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+    assert.equal(nativeOf(field).getAttribute('aria-haspopup'), 'dialog');
+    assert.equal(nativeOf(field).getAttribute('aria-expanded'), 'false');
+  });
+
+  it('portals the panel to the body, not inside the field', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+
+    field.openPicker();
+
+    const open = panel();
+    assert.ok(open, 'the panel is open');
+    assert.equal(field.contains(open), false, 'it must not live inside the host');
+    assert.equal(open.parentElement, document.body);
+  });
+
+  it('closes on teardown so nothing is left on the body', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+    field.openPicker();
+    assert.ok(panel());
+
+    field.remove();
+    assert.equal(panel(), null);
+  });
+
+  it('renders a day grid with one roving tab stop', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+    field.openPicker();
+
+    const grid = panel().querySelector('[role="grid"]');
+    assert.ok(grid);
+
+    const stops = panel().querySelectorAll('.ui4u-calendar__day[tabindex="0"]');
+    assert.equal(stops.length, 1, 'a grid is a single tab stop');
+  });
+
+  it('picks a date with the mouse and writes it back as ISO', () => {
+    const field = mount('<ui-input type="date" value="2026-08-14"></ui-input>').querySelector(
+      'ui-input'
+    );
+    field.openPicker();
+
+    const target = panel().querySelector('.ui4u-calendar__day[data-date="2026-08-20"]');
+    target.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    assert.equal(field.value, '2026-08-20');
+    assert.equal(panel(), null, 'a single date closes the panel');
+  });
+
+  it('completes a range from a half-open one', () => {
+    const field = mount('<ui-input type="date" range value="2026-08-14"></ui-input>').querySelector(
+      'ui-input'
+    );
+    field.openPicker();
+
+    panel()
+      .querySelector('.ui4u-calendar__day[data-date="2026-08-20"]')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    assert.deepEqual(field.range, { from: '2026-08-14', to: '2026-08-20' });
+  });
+
+  it('starts a range from an empty field and closes it after two clicks', () => {
+    // The panel opens on the current month, so drive it to a known one first.
+    const field = mount('<ui-input type="date" range></ui-input>').querySelector('ui-input');
+    field.openPicker();
+
+    const next = panel().querySelector('.ui4u-calendar__nav[aria-label="Next"]');
+    next.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    const days = [...panel().querySelectorAll('.ui4u-calendar__day:not([data-outside])')];
+    days[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    const range = field.range;
+    assert.ok(range.from, 'a start date was picked');
+    assert.equal(range.to, '', 'the range is still open');
+  });
+
+  it('swaps the ends when the second click is earlier', () => {
+    // A half-open range starting 20 Aug, completed by clicking 5 Aug. Rather
+    // than producing a negative range, the ends swap.
+    const field = mount('<ui-input type="date" range value="2026-08-20"></ui-input>').querySelector(
+      'ui-input'
+    );
+    field.openPicker();
+
+    panel()
+      .querySelector('.ui4u-calendar__day[data-date="2026-08-05"]')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    assert.deepEqual(field.range, { from: '2026-08-05', to: '2026-08-20' });
+    assert.equal(field.checkValidity().valid, true, 'a swapped range is still valid');
+  });
+
+  it('opens at the month view when asked', () => {
+    const field = mount(
+      '<ui-input type="date" view="month" value="2026-08-14"></ui-input>'
+    ).querySelector('ui-input');
+    field.openPicker();
+
+    assert.equal(panel().querySelectorAll('.ui4u-calendar__month').length, 12);
+    assert.equal(panel().querySelectorAll('.ui4u-calendar__day').length, 0);
+  });
+
+  it('drills from months down to days', () => {
+    const field = mount(
+      '<ui-input type="date" view="month" value="2026-08-14"></ui-input>'
+    ).querySelector('ui-input');
+    field.openPicker();
+
+    panel()
+      .querySelector('.ui4u-calendar__month[data-month="7"]')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+    assert.ok(panel().querySelector('.ui4u-calendar__day[data-date="2026-08-01"]'));
+  });
+
+  it('opens at the year view and drills down twice', () => {
+    const field = mount(
+      '<ui-input type="date" view="year" value="2026-08-14"></ui-input>'
+    ).querySelector('ui-input');
+    field.openPicker();
+
+    assert.equal(panel().querySelectorAll('.ui4u-calendar__year').length, 12);
+
+    panel()
+      .querySelector('.ui4u-calendar__year[data-year="2026"]')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(panel().querySelectorAll('.ui4u-calendar__month').length, 12);
+
+    panel()
+      .querySelector('.ui4u-calendar__month[data-month="7"]')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.ok(panel().querySelector('.ui4u-calendar__day'));
+  });
+
+  it('moves the roving focus with the arrow keys', () => {
+    const field = mount('<ui-input type="date" value="2026-08-14"></ui-input>').querySelector(
+      'ui-input'
+    );
+    field.openPicker();
+
+    const body = panel().querySelector('.ui4u-calendar__body');
+    body.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+    const focused = panel().querySelector('.ui4u-calendar__day[tabindex="0"]');
+    assert.equal(focused.dataset.date, '2026-08-15');
+    assert.equal(
+      panel().querySelectorAll('.ui4u-calendar__day[tabindex="0"]').length,
+      1,
+      'still exactly one tab stop'
+    );
+  });
+
+  it('closes on Escape', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+    field.openPicker();
+
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert.equal(panel(), null);
+  });
+
+  it('disables days outside its bounds', () => {
+    const field = mount(
+      '<ui-input type="date" min="2026-08-10" max="2026-08-20" value="2026-08-14"></ui-input>'
+    ).querySelector('ui-input');
+    field.openPicker();
+
+    assert.equal(
+      panel().querySelector('.ui4u-calendar__day[data-date="2026-08-05"]').disabled,
+      true
+    );
+    assert.equal(
+      panel().querySelector('.ui4u-calendar__day[data-date="2026-08-15"]').disabled,
+      false
+    );
+  });
+
+  it('validates the chosen date against its bounds', () => {
+    const field = mount(
+      '<ui-input type="date" min="2026-08-10" max="2026-08-20" value="2026-09-01"></ui-input>'
+    ).querySelector('ui-input');
+
+    const result = field.checkValidity();
+    assert.equal(result.valid, false);
+    assert.match(result.message, /or earlier/);
+  });
+
+  it('rejects a reversed range', () => {
+    const field = mount(
+      '<ui-input type="date" range value="2026-08-20/2026-08-10"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.checkValidity().valid, false);
+  });
+
+  it('exposes the chosen range as a getter', () => {
+    const field = mount(
+      '<ui-input type="date" range value="2026-08-10/2026-08-20"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.deepEqual(field.range, { from: '2026-08-10', to: '2026-08-20' });
+  });
+
+  it('stays closed when the field is disabled', () => {
+    const field = mount('<ui-input type="date" disabled></ui-input>').querySelector('ui-input');
+
+    field.openPicker();
+    assert.equal(panel(), null);
+  });
+});

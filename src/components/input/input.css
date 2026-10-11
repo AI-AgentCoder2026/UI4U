@@ -141,6 +141,309 @@ ui-input .ui4u-input__error[hidden] {
   display: none;
 }
 
+/* --- amount mode ---------------------------------------------------------- */
+
+/*
+ * Tabular figures keep the digits from shifting sideways as the value is
+ * reformatted under the caret on every keystroke.
+ */
+ui-input[data-mode='amount'] .ui4u-input__native {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--ui4u-font-mono);
+}
+
+/* --- date mode ------------------------------------------------------------ */
+
+ui-input[data-mode='date'] .ui4u-input__native {
+  cursor: pointer;
+}
+
+ui-input[data-mode='date'] .ui4u-input__native::after {
+  content: '';
+}
+
+/* A caret hint, drawn with a border so no icon font is needed. */
+ui-input[data-mode='date'] .ui4u-input__native {
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    right calc(100% - var(--ui4u-space-4)) calc(50% + 1px),
+    right calc(100% - var(--ui4u-space-3)) calc(50% + 1px);
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-inline-end: calc(var(--ui4u-space-6) + var(--ui4u-space-2));
+}
+
+ui-input[data-mode='date'] .ui4u-input__native[readonly] {
+  cursor: pointer;
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* --- calendar panel -------------------------------------------------------
+ *
+ * Portalled to <body>, so it is styled by its own class only. A selector rooted
+ * at the host element would never match it.
+ */
+
+.ui4u-calendar {
+  z-index: var(--ui4u-z-popup);
+  min-width: 17rem;
+  padding: var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-radius-md);
+  background: var(--ui4u-surface);
+  color: var(--ui4u-text);
+  font-family: var(--ui4u-font-sans);
+  box-shadow: var(--ui4u-shadow-lg);
+}
+
+.ui4u-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui4u-space-2);
+  margin-bottom: var(--ui4u-space-2);
+}
+
+.ui4u-calendar__title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  cursor: pointer;
+  border-radius: var(--ui4u-radius-xs);
+}
+
+.ui4u-calendar__title:hover {
+  color: var(--ui4u-primary);
+}
+
+.ui4u-calendar__title:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring);
+}
+
+.ui4u-calendar__nav {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ui4u-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Chevron drawn with rotated borders, so there is no icon dependency. */
+.ui4u-calendar__nav::before {
+  content: '';
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-inline: 1.5px solid currentColor;
+  border-block: 1.5px solid currentColor;
+}
+
+.ui4u-calendar__nav:hover {
+  background: var(--ui4u-surface-3);
+  color: var(--ui4u-primary);
+}
+
+.ui4u-calendar__nav:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring);
+}
+
+.ui4u-calendar__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ui4u-calendar__table th {
+  padding: var(--ui4u-space-1);
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-medium);
+  color: var(--ui4u-text-subtle);
+}
+
+.ui4u-calendar__day {
+  width: 100%;
+  min-width: 2.25rem;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui4u-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+.ui4u-calendar__day:hover:not(:disabled) {
+  background: var(--ui4u-surface-3);
+}
+
+.ui4u-calendar__day:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+.ui4u-calendar__day[data-outside] {
+  color: var(--ui4u-text-subtle);
+}
+
+.ui4u-calendar__day[data-today] {
+  font-weight: var(--ui4u-weight-bold);
+  color: var(--ui4u-primary);
+}
+
+.ui4u-calendar__day[data-in-range] {
+  background: var(--ui4u-primary-soft);
+  border-radius: 0;
+}
+
+.ui4u-calendar__day[data-selected],
+.ui4u-calendar__day[data-range-start],
+.ui4u-calendar__day[data-range-end] {
+  background: var(--ui4u-primary);
+  color: var(--ui4u-primary-contrast);
+}
+
+.ui4u-calendar__day[data-range-start] {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.ui4u-calendar__day[data-range-end] {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.ui4u-calendar__day:disabled,
+.ui4u-calendar__day[data-blocked] {
+  color: var(--ui4u-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.ui4u-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui4u-space-1);
+}
+
+.ui4u-calendar__grid--years {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.ui4u-calendar__month,
+.ui4u-calendar__year {
+  padding: var(--ui4u-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--ui4u-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.ui4u-calendar__month:hover,
+.ui4u-calendar__year:hover {
+  background: var(--ui4u-surface-3);
+  color: var(--ui4u-primary);
+}
+
+.ui4u-calendar__month:focus-visible,
+.ui4u-calendar__year:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+.ui4u-calendar__month[aria-pressed='true'] {
+  background: var(--ui4u-primary);
+  color: var(--ui4u-primary-contrast);
+}
+
+.ui4u-calendar__year[data-today] {
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary);
+  font-weight: var(--ui4u-weight-semibold);
+}
+
+.ui4u-calendar__footer {
+  display: flex;
+  gap: var(--ui4u-space-2);
+  margin-top: var(--ui4u-space-3);
+  padding-top: var(--ui4u-space-2);
+  border-top: 1px solid var(--ui4u-divider);
+}
+
+.ui4u-calendar__today,
+.ui4u-calendar__clear,
+.ui4u-calendar__done {
+  flex: 1;
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  cursor: pointer;
+}
+
+.ui4u-calendar__done {
+  background: var(--ui4u-primary);
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary-contrast);
+}
+
+.ui4u-calendar__today:hover,
+.ui4u-calendar__clear:hover {
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary);
+}
+
+.ui4u-calendar__today:focus-visible,
+.ui4u-calendar__clear:focus-visible,
+.ui4u-calendar__done:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+.ui4u-calendar__status {
+  margin: var(--ui4u-space-2) 0 0;
+  font-size: var(--ui4u-font-size-xs);
+  color: var(--ui4u-text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A date panel is narrow on a phone; let it use the width it has. */
+@media (min-width: 48rem) {
+  .ui4u-calendar {
+    min-width: 19rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui4u-calendar__day {
+    transition: none;
+  }
+}
+
 /* --- desktop refinements -------------------------------------------------- */
 @media (min-width: 48rem) {
   ui-input {

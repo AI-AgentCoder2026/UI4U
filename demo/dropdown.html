@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Dropdown</title>
+    <meta
+      name="description"
+      content="ui-dropdown — a custom listbox with a real button trigger, a portalled panel and full keyboard and screen reader support."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-dropdown</code></h1>
+          <p class="lede">
+            A custom listbox, not a styled <code>&lt;select&gt;</code>. A real
+            <code>&lt;button&gt;</code> trigger owns focus for the whole interaction and names the
+            active option through <code>aria-activedescendant</code>, so the portalled panel never
+            steals it.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Selection</span>
+          <ui-tabs id="opt-mode" variant="underline" label="Selection">
+            <ui-tab label="single"></ui-tab>
+            <ui-tab label="multiple"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Label</span>
+          <ui-tabs id="opt-label" variant="underline" label="Label style">
+            <ui-tab label="visible"></ui-tab>
+            <ui-tab label="sr-only"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-dropdown
+          id="demo"
+          label="Country"
+          name="country"
+          placeholder="Choose a country"
+          hint="Used for the shipping quote."
+          required
+        >
+          <ui-dropdown-option value="my">Malaysia</ui-dropdown-option>
+          <ui-dropdown-option value="sg">Singapore</ui-dropdown-option>
+          <ui-dropdown-option value="th" disabled>Thailand (fully booked)</ui-dropdown-option>
+          <ui-dropdown-option value="vn">Vietnam</ui-dropdown-option>
+          <ui-dropdown-option value="id">Indonesia</ui-dropdown-option>
+        </ui-dropdown>
+      </div>
+
+      <div class="controls">
+        <button id="toggle-required" type="button">Toggle required</button>
+        <button id="toggle-disabled" type="button">Toggle disabled</button>
+        <button id="toggle-error" type="button">Toggle error</button>
+      </div>
+
+      <div class="controls">
+        <button id="validate" type="button">Validate</button>
+        <button id="clear" type="button">Clear validity</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a selection…</div>
+
+      <section>
+        <h2>Multiple selection</h2>
+        <p>
+          <code>Space</code> toggles the active option without closing the list,
+          <code>Ctrl</code>+<kbd>↓</kbd> extends the selection, and the trigger shows every chosen
+          label.
+        </p>
+        <div class="controls">
+          <ui-dropdown id="regions" label="Regions" name="regions" multiple placeholder="Any">
+            <ui-dropdown-option value="eu">Europe</ui-dropdown-option>
+            <ui-dropdown-option value="ap">Asia Pacific</ui-dropdown-option>
+            <ui-dropdown-option value="la">Latin America</ui-dropdown-option>
+            <ui-dropdown-option value="na">North America</ui-dropdown-option>
+          </ui-dropdown>
+        </div>
+      </section>
+
+      <section>
+        <h2>States</h2>
+        <div class="controls">
+          <ui-dropdown label="Small list" hint="Nothing is preselected.">
+            <ui-dropdown-option value="a">Alpha</ui-dropdown-option>
+            <ui-dropdown-option value="b">Beta</ui-dropdown-option>
+          </ui-dropdown>
+
+          <ui-dropdown label="Preselected" value="b" sr-only hint="The label is spoken, not shown.">
+            <ui-dropdown-option value="a">Alpha</ui-dropdown-option>
+            <ui-dropdown-option value="b">Beta</ui-dropdown-option>
+          </ui-dropdown>
+
+          <ui-dropdown label="Unavailable" value="a" disabled>
+            <ui-dropdown-option value="a">Alpha</ui-dropdown-option>
+          </ui-dropdown>
+        </div>
+      </section>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-dropdown label="Country" name="country" placeholder="Choose a country" required hint="Used for the shipping quote."&gt;
+  &lt;ui-dropdown-option value="my"&gt;Malaysia&lt;/ui-dropdown-option&gt;
+  &lt;ui-dropdown-option value="sg"&gt;Singapore&lt;/ui-dropdown-option&gt;
+  &lt;ui-dropdown-option value="th" disabled&gt;Thailand (fully booked)&lt;/ui-dropdown-option&gt;
+&lt;/ui-dropdown&gt;
+
+&lt;!-- `multiple` switches on aria-multiselectable; Space then toggles
+     without closing, and the trigger shows every chosen label. --&gt;
+&lt;ui-dropdown label="Regions" multiple&gt;
+  &lt;ui-dropdown-option value="eu"&gt;Europe&lt;/ui-dropdown-option&gt;
+&lt;/ui-dropdown&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const field = document.getElementById('demo');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+field.configure({
+  label: 'Country',
+  hint: 'Used for the shipping quote.',
+  required: true,
+});
+
+// The same result shape as ui-input, so ui-form drives both the same way.
+const { valid, message, value, name } = field.checkValidity();
+field.reportValidity();  // sets `error` and announces it
+field.clearValidity();   // drops the error state again
+
+// The listbox state, and the options behind it.
+field.open();
+field.toggle();
+field.close();
+console.log(field.options);  // [{ value, label, disabled, selected }]
+
+field.addEventListener('ui4u:change', (event) =&gt; {
+  const { value, name, option } = event.detail;
+  console.log(`${name} -&gt; ${value} (${option.textContent})`);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The panel is portalled to &lt;body&gt;, so it is styled through its
+   OWN class and data attributes. A selector rooted at the host,
+   like `ui-dropdown[data-open] .ui4u-dropdown__panel`, can never
+   match: the panel is not a descendant of the host. */
+.ui4u-dropdown__panel {
+  --ui4u-dropdown-anchor-width: 14rem;
+  z-index: var(--ui4u-z-dropdown);
+  box-shadow: var(--ui4u-shadow-lg);
+}
+
+.ui4u-dropdown__panel ui-dropdown-option[data-active='true'] {
+  background: var(--ui4u-primary-soft);
+}
+
+ui-dropdown {
+  --ui4u-dropdown-height: 3rem;
+  --ui4u-dropdown-radius: var(--ui4u-radius-lg);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure id="a11y" summary="Accessibility notes">
+        <p>
+          This component follows the WAI-ARIA <strong>select-only combobox</strong> pattern: the
+          trigger is a real <code>&lt;button&gt;</code> and it keeps focus for the entire
+          interaction.
+        </p>
+        <ul>
+          <li>
+            The trigger carries <code>aria-haspopup="listbox"</code>, <code>aria-expanded</code> and
+            <code>aria-controls</code> pointing at the panel; the panel is
+            <code>role="listbox"</code> and carries <code>aria-multiselectable</code> when
+            <code>multiple</code> is set, each option is <code>role="option"</code> with
+            <code>aria-selected</code>, and disabled options carry <code>aria-disabled</code>.
+          </li>
+          <li>
+            The keyboard cursor is published with <code>aria-activedescendant</code>, so a screen
+            reader follows the options without focus ever leaving the trigger. That is also why the
+            portalled panel needs no focus trap.
+          </li>
+          <li>
+            Closed: <kbd>Enter</kbd>/<kbd>Space</kbd>/<kbd>↓</kbd>/<kbd>↑</kbd> open,
+            <kbd>Home</kbd>/<kbd>End</kbd> open onto the first/last option, typing jumps to a
+            matching label. Open: <kbd>↑</kbd>/<kbd>↓</kbd> move, <kbd>Home</kbd>/<kbd>End</kbd>
+            jump, <kbd>Enter</kbd> commits, <kbd>Space</kbd> commits or toggles when
+            <code>multiple</code>, <kbd>Esc</kbd> closes and returns focus to the trigger, and
+            <kbd>Tab</kbd> closes without swallowing the key.
+          </li>
+          <li>
+            Disabled options are skipped by arrow navigation and type-ahead, and can never be
+            committed by click or keyboard.
+          </li>
+          <li>
+            The trigger's text content is the current selection, so the value is part of its
+            accessible name. With <code>sr-only</code> the visible label is clipped but still read.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const field = document.getElementById('demo');
+      const regions = document.getElementById('regions');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real field.
+      document.getElementById('opt-mode').addEventListener('ui4u:change', (event) => {
+        const multiple = event.detail.label === 'multiple';
+        field.configure({ multiple });
+        log.textContent = `Selection mode → ${multiple ? 'multiple' : 'single'}`;
+      });
+
+      document.getElementById('opt-label').addEventListener('ui4u:change', (event) => {
+        field.configure({ srOnly: event.detail.label === 'sr-only' });
+      });
+
+      const toggles = [
+        ['toggle-required', 'required'],
+        ['toggle-disabled', 'disabled'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('click', () => {
+          field[option] = !field[option];
+        });
+      }
+
+      document.getElementById('toggle-error').addEventListener('click', () => {
+        field.configure({ error: field.error ? '' : 'We do not ship there yet.' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        field.reportValidity();
+        const result = field.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        field.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        field
+          .configure({ value: '', error: '', hint: 'Used for the shipping quote.' })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      field.addEventListener('ui4u:change', (event) => {
+        const value = Array.isArray(event.detail.value)
+          ? event.detail.value.join(', ')
+          : event.detail.value;
+        log.textContent = `ui4u:change → ${event.detail.name} = "${value}"`;
+        // Clear a stale error as soon as the author picks again.
+        field.clearValidity();
+      });
+
+      regions.addEventListener('ui4u:change', (event) => {
+        const value = Array.isArray(event.detail.value)
+          ? event.detail.value.join(', ')
+          : event.detail.value;
+        log.textContent = `regions = "${value}"`;
+      });
+    </script>
+  </body>
+</html>

@@ -41,6 +41,14 @@ import { Input, INPUT_STYLE_ID, inputCss } from './components/input/index.js';
 import { TableGrid, TABLEGRID_STYLE_ID, tablegridCss } from './components/tablegrid/index.js';
 import { Form, FORM_STYLE_ID, formCss } from './components/form/index.js';
 import { Sidebar, SidebarItem, SIDEBAR_STYLE_ID, sidebarCss } from './components/sidebar/index.js';
+import { Checkbox, CHECKBOX_STYLE_ID, checkboxCss } from './components/checkbox/index.js';
+import { Radio, RadioGroup, RADIO_STYLE_ID, radioCss } from './components/radio/index.js';
+import {
+  Dropdown,
+  DropdownOption,
+  DROPDOWN_STYLE_ID,
+  dropdownCss,
+} from './components/dropdown/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -87,6 +95,17 @@ export {
   SidebarItem,
   SIDEBAR_STYLE_ID,
   sidebarCss,
+  Checkbox,
+  CHECKBOX_STYLE_ID,
+  checkboxCss,
+  Radio,
+  RadioGroup,
+  RADIO_STYLE_ID,
+  radioCss,
+  Dropdown,
+  DropdownOption,
+  DROPDOWN_STYLE_ID,
+  dropdownCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -136,6 +155,16 @@ export const components = [
     styleId: SIDEBAR_STYLE_ID,
     css: sidebarCss,
   },
+  { tag: 'ui-checkbox', ctor: Checkbox, styleId: CHECKBOX_STYLE_ID, css: checkboxCss },
+  { tag: 'ui-radio', ctor: Radio },
+  { tag: 'ui-radio-group', ctor: RadioGroup, styleId: RADIO_STYLE_ID, css: radioCss },
+  { tag: 'ui-dropdown-option', ctor: DropdownOption },
+  {
+    tag: 'ui-dropdown',
+    ctor: Dropdown,
+    styleId: DROPDOWN_STYLE_ID,
+    css: dropdownCss,
+  },
 ];
 
 /**
@@ -178,6 +207,12 @@ export const UI4U = {
   TableGrid,
   Form,
   Sidebar,
+  SidebarItem,
+  Checkbox,
+  Radio,
+  RadioGroup,
+  Dropdown,
+  DropdownOption,
   UI4UElement,
   Emitter,
   define: defineElement,

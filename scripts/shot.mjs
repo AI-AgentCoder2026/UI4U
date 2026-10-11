@@ -30,6 +30,9 @@ const PAGES = [
   ['sidebar', devices['Desktop Chrome'].viewport],
   ['layout', devices['Desktop Chrome'].viewport],
   ['tablegrid', devices['Desktop Chrome'].viewport],
+  ['checkbox', devices['Desktop Chrome'].viewport],
+  ['radio', devices['Desktop Chrome'].viewport],
+  ['dropdown', devices['Desktop Chrome'].viewport],
 ];
 
 const only = process.argv[2];
@@ -67,8 +70,8 @@ for (const [name, viewport] of targets) {
   }
 
   // `window` lives in the browser; this runs under Node, so the eslint browser
-// globals have to be named where they are used.
-await page.evaluate(() => globalThis.scrollTo(0, 0));
+  // globals have to be named where they are used.
+  await page.evaluate(() => globalThis.scrollTo(0, 0));
 
   // The table grid has a tall control area above it; shooting the component
   // itself keeps the docs image about the table rather than the pickers.

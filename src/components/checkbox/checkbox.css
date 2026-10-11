@@ -1,0 +1,137 @@
+/**
+ * ui-checkbox
+ *
+ * Every value is a `--ui4u-*` token. The measurements with no global token —
+ * the control size and the touch target — are declared once on the element as
+ * `--ui4u-checkbox-*`, so overriding them is a token override, never a fork of
+ * this file.
+ *
+ * The native input stays a native input: `accent-color` themes it and
+ * `:focus-visible` gives it a real focus ring. Nothing here hides the control
+ * behind a drawn box, because that is what would break form submission, mobile
+ * pickers and assistive technology.
+ *
+ * Mobile-first: the base row is sized for touch (44px), and the wide-screen
+ * rule only widens the horizontal padding.
+ */
+
+ui-checkbox {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-checkbox-size: 1.25rem;
+  --ui4u-checkbox-gap: var(--ui4u-space-3);
+  --ui4u-checkbox-touch: 2.75rem;
+  --ui4u-checkbox-padding-x: var(--ui4u-space-3);
+  --ui4u-checkbox-radius: var(--ui4u-radius-sm);
+  --ui4u-checkbox-accent: var(--ui4u-primary);
+  --ui4u-checkbox-disabled-opacity: 0.55;
+}
+
+/* --- the row ------------------------------------------------------------- */
+
+ui-checkbox .ui4u-checkbox__row {
+  display: grid;
+  grid-template-columns: var(--ui4u-checkbox-size) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ui4u-checkbox-gap);
+  box-sizing: border-box;
+  min-height: var(--ui4u-checkbox-touch);
+  padding-block: var(--ui4u-space-2);
+  padding-inline: var(--ui4u-checkbox-padding-x);
+  border-radius: var(--ui4u-checkbox-radius);
+  transition: background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+/* A ticked (or mixed) box gets a restrained brand tint. `:has` keeps the real
+   input as the source of truth — no second, fake control is drawn. */
+ui-checkbox .ui4u-checkbox__row:has(.ui4u-checkbox__native:checked) {
+  background: var(--ui4u-primary-soft);
+}
+
+ui-checkbox[disabled] .ui4u-checkbox__row {
+  opacity: var(--ui4u-checkbox-disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* --- the native control -------------------------------------------------- */
+
+ui-checkbox .ui4u-checkbox__native {
+  box-sizing: border-box;
+  width: var(--ui4u-checkbox-size);
+  height: var(--ui4u-checkbox-size);
+  margin: 0;
+  accent-color: var(--ui4u-checkbox-accent);
+  cursor: inherit;
+}
+
+ui-checkbox[disabled] .ui4u-checkbox__native {
+  cursor: not-allowed;
+}
+
+ui-checkbox .ui4u-checkbox__native:focus-visible {
+  outline: var(--ui4u-focus-ring-width) solid var(--ui4u-focus-ring-color);
+  outline-offset: var(--ui4u-focus-ring-offset);
+}
+
+/* --- label ---------------------------------------------------------------- */
+
+ui-checkbox .ui4u-checkbox__label {
+  font-size: var(--ui4u-font-size-md);
+  font-weight: var(--ui4u-weight-medium);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  cursor: inherit;
+  user-select: none;
+}
+
+ui-checkbox[disabled] .ui4u-checkbox__label {
+  cursor: not-allowed;
+}
+
+ui-checkbox .ui4u-checkbox__label[hidden] {
+  display: none;
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-checkbox .ui4u-checkbox__hint,
+ui-checkbox .ui4u-checkbox__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  padding-inline-start: var(--ui4u-checkbox-padding-x);
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-checkbox .ui4u-checkbox__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-checkbox .ui4u-checkbox__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-checkbox .ui4u-checkbox__hint[hidden],
+ui-checkbox .ui4u-checkbox__error[hidden] {
+  display: none;
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-checkbox {
+    --ui4u-checkbox-padding-x: var(--ui4u-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-checkbox .ui4u-checkbox__row {
+    transition: none;
+  }
+}

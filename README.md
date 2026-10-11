@@ -22,10 +22,13 @@ Early, and deliberately incremental. Shipped:
 | `ui-tooltip`    | [`demo/tooltip.html`](demo/tooltip.html)       | Hover + focus, viewport flipping, `Escape` to dismiss                     |
 | `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters       |
 | `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes               |
-| `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface       |
+| `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, plus `amount` (k/m/b) and `date` (picker) modes   |
 | `ui-form`       | [`demo/form.html`](demo/form.html)             | Validation, inline errors, `role="alert"` error summary                   |
 | `ui-sidebar`    | [`demo/sidebar.html`](demo/sidebar.html)       | Collapsible regions, off-canvas drawer on narrow screens                  |
 | `ui-tablegrid`  | [`demo/tablegrid.html`](demo/tablegrid.html)   | Column groups, sorting, search, advanced filters, selection, copy, paging |
+| `ui-checkbox`   | [`demo/checkbox.html`](demo/checkbox.html)     | Real `<input type="checkbox">`, `indeterminate`, shared validation        |
+| `ui-radio`      | [`demo/radio.html`](demo/radio.html)           | Radio group with one tab stop and arrow-key movement                      |
+| `ui-dropdown`   | [`demo/dropdown.html`](demo/dropdown.html)     | Listbox with type-ahead, arrow-key navigation and multi-select            |
 
 ![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
 
