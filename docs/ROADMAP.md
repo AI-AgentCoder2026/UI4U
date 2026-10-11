@@ -5,16 +5,16 @@ page and tests exist — see the component contract in [`AGENTS.md`](../AGENTS.m
 
 ## Status
 
-| Phase | Component    | State                                                           |
-| ----- | ------------ | --------------------------------------------------------------- |
-| 1     | `ui-button`  | ✅ shipped                                                      |
-| 1     | `ui-tooltip` | ✅ shipped (also brought in `core/position.js`)                 |
-| 1     | `ui-popup`   | ✅ shipped (also brought in `core/focus-trap.js`)               |
-| 2     | `ui-input`   | ✅ shipped                                                      |
-| 2     | `ui-form`    | ⏳ next                                                         |
-| 3     | `ui-grid`    | ✅ shipped                                                      |
-| 3     | `ui-sidebar` | ⏳ planned                                                      |
-| 3     | `ui-layout`  | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
+| Phase | Component      | State                                                           |
+| ----- | -------------- | --------------------------------------------------------------- |
+| 1     | `ui-button`    | ✅ shipped                                                      |
+| 1     | `ui-tooltip`   | ✅ shipped (also brought in `core/position.js`)                 |
+| 1     | `ui-popup`     | ✅ shipped (also brought in `core/focus-trap.js`)               |
+| 2     | `ui-input`     | ✅ shipped                                                      |
+| 2     | `ui-form`      | ⏳ next                                                         |
+| 3     | `ui-tablegrid` | Browsable data table: sortable columns, keyboard cell nav       |
+| 3     | `ui-sidebar`   | ⏳ planned                                                      |
+| 3     | `ui-layout`    | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
 
 Shared helpers extracted so far: `core/position.js`, `core/pointer.js`,
 `core/size.js`, `core/focus-trap.js`. `dom.js` still owns `focusables()` and
@@ -25,16 +25,16 @@ second one.
 
 The order is driven by dependencies, not by importance.
 
-| Phase | Component    | Why here                                                                     |
-| ----- | ------------ | ---------------------------------------------------------------------------- |
-| 1     | `ui-button`  | Everything interactive needs it; form, popup and input all submit through it |
-| 1     | `ui-tooltip` | First consumer of the positioning helper, which popup then reuses            |
-| 1     | `ui-popup`   | Needs the focus trap; sidebar's mobile drawer will reuse it                  |
-| 2     | `ui-input`   | Pure presentational field, no behaviour to get wrong                         |
-| 2     | `ui-form`    | Depends on `ui-input`'s validity surface                                     |
-| 3     | `ui-grid`    | CSS-only, low risk, useful in every other demo                               |
-| 3     | `ui-sidebar` | Reuses popup's drawer behaviour on narrow screens                            |
-| 3     | `ui-layout`  | Largest surface; benefits from grid and sidebar being settled                |
+| Phase | Component      | Why here                                                                     |
+| ----- | -------------- | ---------------------------------------------------------------------------- |
+| 1     | `ui-button`    | Everything interactive needs it; form, popup and input all submit through it |
+| 1     | `ui-tooltip`   | First consumer of the positioning helper, which popup then reuses            |
+| 1     | `ui-popup`     | Needs the focus trap; sidebar's mobile drawer will reuse it                  |
+| 2     | `ui-input`     | Pure presentational field, no behaviour to get wrong                         |
+| 2     | `ui-form`      | Depends on `ui-input`'s validity surface                                     |
+| 3     | `ui-tablegrid` | Browsable data table: sortable columns, keyboard cell nav                    |
+| 3     | `ui-sidebar`   | Reuses popup's drawer behaviour on narrow screens                            |
+| 3     | `ui-layout`    | Largest surface; benefits from grid and sidebar being settled                |
 
 ## Shared infrastructure to extract first
 
@@ -125,16 +125,44 @@ re-exported from `dom.js` so nothing breaks.
   linking to its field.
 - **Events** — `ui4u:submit` (only when valid), `ui4u:invalid`.
 
-## 6. `ui-grid`
+## 6. `ui-tablegrid`
+
+Wraps a plain `<table>`; the author keeps writing native markup.
 
 ```html
-<ui-grid columns="3" min="18rem" gap="md">…</ui-grid>
+<ui-tablegrid label="Releases" navigate>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col" data-sort="version" data-type="text">Version</th>
+        <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
+        <th scope="col">Published</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1.2.0</td>
+        <td data-value="8421">8,421</td>
+        <td>2026-08-14</td>
+      </tr>
+    </tbody>
+  </table>
+</ui-tablegrid>
 ```
 
-- **API** — `configure({ columns, min, gap, align, justify })`
-- **CSS-first** — auto-fit columns, so it is fluid without JS. Optional fixed
-  `columns` for grids that genuinely need a column count.
-- **A11y** — a plain container; no roles imposed on consumer content.
+- **API** — `configure({ navigate, striped, dense, sort, direction })`,
+  `sortBy(key, direction)`, `resetSort()`, and a `data` getter returning one
+  record per row keyed by each sortable column.
+- **Sorting** — `data-sort` marks a column sortable; `data-type="number"`
+  compares numerically; `data-value` carries the real number behind formatted
+  text such as `8,421`. Sorts are stable and `resetSort()` restores the
+  authored order.
+- **A11y** — each sortable header holds a real `<button>` so sorting is
+  keyboard reachable, and `aria-sort` is applied to exactly one header at a
+  time. `navigate` is opt-in: it switches the table to `role="grid"` with a
+  roving tab stop across cells, because a plain `<table>` is already
+  navigable and turning every cell into a tab stop would be a downgrade.
+- **Events** — `ui4u:sort` with `detail: { column, direction, rows }`.
 
 ## 7. `ui-sidebar`
 

@@ -23,7 +23,7 @@ Early, and deliberately incremental. Shipped:
 | `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters     |
 | `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes             |
 | `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface     |
-| `ui-grid`       | [`demo/grid.html`](demo/grid.html)             | Fluid auto-fit columns driven entirely by CSS                           |
+| `ui-tablegrid`  | [`demo/grid.html`](demo/grid.html)             | Fluid auto-fit columns driven entirely by CSS                           |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Table grid</title>
+    <meta
+      name="description"
+      content="ui-tablegrid — a browsable data table with sortable columns and keyboard cell navigation."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+    <style>
+      ui-tablegrid {
+        display: block;
+      }
+      .table-wrap {
+        max-height: 22rem;
+        overflow: auto;
+        border-radius: var(--ui4u-radius-lg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-tablegrid</code></h1>
+          <p class="lede">
+            A browsable data table. Click a header to sort, or focus one and press
+            <kbd>Enter</kbd>. Turn on <strong>navigate</strong> and the arrow keys move between
+            cells, like a spreadsheet.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Mode</span>
+          <ui-tabs id="opt-navigate" variant="underline" label="Mode">
+            <!-- `grid` first so the picker's default matches the `navigate`
+                 attribute below; otherwise the first click is a no-op. -->
+            <ui-tab label="grid"></ui-tab>
+            <ui-tab label="table"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Rows</span>
+          <ui-tabs id="opt-density" variant="underline" label="Rows">
+            <ui-tab label="comfortable"></ui-tab>
+            <ui-tab label="dense"></ui-tab>
+            <ui-tab label="striped"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-button id="sort-downloads" variant="primary">Sort by downloads</ui-button>
+        <ui-button id="sort-version" variant="secondary">Sort by version</ui-button>
+        <ui-button id="reset" variant="ghost">Reset sort</ui-button>
+      </div>
+
+      <div class="table-wrap">
+        <ui-tablegrid id="demo" label="Release downloads" navigate>
+          <table>
+            <caption class="u4u-sr-only">
+              Release downloads, sortable
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col" data-sort="version" data-type="text">Version</th>
+                <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
+                <th scope="col" data-sort="channel">Channel</th>
+                <th scope="col" data-sort="size" data-type="number">Size</th>
+                <th scope="col">Published</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1.0.0</td>
+                <td data-value="3900">3,900</td>
+                <td>stable</td>
+                <td data-value="41200">41.2 kB</td>
+                <td>2026-05-01</td>
+              </tr>
+              <tr>
+                <td>1.1.0</td>
+                <td data-value="5120">5,120</td>
+                <td>stable</td>
+                <td data-value="42380">42.4 kB</td>
+                <td>2026-06-02</td>
+              </tr>
+              <tr>
+                <td>1.2.0-beta.1</td>
+                <td data-value="1120">1,120</td>
+                <td>beta</td>
+                <td data-value="43100">43.1 kB</td>
+                <td>2026-07-21</td>
+              </tr>
+              <tr>
+                <td>1.2.0</td>
+                <td data-value="8421">8,421</td>
+                <td>stable</td>
+                <td data-value="43990">44.0 kB</td>
+                <td>2026-08-14</td>
+              </tr>
+              <tr>
+                <td>1.3.0-rc.1</td>
+                <td data-value="640">640</td>
+                <td>rc</td>
+                <td data-value="44210">44.2 kB</td>
+                <td>2026-09-30</td>
+              </tr>
+              <tr>
+                <td>1.3.0</td>
+                <td data-value="9260">9,260</td>
+                <td>stable</td>
+                <td data-value="44680">44.7 kB</td>
+                <td>2026-10-08</td>
+              </tr>
+            </tbody>
+          </table>
+        </ui-tablegrid>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for an event…</div>
+
+      <ui-disclosure summary="Source">
+        <p>
+          The author writes a plain <code>&lt;table&gt;</code>. The component keeps it and adds
+          sorting, keyboard navigation and sticky headers.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-tablegrid label="Release downloads" navigate&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th scope="col" data-sort="version" data-type="text"&gt;Version&lt;/th&gt;
+        &lt;th scope="col" data-sort="downloads" data-type="number"&gt;Downloads&lt;/th&gt;
+        &lt;th scope="col"&gt;Published&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;1.2.0&lt;/td&gt;
+        &lt;td data-value="8421"&gt;8,421&lt;/td&gt;
+        &lt;td&gt;2026-08-14&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/ui-tablegrid&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const grid = document.querySelector('ui-tablegrid');
+
+grid.configure({ navigate: true, striped: true, dense: false });
+
+grid.sortBy('downloads', 'desc');
+grid.resetSort();
+
+// One record per row, keyed by each sortable column's data-sort.
+grid.data;
+// [{ version: '1.3.0', downloads: '9260', channel: 'stable', size: '44680' }, …]
+
+grid.addEventListener('ui4u:sort', (event) =&gt; {
+  const { column, direction, rows } = event.detail;
+  console.log(column, direction, rows.length);
+});</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes" variant="ghost">
+        <ul>
+          <li>
+            Each sortable header contains a real <code>&lt;button&gt;</code>, so sorting works from
+            the keyboard without re-implementing button semantics.
+          </li>
+          <li>
+            <code>aria-sort</code> is applied to exactly one header at a time, using
+            <code>ascending</code> / <code>descending</code> / <code>none</code>.
+          </li>
+          <li>
+            A column marked <code>data-type="number"</code> compares numerically, and a formatted
+            cell can carry <code>data-value</code> for the real number.
+          </li>
+          <li>
+            <code>navigate</code> is opt-in. A plain <code>&lt;table&gt;</code> is already navigable
+            by a screen reader; grid roles and a roving tab stop are only added when you ask for
+            cell-by-cell keyboard movement.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const grid = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      document.getElementById('opt-navigate').addEventListener('ui4u:change', (event) => {
+        // Changing the mode rebuilds the ARIA wiring, so reconnect the element.
+        grid.toggleAttribute('navigate', event.detail.label === 'grid');
+      });
+
+      document.getElementById('opt-density').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        grid.configure({ dense: label === 'dense', striped: label === 'striped' });
+      });
+
+      document.getElementById('sort-downloads').addEventListener('click', () => {
+        grid.sortBy('downloads', 'desc');
+      });
+
+      document.getElementById('sort-version').addEventListener('click', () => {
+        grid.sortBy('version');
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        grid.resetSort();
+      });
+
+      grid.addEventListener('ui4u:sort', (event) => {
+        const { column, direction, rows } = event.detail;
+        log.textContent = `ui4u:sort → ${column ?? 'none'} ${direction} · ${rows.length} rows`;
+      });
+    </script>
+  </body>
+</html>

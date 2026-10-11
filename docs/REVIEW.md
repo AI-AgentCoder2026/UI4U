@@ -1,7 +1,7 @@
 # Review and next features
 
 Status of the library after `ui-tabs`, `ui-disclosure`, `ui-button`, `ui-tooltip`,
-`ui-layout`, `ui-popup`, `ui-input` and `ui-grid` shipped. `ui-form` and `ui-sidebar`
+`ui-layout`, `ui-popup`, `ui-input` and `ui-tablegrid` shipped. `ui-form` and `ui-sidebar`
 complete the original roadmap.
 
 ## What the audits found
@@ -81,7 +81,6 @@ Ranked by how much of a real interface they unblock.
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `ui-menu`                                                           | Dropdown/context menu with roving focus and typeahead. Reuses `core/position.js`.                 |
 | `ui-toast`                                                          | Transient messages with correct live-region politeness. Absent from any UI library of this scope. |
-| `ui-table`                                                          | Sortable, selectable data grid; `ui-grid` covers layout but not semantics.                        |
 | `ui-pagination`, `ui-breadcrumb`                                    | Small, common, low-risk.                                                                          |
 | `ui-progress`, `ui-spinner`, `ui-skeleton`, `ui-badge`, `ui-avatar` | Cheap primitives that round out a design system.                                                  |
 

@@ -39,7 +39,7 @@ Every component follows the same shape — keep new ones consistent:
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout` · `popup` · `input` · `grid` · `form` · `sidebar`
+Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout` · `popup` · `input` · `tablegrid` · `form` · `sidebar`
 
 Roadmap: none outstanding. Next candidates and the audit findings live in `docs/REVIEW.md`.
 

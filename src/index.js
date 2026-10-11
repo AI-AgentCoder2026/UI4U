@@ -38,7 +38,7 @@ import { Tooltip, TOOLTIP_STYLE_ID, tooltipCss } from './components/tooltip/inde
 import { Layout, Panel, LAYOUT_STYLE_ID, layoutCss } from './components/layout/index.js';
 import { Popup, POPUP_STYLE_ID, popupCss } from './components/popup/index.js';
 import { Input, INPUT_STYLE_ID, inputCss } from './components/input/index.js';
-import { Grid, GRID_STYLE_ID, gridCss } from './components/grid/index.js';
+import { TableGrid, TABLEGRID_STYLE_ID, tablegridCss } from './components/tablegrid/index.js';
 import { Form, FORM_STYLE_ID, formCss } from './components/form/index.js';
 import { Sidebar, SidebarItem, SIDEBAR_STYLE_ID, sidebarCss } from './components/sidebar/index.js';
 
@@ -77,9 +77,9 @@ export {
   Input,
   INPUT_STYLE_ID,
   inputCss,
-  Grid,
-  GRID_STYLE_ID,
-  gridCss,
+  TableGrid,
+  TABLEGRID_STYLE_ID,
+  tablegridCss,
   Form,
   FORM_STYLE_ID,
   formCss,
@@ -119,7 +119,12 @@ export const components = [
   },
   { tag: 'ui-popup', ctor: Popup, styleId: POPUP_STYLE_ID, css: popupCss },
   { tag: 'ui-input', ctor: Input, styleId: INPUT_STYLE_ID, css: inputCss },
-  { tag: 'ui-grid', ctor: Grid, styleId: GRID_STYLE_ID, css: gridCss },
+  {
+    tag: 'ui-tablegrid',
+    ctor: TableGrid,
+    styleId: TABLEGRID_STYLE_ID,
+    css: tablegridCss,
+  },
   { tag: 'ui-form', ctor: Form, styleId: FORM_STYLE_ID, css: formCss },
   {
     tag: 'ui-sidebar-item',
@@ -170,7 +175,7 @@ export const UI4U = {
   Panel,
   Popup,
   Input,
-  Grid,
+  TableGrid,
   Form,
   Sidebar,
   UI4UElement,

@@ -1,0 +1,161 @@
+/**
+ * ui-tablegrid
+ *
+ * Sits around a plain `<table>` and styles it: sticky header, sort buttons,
+ * optional zebra striping and dense rows. Nothing here imposes a layout the
+ * author's markup did not already have.
+ */
+
+ui-tablegrid {
+  --ui4u-tablegrid-radius: var(--ui4u-radius-lg);
+  --ui4u-tablegrid-cell-padding: var(--ui4u-space-3) var(--ui4u-space-4);
+  --ui4u-tablegrid-header-height: 2.75rem;
+
+  display: block;
+  width: 100%;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+}
+
+ui-tablegrid table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-tablegrid-radius);
+  background: var(--ui4u-surface-glass);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+  box-shadow: var(--ui4u-shadow-sm);
+  /* Scrolls horizontally on a narrow screen while the header stays put. */
+  overflow: hidden;
+}
+
+/* --- header ------------------------------------------------------------- */
+
+ui-tablegrid thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--ui4u-z-sticky);
+  padding: 0;
+  text-align: left;
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-wide);
+  color: var(--ui4u-text-muted);
+  background: var(--ui4u-surface-2);
+  border-bottom: 1px solid var(--ui4u-border);
+  white-space: nowrap;
+}
+
+/* A header with no sortable button still needs breathing room. */
+ui-tablegrid thead th:not(:has(.ui4u-tablegrid__sort)) {
+  padding: var(--ui4u-space-3) var(--ui4u-space-4);
+}
+
+ui-tablegrid .ui4u-tablegrid__sort {
+  display: flex;
+  align-items: center;
+  gap: var(--ui4u-space-2);
+  width: 100%;
+  padding: var(--ui4u-space-3) var(--ui4u-space-4);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  transition: color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-tablegrid .ui4u-tablegrid__sort:hover {
+  color: var(--ui4u-primary);
+}
+
+ui-tablegrid .ui4u-tablegrid__sort:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+/* Direction indicator, drawn with a border so it needs no icon font. */
+ui-tablegrid .ui4u-tablegrid__sort::after {
+  content: '';
+  width: 0;
+  height: 0;
+  border-inline: 0.3em solid transparent;
+  border-block-start: 0.42em solid currentColor;
+  opacity: 0.25;
+  transition:
+    transform var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    opacity var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-tablegrid th[aria-sort='ascending'] .ui4u-tablegrid__sort::after {
+  opacity: 1;
+  color: var(--ui4u-primary);
+}
+
+ui-tablegrid th[aria-sort='descending'] .ui4u-tablegrid__sort::after {
+  opacity: 1;
+  color: var(--ui4u-primary);
+  transform: rotate(180deg);
+}
+
+/* --- body --------------------------------------------------------------- */
+
+ui-tablegrid tbody td {
+  padding: var(--ui4u-tablegrid-cell-padding);
+  border-bottom: 1px solid var(--ui4u-divider);
+  font-size: var(--ui4u-font-size-sm);
+  vertical-align: middle;
+}
+
+ui-tablegrid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+ui-tablegrid tbody tr:hover td {
+  background: var(--ui4u-surface-3);
+}
+
+ui-tablegrid table.ui4u-tablegrid__striped tbody tr:nth-child(even) td {
+  background: var(--ui4u-surface-2);
+}
+
+ui-tablegrid table.ui4u-tablegrid__striped tbody tr:nth-child(even):hover td {
+  background: var(--ui4u-surface-3);
+}
+
+ui-tablegrid table.ui4u-tablegrid__dense tbody td,
+ui-tablegrid table.ui4u-tablegrid__dense thead th:not(:has(.ui4u-tablegrid__sort)) {
+  padding-block: var(--ui4u-space-2);
+}
+
+/* --- grid mode ---------------------------------------------------------- */
+
+ui-tablegrid [role='gridcell']:focus-visible,
+ui-tablegrid [role='columnheader']:focus-visible {
+  outline: none;
+  box-shadow: inset var(--ui4u-focus-ring);
+}
+
+ui-tablegrid [role='gridcell'] {
+  cursor: default;
+}
+
+/* --- caption ------------------------------------------------------------ */
+
+ui-tablegrid caption {
+  padding: var(--ui4u-space-3) var(--ui4u-space-4);
+  color: var(--ui4u-text-subtle);
+  font-size: var(--ui4u-font-size-xs);
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-tablegrid .ui4u-tablegrid__sort,
+  ui-tablegrid .ui4u-tablegrid__sort::after {
+    transition: none;
+  }
+}
