@@ -286,6 +286,9 @@ kbd {
 .demo-cards {
   display: grid;
   gap: var(--ui4u-space-3);
+  /* Three per row on a desktop-width page, one on a phone. The description is
+     free to wrap, so a narrower track stays readable. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
   padding: 0;
   margin: var(--ui4u-space-7) 0 0;
   list-style: none;
@@ -293,9 +296,12 @@ kbd {
 
 .demo-card {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--ui4u-space-4);
+  /* Stack once the card is too narrow to hold both on one line, rather than
+     crushing the description into a narrow right-aligned column. */
+  flex-wrap: wrap;
+  gap: var(--ui4u-space-1) var(--ui4u-space-4);
   padding: var(--ui4u-space-5);
   border: 1px solid var(--ui4u-border);
   border-radius: var(--ui4u-radius-lg);
@@ -323,7 +329,15 @@ kbd {
 .demo-card span {
   color: var(--ui4u-text-muted);
   font-size: var(--ui4u-font-size-sm);
-  text-align: right;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+/* Once the description wraps onto its own line it reads better left-aligned. */
+@media (max-width: 64rem) {
+  .demo-card span {
+    text-align: left;
+  }
 }
 
 .demo-todo {
