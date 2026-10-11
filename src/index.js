@@ -49,6 +49,12 @@ import {
   DROPDOWN_STYLE_ID,
   dropdownCss,
 } from './components/dropdown/index.js';
+import { Toolbar, TOOLBAR_STYLE_ID, toolbarCss } from './components/toolbar/index.js';
+import {
+  ButtonGroup,
+  BUTTON_GROUP_STYLE_ID,
+  buttonGroupCss,
+} from './components/button-group/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -106,6 +112,12 @@ export {
   DropdownOption,
   DROPDOWN_STYLE_ID,
   dropdownCss,
+  Toolbar,
+  TOOLBAR_STYLE_ID,
+  toolbarCss,
+  ButtonGroup,
+  BUTTON_GROUP_STYLE_ID,
+  buttonGroupCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -164,6 +176,13 @@ export const components = [
     ctor: Dropdown,
     styleId: DROPDOWN_STYLE_ID,
     css: dropdownCss,
+  },
+  { tag: 'ui-toolbar', ctor: Toolbar, styleId: TOOLBAR_STYLE_ID, css: toolbarCss },
+  {
+    tag: 'ui-button-group',
+    ctor: ButtonGroup,
+    styleId: BUTTON_GROUP_STYLE_ID,
+    css: buttonGroupCss,
   },
 ];
 

@@ -22,6 +22,8 @@ import { position } from '../../core/position.js';
  * @property {boolean} [multiple] Allow more than one option to be selected.
  * @property {boolean} [open] Whether the list starts open.
  * @property {boolean} [srOnly] Hides the label visually, keeping it for AT.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ change: ({ value }) => value !== 'my' }`.
  *
  * @typedef {object} DropdownValidityResult
  * @property {boolean} valid
@@ -83,6 +85,17 @@ export class DropdownOption extends UI4UElement {}
  *
  * Listens for `ui4u:open` and `ui4u:close`, plus `ui4u:change` —
  * `detail: { value, name, option }` — on every commit.
+ *
+ * Binds to `open`, `close` and `change` with the same names and details. A
+ * binding that returns `false` stops the commit entirely: a vetoed `change`
+ * leaves the previous selection — and the list, open or closed, exactly as it
+ * was — untouched, whatever the commit came from. All three commit paths
+ * (click, <kbd>Enter</kbd>/<kbd>Space</kbd>, <kbd>Ctrl</kbd>+<kbd>Arrow</kbd>)
+ * share one guarded step rather than three copies of the check.
+ *
+ * Setting the `open` attribute or the `value` yourself bypasses `open`/`close`
+ * and the commit path respectively: that is authored state, already decided by
+ * the time any handler could see it.
  */
 export class Dropdown extends UI4UElement {
   static get observedAttributes() {
@@ -332,6 +345,7 @@ export class Dropdown extends UI4UElement {
       multiple,
       open,
       srOnly,
+      bindings,
     } = options;
 
     if (label !== undefined) this.label = label;
@@ -345,6 +359,7 @@ export class Dropdown extends UI4UElement {
     if (multiple !== undefined) this.multiple = multiple;
     if (srOnly !== undefined) this.srOnly = srOnly;
     if (open !== undefined) this.isOpen = open;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -359,7 +374,12 @@ export class Dropdown extends UI4UElement {
    * field.open();
    */
   open() {
-    if (!this.hasAttribute('open')) this.setAttribute('open', '');
+    if (this.isOpen) return this;
+    // Guarded before the attribute, so a veto never builds the panel. Setting
+    // the attribute directly is the unguarded route, and deliberately so.
+    if (!this.runBinding('open', { name: this.name })) return this;
+
+    this.setAttribute('open', '');
     return this;
   }
 
@@ -369,7 +389,12 @@ export class Dropdown extends UI4UElement {
    * @returns {this}
    */
   close() {
-    if (this.hasAttribute('open')) this.removeAttribute('open');
+    if (!this.isOpen) return this;
+    // Guarded before the attribute: the panel stays up and the options stay in
+    // it, which is what "leave this open" has to mean.
+    if (!this.runBinding('close', { name: this.name })) return this;
+
+    this.removeAttribute('open');
     return this;
   }
 
@@ -470,6 +495,8 @@ export class Dropdown extends UI4UElement {
     if (oldValue === newValue || !this.#built) return;
 
     if (name === 'open') {
+      // No binding here: the attribute is already the decided state, so a veto
+      // could not un-decide it. `open()` / `close()` are the guarded routes.
       if (this.isOpen) this.#show();
       else this.#destroyPanel();
       return;
@@ -1018,13 +1045,7 @@ export class Dropdown extends UI4UElement {
     const option = this.#activeIndex < 0 ? null : this.#optionEls[this.#activeIndex];
     if (!option || this.#isDisabled(option)) return;
 
-    const value = this.#valueOf(option);
-    this.#selection = new Set([value]);
-    this.#setTextAttribute('value', value);
-    this.#syncSelection();
-
-    if (close) this.close();
-    this.emit('ui4u:change', { value: this.value, name: this.name, option });
+    this.#apply(new Set([this.#valueOf(option)]), option, { close });
   }
 
   /** Adds or removes the active option from the selection, and stays open. */
@@ -1033,12 +1054,11 @@ export class Dropdown extends UI4UElement {
     if (!option || this.#isDisabled(option)) return;
 
     const value = this.#valueOf(option);
-    if (this.#selection.has(value)) this.#selection.delete(value);
-    else this.#selection.add(value);
+    const next = new Set(this.#selection);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
 
-    this.#setTextAttribute('value', [...this.#selection].join(','));
-    this.#syncSelection();
-    this.emit('ui4u:change', { value: this.value, name: this.name, option });
+    this.#apply(next, option);
   }
 
   /**
@@ -1053,10 +1073,43 @@ export class Dropdown extends UI4UElement {
 
     this.#setActive(next);
     const option = this.#optionEls[next];
-    this.#selection.add(this.#valueOf(option));
-    this.#setTextAttribute('value', [...this.#selection].join(','));
+    const selection = new Set(this.#selection);
+    selection.add(this.#valueOf(option));
+
+    this.#apply(selection, option);
+  }
+
+  /**
+   * The single path every `ui4u:change` goes through — a click commit, an
+   * <kbd>Enter</kbd> commit, a <kbd>Space</kbd> toggle and Ctrl+Arrow all land
+   * here, so the binding is guarded once instead of at three call sites.
+   *
+   * The detail describes the selection this interaction WOULD commit, read
+   * from `next` rather than from live state: the binding has to be offered the
+   * decision before it is taken, and it is the same payload the emit carries.
+   *
+   * @param {Set<string>} next the selection to commit
+   * @param {HTMLElement} option the option responsible for it
+   * @param {{ close?: boolean }} [options] close the list before emitting
+   * @returns {boolean} `false` when a binding took the change over
+   */
+  #apply(next, option, { close = false } = {}) {
+    const chosen = [...next];
+    const detail = {
+      value: this.multiple ? chosen : (chosen[0] ?? ''),
+      name: this.name,
+      option,
+    };
+
+    if (!this.runBinding('change', detail)) return false;
+
+    this.#selection = next;
+    this.#setTextAttribute('value', chosen.join(','));
     this.#syncSelection();
-    this.emit('ui4u:change', { value: this.value, name: this.name, option });
+
+    if (close) this.close();
+    this.emit('ui4u:change', detail);
+    return true;
   }
 
   /* --------------------------------------------------------------- option */

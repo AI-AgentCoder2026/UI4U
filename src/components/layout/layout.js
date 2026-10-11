@@ -29,6 +29,8 @@ import { clamp, toPx } from '../../core/size.js';
  * @typedef {object} LayoutOptions
  * @property {string} [gutter] Splitter thickness. Default `'var(--ui4u-layout-splitter-size)'`.
  * @property {number} [step] Keyboard resize step in px. Default `16`.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ resize: ({ slot }) => slot !== 'left' }`.
  */
 
 /** Every valid slot name. @type {PanelSlot[]} */
@@ -98,6 +100,17 @@ export function separatorArea(axis, after) {
  * on an outer layout can tell its own events from a nested one's.
  *
  * Listens for `ui4u:resize` and `ui4u:collapse`.
+ *
+ * Binds to `resize` and `collapse`, with the same names and details — both
+ * including the emitting `layout`, so a binding on an outer layout can tell
+ * its own drag from a nested one's. A binding that returns `false` leaves that
+ * panel's track exactly as it was, whether the resize came from a drag, an
+ * arrow key, `Home`/`End` or `setSlotSize()`.
+ *
+ * A drag moves two panels at once, and each is guarded on its own: a binding
+ * that vetoes only one of them has taken that panel over deliberately, and
+ * vetoes both if it means the whole gesture. `reset()` binds to nothing — it
+ * restores the authored sizes, which is not a resize anybody asked for.
  */
 export class Layout extends UI4UElement {
   static get observedAttributes() {
@@ -123,9 +136,10 @@ export class Layout extends UI4UElement {
    * layout.configure({ step: 24, gutter: '10px' });
    */
   configure(options = {}) {
-    const { gutter, step } = options;
+    const { gutter, step, bindings } = options;
     if (gutter !== undefined) this.setAttribute('gutter', gutter);
     if (step !== undefined) this.setAttribute('step', String(step));
+    if (bindings !== undefined) this.bindAll(bindings);
     return this;
   }
 
@@ -248,8 +262,15 @@ export class Layout extends UI4UElement {
     // Any slot may be filled by a panel *or* by another layout, which is what
     // makes the component recursive: a sidebar can be a nested layout with its
     // own centre and further left/right regions, to any depth.
+    //
+    // A `ui-toolbar` may also sit directly in a slot. It is a thin band, not a
+    // resizable region, so it is sized by its content and never given a
+    // splitter — an app bar you cannot drag open and shut is not a panel.
     const nodes = /** @type {HTMLElement[]} */ (
-      [...this.children].filter((c) => c.localName === 'ui-panel' || c.localName === 'ui-layout')
+      [...this.children].filter(
+        (c) =>
+          c.localName === 'ui-panel' || c.localName === 'ui-layout' || c.localName === 'ui-toolbar'
+      )
     );
     if (nodes.length === 0) return;
 
@@ -282,6 +303,10 @@ export class Layout extends UI4UElement {
     const size = node.getAttribute('size');
     const current = toPx(size) ?? 0;
 
+    // A toolbar band takes its height from its controls, and is never
+    // resizable or collapsible — there is nothing to drag and no closed state.
+    const isToolbar = node.localName === 'ui-toolbar';
+
     return {
       node,
       label: node.getAttribute('label') ?? '',
@@ -292,8 +317,8 @@ export class Layout extends UI4UElement {
       sized: size !== null,
       min: toPx(node.getAttribute('min')),
       max: toPx(node.getAttribute('max')),
-      resizable: node.hasAttribute('resizable'),
-      collapsible: node.hasAttribute('collapsible'),
+      resizable: !isToolbar && node.hasAttribute('resizable'),
+      collapsible: !isToolbar && node.hasAttribute('collapsible'),
       collapsed: false,
     };
   }
@@ -419,6 +444,18 @@ export class Layout extends UI4UElement {
     const next = clamp(px, spec.min, spec.max);
     if (next === spec.current && spec.sized) return;
 
+    /*
+     * Guarded after the clamp and before the first write, so the binding is
+     * offered the size the panel would actually take and a veto leaves the
+     * track — and the separator's `aria-valuenow` — untouched.
+     */
+    if (
+      !silent &&
+      !this.runBinding('resize', { slot, size: next, min: spec.min, max: spec.max, layout: this })
+    ) {
+      return;
+    }
+
     spec.current = next;
     // First explicit size turns a fluid slot into a fixed track.
     spec.sized = true;
@@ -444,6 +481,10 @@ export class Layout extends UI4UElement {
 
     const next = typeof force === 'boolean' ? force : !spec.collapsed;
     if (next === spec.collapsed) return;
+
+    // Guarded before the flag flips, so a veto leaves the panel in the tree and
+    // on screen exactly as it was.
+    if (!this.runBinding('collapse', { slot, collapsed: next, layout: this })) return;
 
     if (next) {
       spec.current = clamp(spec.current, spec.min, spec.max);

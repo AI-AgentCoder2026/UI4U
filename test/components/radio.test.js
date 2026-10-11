@@ -785,3 +785,131 @@ describe('ui-radio teardown', () => {
     assert.equal(radio.checkValidity().valid, true);
   });
 });
+
+describe('ui-radio bindings', () => {
+  let group;
+  let inputs;
+
+  beforeEach(() => {
+    group = mount(GROUP).querySelector('ui-radio-group');
+    inputs = inputsOf(group);
+  });
+
+  afterEach(() => cleanup());
+
+  /**
+   * What a click does natively: the control has already ticked itself, and the
+   * shared `name` has already unticked its siblings, before `change` fires.
+   *
+   * @param {HTMLInputElement} input
+   */
+  function check(input) {
+    input.checked = true;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  it('runs a change binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    group.bind('change', (detail) => seen.push(detail));
+
+    check(inputs[1]);
+
+    assert.deepEqual(seen, [{ value: 'pro', name: 'plan' }]);
+  });
+
+  it('a binding returning false puts the previous selection back', () => {
+    check(inputs[0]);
+    /** @type {unknown[]} */
+    const events = [];
+    group.addEventListener('ui4u:change', () => events.push('change'));
+    group.bind('change', () => false);
+
+    check(inputs[2]);
+
+    assert.equal(group.value, 'free', 'the group is back on what it had');
+    assert.deepEqual(
+      inputs.map((input) => input.checked),
+      [true, false, false],
+      'the siblings are where they were too'
+    );
+    assert.equal(inputs[0].tabIndex, 0, 'and so is the tab stop');
+    assert.deepEqual(events, [], 'a vetoed change is never announced');
+  });
+
+  it('a vetoed first choice leaves the group with nothing selected', () => {
+    group.bind('change', () => false);
+
+    check(inputs[1]);
+
+    assert.equal(group.value, '');
+    assert.deepEqual(
+      inputs.map((input) => input.checked),
+      [false, false, false]
+    );
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    check(inputs[0]);
+    group.bind('change', (_detail, event) => event.preventDefault());
+
+    check(inputs[1]);
+
+    assert.equal(group.value, 'free');
+  });
+
+  it('guards the shared path, so the arrow keys are vetoed too', () => {
+    check(inputs[0]);
+    group.bind('change', () => false);
+
+    press(inputs[0], 'ArrowDown');
+    assert.equal(group.value, 'free', 'the arrow key was vetoed');
+    assert.deepEqual(
+      inputs.map((input) => input.checked),
+      [true, false, false]
+    );
+  });
+
+  it('leaves the value setter unguarded — setting the value is authoring, not activation', () => {
+    group.bind('change', () => false);
+
+    group.value = 'team';
+
+    assert.equal(group.value, 'team', 'it writes state without asking, as it always did');
+  });
+
+  it('a binding returning undefined lets the selection through, and ui4u:change still fires', () => {
+    /** @type {any[]} */
+    const events = [];
+    group.addEventListener('ui4u:change', (event) => events.push(event.detail));
+    group.bind('change', () => undefined);
+
+    check(inputs[1]);
+
+    assert.equal(group.value, 'pro');
+    assert.deepEqual(events, [{ value: 'pro', name: 'plan' }]);
+  });
+
+  it('vetoes a standalone option by unticking it', () => {
+    const radio = mount('<ui-radio value="solo" label="Solo"></ui-radio>').querySelector(
+      'ui-radio'
+    );
+    const native = radio.querySelector('.ui4u-radio__native');
+    radio.bind('change', () => false);
+
+    native.checked = true;
+    native.dispatchEvent(new Event('change', { bubbles: true }));
+
+    assert.equal(radio.checked, false, 'the control was put back');
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    group.configure({ bindings: { change: (detail) => seen.push(detail.value) } });
+
+    check(inputs[1]);
+
+    assert.deepEqual(seen, ['pro']);
+  });
+});

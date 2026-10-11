@@ -287,3 +287,111 @@ describe('ui-popup teardown', () => {
     assert.equal(document.querySelector('.ui4u-popup__surface p').textContent, 'x');
   });
 });
+
+describe('ui-popup bindings', () => {
+  let popup;
+
+  beforeEach(() => {
+    popup = mount('<ui-popup label="Confirm"><p>Body</p></ui-popup>').querySelector('ui-popup');
+  });
+
+  afterEach(() => cleanup());
+
+  it('runs an open binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    popup.bind('open', (detail) => seen.push(detail));
+
+    popup.openPopup();
+
+    assert.deepEqual(seen, [{ mode: 'modal' }]);
+  });
+
+  it('a binding returning false leaves the popup closed and untrapped', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    popup.addEventListener('ui4u:open', () => events.push('open'));
+    popup.bind('open', () => false);
+
+    popup.openPopup();
+
+    assert.equal(popup.isOpen, false, 'no open attribute');
+    assert.equal(popup.hasAttribute('open'), false);
+    assert.equal(surfaceOf(popup).hidden, true, 'the surface never appeared');
+    assert.deepEqual(events, []);
+  });
+
+  it('a binding returning false leaves the popup open when asked to close', () => {
+    popup.openPopup();
+    /** @type {unknown[]} */
+    const events = [];
+    popup.addEventListener('ui4u:close', () => events.push('close'));
+    popup.bind('close', () => false);
+
+    popup.closePopup();
+
+    assert.equal(popup.isOpen, true, 'still open');
+    assert.equal(surfaceOf(popup).hidden, false);
+    assert.deepEqual(events, []);
+  });
+
+  it('a binding calling preventDefault vetoes the open', () => {
+    popup.bind('open', (_detail, event) => event.preventDefault());
+
+    popup.openPopup();
+
+    assert.equal(popup.isOpen, false);
+    assert.equal(surfaceOf(popup).hidden, true);
+  });
+
+  it('a vetoed cancel leaves the popup standing — this is the "are you sure?" case', () => {
+    popup.openPopup();
+    /** @type {unknown[]} */
+    const events = [];
+    popup.addEventListener('ui4u:cancel', () => events.push('cancel'));
+    popup.bind('cancel', () => false);
+
+    pressKey('Escape');
+
+    assert.equal(popup.isOpen, true, 'the popup did not close behind the consumer back');
+    assert.equal(surfaceOf(popup).hidden, false);
+    assert.deepEqual(events, [], 'and the dismissal was never announced');
+  });
+
+  it('a binding returning undefined lets the popup open, and ui4u:open still fires', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    popup.addEventListener('ui4u:open', () => events.push('open'));
+    popup.bind('open', () => undefined);
+
+    popup.openPopup();
+
+    assert.equal(popup.isOpen, true);
+    assert.equal(surfaceOf(popup).hidden, false);
+    assert.deepEqual(events, ['open']);
+  });
+
+  it('cancelling without a veto emits ui4u:cancel and then closes', () => {
+    popup.openPopup();
+    /** @type {unknown[]} */
+    const events = [];
+    popup.addEventListener('ui4u:cancel', () => events.push('cancel'));
+    popup.addEventListener('ui4u:close', () => events.push('close'));
+
+    pressKey('Escape');
+
+    assert.deepEqual(events, ['cancel', 'close'], 'the existing order is unchanged');
+    assert.equal(popup.isOpen, false);
+  });
+
+  it('configure({ bindings }) registers bindings', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    popup.configure({ bindings: { open: (detail) => seen.push(detail) } });
+
+    popup.openPopup();
+
+    assert.equal(seen.length, 1);
+    assert.equal(popup.isOpen, true);
+  });
+});

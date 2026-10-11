@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Toolbar</title>
+    <meta
+      name="description"
+      content="ui-toolbar — a bar of controls that is one tab stop, pluggable into any ui-layout region or the top of a ui-tablegrid."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+    <style>
+      ui-toolbar {
+        display: block;
+        margin-bottom: var(--ui4u-space-4);
+      }
+      /* A toolbar placed straight into a layout region sizes itself. */
+      ui-layout ui-toolbar {
+        margin-bottom: 0;
+      }
+      ui-toolbar[orientation='vertical'] {
+        margin-bottom: var(--ui4u-space-4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-toolbar</code></h1>
+          <p class="lede">
+            A row of controls that behaves as <strong>one tab stop</strong>. Tab enters and leaves
+            the bar in a single press; the arrow keys move between the controls inside it. Holds
+            <code>ui-input</code>, <code>ui-button</code>, or anything else focusable — they stay
+            light-DOM children and keep working on their own.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Orientation</span>
+          <ui-tabs id="opt-orientation" variant="underline" label="Orientation">
+            <ui-tab label="horizontal"></ui-tab>
+            <ui-tab label="vertical"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Caption</span>
+          <ui-tabs id="opt-caption" variant="underline" label="Caption">
+            <ui-tab label="visible"></ui-tab>
+            <ui-tab label="screen-reader-only"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <ui-toolbar id="demo" label="Filters">
+        <ui-input label="Search" placeholder="Filter rows" size="sm"></ui-input>
+        <ui-dropdown label="Status" placeholder="Any" size="sm">
+          <ui-dropdown-option value="all">Any status</ui-dropdown-option>
+          <ui-dropdown-option value="open">Open</ui-dropdown-option>
+          <ui-dropdown-option value="closed">Closed</ui-dropdown-option>
+        </ui-dropdown>
+        <ui-button id="apply" variant="primary" size="sm" data-toolbar-end>Apply</ui-button>
+      </ui-toolbar>
+
+      <div class="log" id="log" role="status" aria-live="polite">
+        Press Tab once to enter the bar, then use the arrow keys.
+      </div>
+
+      <ui-disclosure summary="In a ui-layout" variant="ghost">
+        <p>
+          A <code>ui-toolbar</code> can sit directly in any <code>ui-layout</code> region as a thin,
+          non-resizable band — an app bar. It takes its height from its controls and never gets a
+          splitter.
+        </p>
+      </ui-disclosure>
+
+      <div id="layout-host"></div>
+
+      <ui-disclosure summary="On a ui-tablegrid" variant="ghost">
+        <p>
+          A <code>ui-toolbar</code> written before the <code>&lt;table&gt;</code> becomes that
+          grid's own toolbar — the search, filters and bulk actions that belong to the table rather
+          than to the page around it. Reach it through the <code>toolbar</code> getter.
+        </p>
+      </ui-disclosure>
+
+      <div id="grid-host"></div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, API and the keyboard contract. Both blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;!-- Anywhere: as an app bar in a layout region --&gt;
+&lt;ui-layout&gt;
+  &lt;ui-toolbar slot="top" label="Actions"&gt;
+    &lt;ui-button variant="primary"&gt;Save&lt;/ui-button&gt;
+    &lt;ui-button variant="ghost"&gt;Cancel&lt;/ui-button&gt;
+  &lt;/ui-toolbar&gt;
+
+  &lt;ui-panel slot="center"&gt;Editor&lt;/ui-panel&gt;
+&lt;/ui-layout&gt;
+
+&lt;!-- At the top of a table grid --&gt;
+&lt;ui-tablegrid label="Releases" per-page="10"&gt;
+  &lt;ui-toolbar label="Table actions"&gt;
+    &lt;ui-input placeholder="Filter"&gt;&lt;/ui-input&gt;
+    &lt;ui-button&gt;Export&lt;/ui-button&gt;
+  &lt;/ui-toolbar&gt;
+
+  &lt;table&gt;&lt;!-- … --&gt;&lt;/table&gt;
+&lt;/ui-tablegrid&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const toolbar = document.querySelector('ui-toolbar');
+
+toolbar.configure({ label: 'Filters', orientation: 'vertical' });
+
+toolbar.items;   // the focusable controls, in visual order
+toolbar.focus(); // jump to the bar's single tab stop
+toolbar.refresh(); // re-derive it after adding a control
+
+toolbar.addEventListener('ui4u:navigate', (event) =&gt; {
+  const { index } = event.detail;
+  console.log('moved to control', index);
+});</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes" variant="ghost">
+        <ul>
+          <li>
+            The bar carries <code>role="toolbar"</code> and is named by its <code>label</code>. An
+            unlabelled toolbar is announced as an unnamed group of buttons.
+          </li>
+          <li>
+            Exactly one control holds <code>tabindex="0"</code>. Tab therefore enters and leaves the
+            whole bar in one press — which is the entire point of the component.
+          </li>
+          <li>
+            <kbd>ArrowRight</kbd> and <kbd>ArrowLeft</kbd> (or Up/Down when vertical) move between
+            controls and emit <code>ui4u:navigate</code>. Movement clamps at the ends rather than
+            wrapping.
+          </li>
+          <li><kbd>Tab</kbd> is never intercepted, so the bar is never a keyboard trap.</li>
+          <li>
+            Disabled, <code>hidden</code> and <code>aria-hidden</code> controls are skipped by arrow
+            navigation.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const toolbar = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      document.getElementById('opt-orientation').addEventListener('ui4u:change', (event) => {
+        toolbar.configure({ orientation: event.detail.label });
+      });
+
+      document.getElementById('opt-caption').addEventListener('ui4u:change', (event) => {
+        toolbar.configure({ srOnly: event.detail.label === 'screen-reader-only' });
+      });
+
+      toolbar.addEventListener('ui4u:navigate', (event) => {
+        const target = toolbar.items[event.detail.index];
+        log.textContent = `ui4u:navigate → ${event.detail.index} (${target?.tagName.toLowerCase()})`;
+      });
+
+      document.getElementById('apply').addEventListener('click', () => {
+        log.textContent = 'Apply pressed';
+      });
+
+      /* --- a toolbar straight inside a layout region ---------------------- */
+
+      const layoutHost = document.getElementById('layout-host');
+
+      const layout = document.createElement('ui-layout');
+      layout.setAttribute(
+        'style',
+        'height: 16rem; border-radius: var(--ui4u-radius-lg); overflow: hidden;'
+      );
+
+      const bar = document.createElement('ui-toolbar');
+      bar.setAttribute('slot', 'top');
+      bar.setAttribute('label', 'Document');
+      bar.setAttribute(
+        'style',
+        'margin: 0; border-radius: 0; border-inline: 0; border-block-start: 0;'
+      );
+
+      for (const name of ['New', 'Open', 'Save']) {
+        const button = document.createElement('ui-button');
+        button.setAttribute('size', 'sm');
+        button.setAttribute('variant', name === 'Save' ? 'primary' : 'ghost');
+        button.textContent = name;
+        bar.appendChild(button);
+      }
+
+      const panel = document.createElement('ui-panel');
+      panel.setAttribute('slot', 'center');
+
+      const note = document.createElement('p');
+      note.className = 'lede';
+      note.textContent =
+        'The toolbar above is a layout region — no splitter, height from its controls.';
+      panel.appendChild(note);
+
+      layout.append(bar, panel);
+      layoutHost.replaceChildren(layout);
+
+      /* --- a toolbar as a table grid's own toolbar ------------------------ */
+
+      const gridHost = document.getElementById('grid-host');
+      const grid = document.createElement('ui-tablegrid');
+      grid.setAttribute('label', 'Deployments');
+      grid.setAttribute('per-page', '3');
+      grid.setAttribute('striped', '');
+
+      const gridBar = document.createElement('ui-toolbar');
+      gridBar.setAttribute('label', 'Table actions');
+      gridBar.setAttribute('style', 'margin-bottom: var(--ui4u-space-3);');
+
+      const filter = document.createElement('ui-input');
+      filter.setAttribute('placeholder', 'Filter deployments');
+      filter.setAttribute('size', 'sm');
+
+      const exportButton = document.createElement('ui-button');
+      exportButton.setAttribute('size', 'sm');
+      exportButton.textContent = 'Export';
+
+      gridBar.append(filter, exportButton);
+      grid.appendChild(gridBar);
+
+      const table = document.createElement('table');
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      for (const [label, key] of [
+        ['Service', 'service'],
+        ['Environment', 'env'],
+        ['Deployed', 'when'],
+      ]) {
+        const th = document.createElement('th');
+        th.setAttribute('scope', 'col');
+        th.setAttribute('data-sort', key);
+        th.textContent = label;
+        headRow.appendChild(th);
+      }
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      for (const [service, env, when] of [
+        ['api', 'production', '2026-10-01'],
+        ['web', 'production', '2026-10-04'],
+        ['worker', 'staging', '2026-10-06'],
+        ['docs', 'production', '2026-10-09'],
+      ]) {
+        const tr = document.createElement('tr');
+        for (const value of [service, env, when]) {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+
+      grid.appendChild(table);
+      gridHost.replaceChildren(grid);
+
+      filter.addEventListener('ui4u:input', (event) => {
+        grid.search(event.detail.value);
+      });
+    </script>
+  </body>
+</html>

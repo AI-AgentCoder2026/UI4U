@@ -12,6 +12,20 @@ const HTMLElementBase = /** @type {typeof HTMLElement} */ (
 );
 
 /**
+ * Accepts either `change` or `ui4u:change` for a binding name.
+ *
+ * Both spellings are natural — one from the DOM event, one from the method call
+ * site — and silently registering under the wrong key would make a binding
+ * that never fires.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+function normalizeBindingName(name) {
+  return String(name ?? '').replace(/^ui4u:/, '');
+}
+
+/**
  * Lifecycle contract for components:
  *
  * - `connectedCallback` runs `onConnect`, then marks the element live
@@ -30,6 +44,8 @@ export class UI4UElement extends HTMLElementBase {
   /** @type {Array<() => void>} */
   #disposers = [];
   #live = false;
+  /** Semantic event name → handlers. @type {Map<string, Set<Function>>} */
+  #bindings = new Map();
 
   /** True between `connectedCallback` and `disconnectedCallback`. */
   get isLive() {
@@ -84,6 +100,117 @@ export class UI4UElement extends HTMLElementBase {
   emit(type, detail = {}, { bubbles = true, composed = true } = {}) {
     if (typeof CustomEvent === 'undefined') return false;
     return this.dispatchEvent(new CustomEvent(type, { detail, bubbles, composed }));
+  }
+
+  /* ------------------------------------------------------------ bindings */
+
+  /**
+   * Registers a callback for one of this component's semantic events.
+   *
+   * A binding runs **before** the component acts, and can override it: call
+   * `event.preventDefault()` or return `false` and the component skips its own
+   * behaviour for that interaction. Returning anything else lets it proceed.
+   * That is the difference between "tell me what happened" and "I am handling
+   * this myself".
+   *
+   * The name matches the event without its `ui4u:` prefix — `bind('change', …)`
+   * pairs with `ui4u:change`.
+   *
+   * @param {string} name e.g. `'change'`
+   * @param {(detail: any, event: CustomEvent) => unknown} handler
+   * @returns {this}
+   *
+   * @example
+   * field.bind('change', (detail) => {
+   *   if (!detail.amount) return false; // reject the value, change nothing
+   * });
+   */
+  bind(name, handler) {
+    if (typeof handler !== 'function') return this;
+    const key = normalizeBindingName(name);
+
+    if (!this.#bindings.has(key)) this.#bindings.set(key, new Set());
+    this.#bindings.get(key)?.add(handler);
+    return this;
+  }
+
+  /**
+   * Removes one binding, or every binding for a name when no handler is given.
+   *
+   * @param {string} name
+   * @param {(detail: any, event: CustomEvent) => unknown} [handler]
+   * @returns {this}
+   */
+  unbind(name, handler) {
+    const key = normalizeBindingName(name);
+    const handlers = this.#bindings.get(key);
+    if (!handlers) return this;
+
+    if (handler) handlers.delete(handler);
+    else handlers.clear();
+
+    return this;
+  }
+
+  /**
+   * The names that currently have at least one binding.
+   *
+   * @returns {string[]}
+   */
+  get bindingNames() {
+    return [...this.#bindings.keys()].filter((key) => (this.#bindings.get(key)?.size ?? 0) > 0);
+  }
+
+  /**
+   * Runs the bindings for `name` and reports whether the component may proceed.
+   *
+   * Returns `true` when there is nothing to run, so an unbound component costs
+   * one map lookup and every call site can be written the same way.
+   *
+   * @param {string} name
+   * @param {any} [detail]
+   * @returns {boolean} `false` when a binding overrode the action
+   *
+   * @example
+   * if (!this.runBinding('change', { value })) return this;
+   */
+  runBinding(name, detail = {}) {
+    const handlers = this.#bindings.get(normalizeBindingName(name));
+    if (!handlers || handlers.size === 0) return true;
+
+    // Snapshot: a binding is allowed to unbind itself while it runs.
+    for (const handler of [...handlers]) {
+      const event = new CustomEvent(`ui4u:${name}`, {
+        detail,
+        cancelable: true,
+      });
+
+      let result;
+      try {
+        result = handler(detail, event);
+      } catch (error) {
+        // A throwing binding must not take the component down with it.
+        this.reportError?.(error);
+        continue;
+      }
+
+      if (result === false || event.defaultPrevented) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Adds bindings in bulk. Every component's `configure()` forwards `bindings`
+   * here, so `configure({ bindings: { change: fn } })` works everywhere.
+   *
+   * @param {Record<string, (detail: any, event: CustomEvent) => unknown>} bindings
+   * @returns {this}
+   */
+  bindAll(bindings) {
+    if (!bindings || typeof bindings !== 'object') return this;
+    for (const [name, handler] of Object.entries(bindings)) this.bind(name, handler);
+    return this;
   }
 
   /**

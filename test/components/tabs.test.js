@@ -448,3 +448,98 @@ describe('ui-tabs teardown', () => {
     assert.equal(tabs.active, 0);
   });
 });
+
+describe('ui-tabs bindings', () => {
+  let tabs;
+
+  beforeEach(() => {
+    tabs = mount(THREE_TABS).querySelector('ui-tabs');
+  });
+
+  afterEach(() => cleanup());
+
+  it('runs a change binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    tabs.bind('change', (detail) => seen.push(detail));
+
+    click(buttonsOf(tabs)[2]);
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].index, 2);
+    assert.equal(seen[0].label, 'Settings');
+    assert.equal(seen[0].tab, panelsOf(tabs)[2]);
+  });
+
+  it('a binding returning false leaves the active tab exactly where it was', () => {
+    const changes = collectChanges(tabs);
+    tabs.bind('change', () => false);
+
+    click(buttonsOf(tabs)[1]);
+
+    assert.equal(tabs.active, 0, 'the active index did not move');
+    assert.equal(tabs.activeTab, panelsOf(tabs)[0]);
+    assert.equal(panelsOf(tabs)[0].hidden, false, 'the visible panel is still the visible one');
+    assert.equal(panelsOf(tabs)[1].hidden, true);
+    assert.equal(buttonsOf(tabs)[0].getAttribute('aria-selected'), 'true');
+    assert.deepEqual(changes, [], 'and a vetoed switch is not announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    tabs.bind('change', (_detail, event) => event.preventDefault());
+
+    click(buttonsOf(tabs)[1]);
+
+    assert.equal(tabs.active, 0);
+    assert.equal(buttonsOf(tabs)[0].getAttribute('aria-selected'), 'true');
+  });
+
+  it('a binding returning undefined lets the switch through, and ui4u:change still fires', () => {
+    const changes = collectChanges(tabs);
+    tabs.bind('change', () => undefined);
+
+    click(buttonsOf(tabs)[1]);
+
+    assert.equal(tabs.active, 1);
+    assert.equal(buttonsOf(tabs)[1].getAttribute('aria-selected'), 'true');
+    assert.deepEqual(
+      changes.map((change) => change.index),
+      [1]
+    );
+  });
+
+  it('guards the shared path, so next() and the active setter are vetoed too', () => {
+    tabs.bind('change', () => false);
+
+    tabs.next();
+    assert.equal(tabs.active, 0, 'next() was vetoed');
+
+    tabs.active = 2;
+    assert.equal(tabs.active, 0, 'the active setter was vetoed');
+
+    press(buttonsOf(tabs)[0], 'ArrowRight');
+    assert.equal(tabs.active, 0, 'and so was the arrow key');
+  });
+
+  it('never offers the initial build, which is the component placing itself', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    const host = document.createElement('div');
+    host.innerHTML = THREE_TABS;
+    document.body.appendChild(host);
+
+    host.querySelector('ui-tabs').bind('change', (detail) => seen.push(detail));
+
+    assert.deepEqual(seen, [], 'nothing was asked of a consumer that had not connected yet');
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    /** @type {number[]} */
+    const seen = [];
+    tabs.configure({ bindings: { change: (detail) => seen.push(detail.index) } });
+
+    click(buttonsOf(tabs)[1]);
+
+    assert.deepEqual(seen, [1]);
+  });
+});

@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Button group</title>
+    <meta
+      name="description"
+      content="ui-button-group — a segmented control of real ui-buttons that own one selection, one tab stop and arrow-key navigation."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-button-group</code></h1>
+          <p class="lede">
+            Several buttons that together make <strong>one</strong> choice — a segmented control.
+            The segments stay real <code>&lt;ui-button&gt;</code>s; the group owns the selection,
+            the single tab stop and the arrow-key model, and reports it all as one control to
+            assistive technology.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Required</span>
+          <ui-tabs id="opt-required" variant="underline" label="Required">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Disabled</span>
+          <ui-tabs id="opt-disabled" variant="underline" label="Disabled">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Screen-reader-only label</span>
+          <ui-tabs id="opt-sr-only" variant="underline" label="Screen-reader-only label">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Error</span>
+          <ui-tabs id="opt-error" variant="underline" label="Error">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-button-group
+          id="demo"
+          label="View"
+          name="view"
+          value="grid"
+          hint="How the workspace is laid out."
+        >
+          <ui-button value="grid">Grid</ui-button>
+          <ui-button value="table">Table</ui-button>
+          <ui-button value="list">List</ui-button>
+        </ui-button-group>
+      </div>
+
+      <div class="controls">
+        <button id="validate" type="button">Validate</button>
+        <button id="clear" type="button">Clear validity</button>
+        <button id="clear-selection" type="button">Clear selection</button>
+        <button id="reset" type="button">Reset</button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for input…</div>
+
+      <h2>Try the keyboard</h2>
+      <p class="lede">
+        Tab enters the group once — never three times. Inside it, the arrow keys move
+        <em>and</em> select, <code>Home</code> and <code>End</code> jump to the ends, and Tab leaves
+        the group entirely. At either end the arrow keys stop rather than wrapping. The button below
+        is the next tab stop.
+      </p>
+
+      <div class="controls">
+        <button id="after" type="button">Next tab stop</button>
+      </div>
+
+      <h2>More</h2>
+      <div class="controls">
+        <ui-button-group
+          label="Billing cycle"
+          name="cycle"
+          hint="An unread label, for a heading drawn elsewhere."
+          sr-only
+        >
+          <ui-button value="monthly">Monthly</ui-button>
+          <ui-button value="yearly">Yearly — two months free</ui-button>
+          <ui-button value="lifetime" disabled>Lifetime (sold out)</ui-button>
+        </ui-button-group>
+      </div>
+
+      <div class="controls">
+        <ui-button-group id="locked" label="Density" name="density" value="cosy">
+          <ui-button value="cosy">Cosy</ui-button>
+          <ui-button value="compact">Compact</ui-button>
+        </ui-button-group>
+      </div>
+      <div class="log" id="lock-log" role="status" aria-live="polite">Compact is locked.</div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-button-group label="View" name="view" value="grid" hint="How the workspace is laid out."&gt;
+  &lt;ui-button value="grid"&gt;Grid&lt;/ui-button&gt;
+  &lt;ui-button value="table"&gt;Table&lt;/ui-button&gt;
+  &lt;ui-button value="list"&gt;List&lt;/ui-button&gt;
+&lt;/ui-button-group&gt;
+
+&lt;!-- The segments are real ui-buttons. A disabled segment is skipped by the
+     arrow keys and can never hold the tab stop; sr-only keeps the label in
+     the accessibility tree when a heading is drawn elsewhere. --&gt;
+&lt;ui-button-group label="Billing cycle" sr-only&gt;
+  &lt;ui-button value="monthly"&gt;Monthly&lt;/ui-button&gt;
+  &lt;ui-button value="yearly" disabled&gt;Yearly (sold out)&lt;/ui-button&gt;
+&lt;/ui-button-group&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const group = document.querySelector('ui-button-group');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+group.configure({ label: 'View', value: 'table', required: true });
+
+// The group is what ui-form validates, and the result has the same shape
+// as every other UI4U field: { valid, message, value, name }.
+const { valid, message } = group.checkValidity();
+group.reportValidity();  // sets `error` and focuses the tab stop
+group.clearValidity();   // drops the error state again
+
+// Selection is the group's, and it is readable as a plain value.
+console.log(group.value);   // 'table'
+group.value = 'list';       // declarative: selects silently
+group.select('grid');       // imperative: selects AND emits ui4u:change
+group.value = '';           // clears the selection
+group.focus();              // lands on the single tab stop
+group.buttons;              // the ui-button elements, in document order
+
+// One bubbled event per selection.
+group.addEventListener('ui4u:change', (event) => {
+  const { value, name } = event.detail;
+  console.log(`${name} → ${value}`);
+});
+
+// A binding runs BEFORE the group acts and can veto it — return false, or
+// call event.preventDefault(), and the group changes nothing at all.
+group.configure({
+  bindings: {
+    change: ({ value }) => value !== 'grid',  // false ⇒ veto
+  },
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-button-group-* custom properties. */
+ui-button-group {
+  --ui4u-button-group-radius: var(--ui4u-radius-md);
+  --ui4u-button-group-pad: var(--ui4u-space-1);
+  --ui4u-button-group-touch: 2.75rem;
+  --ui4u-button-group-selected-surface: var(--ui4u-surface);
+
+  /* A joined row keeps the button scale, at touch height. */
+  --ui4u-button-height-md: var(--ui4u-button-group-touch);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes">
+        <ul>
+          <li>
+            The host is <code>role="radiogroup"</code> and each segment is
+            <code>role="radio"</code> with <code>aria-checked</code> — several buttons acting as one
+            choice, which is exactly what a segmented control is. The row wrapper is
+            <code>role="presentation"</code>, so the radios are owned by the group directly.
+          </li>
+          <li>
+            The <code>label</code> is a plain <code>&lt;span&gt;</code>, not a
+            <code>&lt;label&gt;</code>: there is no single form control to point
+            <code>for</code> at, and a label wrapping the buttons would swallow their clicks. It is
+            associated through <code>aria-labelledby</code>, and <code>sr-only</code> clips it
+            without taking the group's accessible name away.
+          </li>
+          <li>
+            The group is <strong>one tab stop</strong>: the selected segment, or the first enabled
+            one, holds <code>tabindex="0"</code> and the rest hold <code>-1</code>.
+          </li>
+          <li>
+            Arrow keys move <em>and</em> select; <code>Home</code> and <code>End</code> jump to the
+            ends. Movement clamps instead of wrapping and the key is swallowed even when nothing
+            moved — otherwise Chromium's own handling would wrap the selection. <code>Tab</code> is
+            never prevented, so it leaves the group.
+          </li>
+          <li>
+            Re-selecting the current segment keeps it selected: a choice, not a toggle. Disabled
+            segments are skipped by the arrow keys, cannot be selected, and never hold the tab stop.
+          </li>
+          <li>
+            <code>hint</code> and <code>error</code> are chained through
+            <code>aria-describedby</code>; an error sets <code>aria-invalid</code> and
+            <code>required</code> sets <code>aria-required</code>. Every segment is at least 44px
+            tall, so each is a comfortable touch target.
+          </li>
+        </ul>
+      </ui-disclosure>
+
+      <h2>Which one should I use?</h2>
+      <p class="lede">
+        A <code>ui-button-group</code> is a choice between a handful of options that all stay
+        visible — view mode, density, sort order. Reach for <code>ui-radio-group</code> when the
+        options are a longer list that benefits from real form controls, and
+        <code>ui-tabs</code> when they switch between panels rather than pick a value.
+      </p>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const group = document.getElementById('demo');
+      const log = document.getElementById('log');
+      const errorMessage = 'Pick a view before you continue.';
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real group.
+      const toggles = [
+        ['opt-required', 'required'],
+        ['opt-disabled', 'disabled'],
+        ['opt-sr-only', 'srOnly'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          group[option] = event.detail.label === 'on';
+        });
+      }
+
+      document.getElementById('opt-error').addEventListener('ui4u:change', (event) => {
+        group.configure({ error: event.detail.label === 'on' ? errorMessage : '' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        group.reportValidity();
+        const result = group.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        group.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('clear-selection').addEventListener('click', () => {
+        // The declarative path: it clears the selection without an event.
+        group.value = '';
+        log.textContent = 'Selection cleared — the first segment takes the tab stop';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        group
+          .configure({
+            value: 'grid',
+            error: '',
+            required: false,
+            disabled: false,
+            hint: 'How the workspace is laid out.',
+          })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      group.addEventListener('ui4u:change', (event) => {
+        const { value, name } = event.detail;
+        log.textContent = `ui4u:change → ${name || '(unnamed)'} = "${value}"`;
+        // Clear a stale error as soon as the author answers the question.
+        group.clearValidity();
+      });
+
+      // A binding that vetoes: the group refuses the change and says so, and
+      // nothing about it moves — not the selection, not the tab stop.
+      const locked = document.getElementById('locked');
+      const lockLog = document.getElementById('lock-log');
+
+      locked.configure({
+        bindings: {
+          change: ({ value }) => {
+            if (value === 'cosy') return;
+            lockLog.textContent = `change binding vetoed "${value}" — the group never moved`;
+            return false;
+          },
+        },
+      });
+    </script>
+  </body>
+</html>

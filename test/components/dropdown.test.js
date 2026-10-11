@@ -1039,3 +1039,158 @@ describe('ui-dropdown teardown', () => {
     field.remove();
   });
 });
+
+describe('ui-dropdown bindings', () => {
+  afterEach(() => cleanup());
+
+  it('runs a change binding with the detail the event carries', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    /** @type {any[]} */
+    const seen = [];
+    field.bind('change', (detail) => seen.push(detail));
+
+    field.open();
+    click(rowWithValue(field, 'sg'));
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].value, 'sg');
+    assert.equal(seen[0].name, 'country');
+    assert.equal(seen[0].option, rowWithValue(field, 'sg') ?? seen[0].option);
+  });
+
+  it('a binding returning false leaves the selection and the list untouched', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    field.open();
+    click(rowWithValue(field, 'my'));
+    field.open();
+
+    /** @type {unknown[]} */
+    const events = [];
+    field.addEventListener('ui4u:change', () => events.push('change'));
+    field.bind('change', () => false);
+
+    click(rowWithValue(field, 'vn'));
+
+    assert.equal(field.value, 'my', 'the previous selection stands');
+    assert.equal(field.getAttribute('value'), 'my', 'and the attribute was not rewritten');
+    assert.equal(triggerOf(field).textContent, 'Malaysia', 'the trigger still says Malaysia');
+    assert.equal(field.isOpen, true, 'the list did not close either');
+    assert.equal(rowWithValue(field, 'vn').getAttribute('aria-selected'), 'false');
+    assert.deepEqual(events, [], 'and a vetoed change is never announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    field.bind('change', (_detail, event) => event.preventDefault());
+    field.open();
+
+    click(rowWithValue(field, 'sg'));
+
+    assert.equal(field.value, '');
+    assert.equal(field.getAttribute('value'), null);
+  });
+
+  it('guards the one shared path: Space toggle and Ctrl+Arrow are vetoed too', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    field.bind('change', () => false);
+    field.open();
+
+    press(rowWithValue(field, 'my'), ' ');
+    assert.equal(field.value, '', 'the Space toggle was vetoed');
+
+    press(rowWithValue(field, 'my'), 'Enter');
+    assert.equal(field.value, '', 'the Enter commit was vetoed');
+
+    press(triggerOf(field), 'ArrowDown');
+    press(triggerOf(field), 'ArrowDown', { ctrlKey: true });
+    assert.equal(field.value, '', 'the Ctrl+Arrow selection was vetoed');
+  });
+
+  it('a binding returning undefined lets the commit through, and ui4u:change still fires', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    /** @type {any[]} */
+    const events = [];
+    field.addEventListener('ui4u:change', (event) => events.push(event.detail));
+    field.bind('change', () => undefined);
+
+    field.open();
+    click(rowWithValue(field, 'vn'));
+
+    assert.equal(field.value, 'vn');
+    assert.equal(field.isOpen, false, 'still closed after the commit');
+    assert.deepEqual(
+      events.map((event) => event.value),
+      ['vn']
+    );
+  });
+
+  it('offers the selection the interaction would commit, not the live one', () => {
+    const field = mount(
+      `<ui-dropdown label="Regions" name="regions" multiple>
+         <ui-dropdown-option value="eu">Europe</ui-dropdown-option>
+         <ui-dropdown-option value="ap">Asia Pacific</ui-dropdown-option>
+       </ui-dropdown>`
+    ).querySelector('ui-dropdown');
+
+    /** @type {any[]} */
+    const seen = [];
+    /** @type {string[][]} */
+    const live = [];
+    field.bind('change', (detail) => {
+      seen.push(detail.value);
+      live.push(field.value);
+    });
+
+    field.open();
+    click(rowWithValue(field, 'eu'));
+    field.open();
+    click(rowWithValue(field, 'ap'));
+
+    assert.deepEqual(seen, [['eu'], ['eu', 'ap']]);
+    assert.deepEqual(
+      live,
+      [[], ['eu']],
+      'the live value is always one commit behind the one being offered'
+    );
+  });
+
+  it('an open or close binding vetoes the transition', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    /** @type {unknown[]} */
+    const events = [];
+    field.addEventListener('ui4u:open', () => events.push('open'));
+    field.bind('open', () => false);
+
+    field.open();
+    assert.equal(field.isOpen, false, 'the list never opened');
+    assert.equal(field.panel, null, 'and no panel was built');
+    assert.deepEqual(events, []);
+
+    field.unbind('open');
+    field.open();
+    field.bind('close', () => false);
+    click(triggerOf(field));
+    assert.equal(field.isOpen, true, 'the list stayed open');
+
+    // Setting the attribute is the unguarded route, deliberately.
+    field.removeAttribute('open');
+    assert.equal(field.isOpen, false);
+  });
+
+  it('configure({ bindings }) registers bindings', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+    /** @type {unknown[]} */
+    const seen = [];
+    field.configure({
+      bindings: {
+        open: () => seen.push('open'),
+        change: (detail) => seen.push(detail.value),
+      },
+    });
+
+    field.open();
+    click(rowWithValue(field, 'sg'));
+
+    assert.deepEqual(seen, ['open', 'sg']);
+  });
+});

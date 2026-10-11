@@ -644,3 +644,143 @@ describe('ui-panel', () => {
     assert.equal(panel.slot, 'center');
   });
 });
+
+describe('ui-layout bindings', () => {
+  let layout;
+
+  beforeEach(() => {
+    layout = mount(FULL).querySelector('ui-layout');
+  });
+
+  afterEach(() => cleanup());
+
+  const leftWidth = () => layout.sizeOf('left');
+
+  it('runs a resize binding with the size the panel would actually take', () => {
+    /** @type {any[]} */
+    const seen = [];
+    layout.bind('resize', (detail) => seen.push(detail));
+
+    layout.setSlotSize('left', 300);
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].slot, 'left');
+    assert.equal(seen[0].size, 300);
+    assert.equal(seen[0].min, 160, 'the limits travel with the detail');
+    assert.equal(seen[0].max, 400);
+    assert.equal(seen[0].layout, layout);
+    assert.equal(leftWidth(), 300, 'and the default still ran');
+  });
+
+  it('a binding returning false leaves the panel at its old size', () => {
+    const before = leftWidth();
+    /** @type {unknown[]} */
+    const events = [];
+    layout.addEventListener('ui4u:resize', () => events.push('resize'));
+    layout.bind('resize', () => false);
+
+    layout.setSlotSize('left', 320);
+
+    assert.equal(leftWidth(), before, 'the track did not move');
+    assert.equal(layout.panel('left').current, before);
+    assert.deepEqual(events, [], 'and a vetoed resize is never announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    const before = leftWidth();
+    layout.bind('resize', (_detail, event) => event.preventDefault());
+
+    layout.setSlotSize('left', 320);
+
+    assert.equal(leftWidth(), before);
+  });
+
+  it('guards the shared path, so a keyboard resize is vetoed too', () => {
+    const before = leftWidth();
+    layout.bind('resize', () => false);
+
+    press(splittersOn(layout, 'column')[0], 'ArrowRight');
+
+    assert.equal(leftWidth(), before, 'the separator moved nothing');
+  });
+
+  it('clamps before offering the binding, so a veto sees the real target size', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    layout.bind('resize', (detail) => seen.push(detail.size));
+
+    layout.setSlotSize('left', 5000);
+
+    assert.deepEqual(seen, [400], 'offered the clamped max, not the raw request');
+  });
+
+  it('a binding returning undefined lets the resize through, and ui4u:resize still fires', () => {
+    /** @type {any[]} */
+    const events = [];
+    layout.addEventListener('ui4u:resize', (event) => events.push(event.detail));
+    layout.bind('resize', () => undefined);
+
+    layout.setSlotSize('left', 280);
+
+    assert.equal(leftWidth(), 280);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].slot, 'left');
+  });
+
+  it('runs a collapse binding, and a veto leaves the panel in the tree', () => {
+    /** @type {any[]} */
+    const seen = [];
+    layout.bind('collapse', (detail) => seen.push(detail));
+
+    layout.setSlotCollapsed('left', true);
+
+    assert.deepEqual(seen, [{ slot: 'left', collapsed: true, layout }]);
+    assert.equal(layout.panel('left').collapsed, true);
+  });
+
+  it('a vetoed collapse leaves the panel on screen', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    layout.addEventListener('ui4u:collapse', () => events.push('collapse'));
+    layout.bind('collapse', () => false);
+
+    layout.setSlotCollapsed('left', true);
+
+    assert.equal(layout.panel('left').collapsed, false, 'still expanded');
+    assert.equal(leftWidth(), 240, 'and still at its size');
+    assert.deepEqual(events, []);
+  });
+
+  it('a collapse binding calling preventDefault vetoes too', () => {
+    layout.bind('collapse', (_detail, event) => event.preventDefault());
+
+    layout.setSlotCollapsed('left', true);
+
+    assert.equal(layout.panel('left').collapsed, false);
+  });
+
+  it('leaves reset() unguarded — restoring the authored size is not a resize', () => {
+    layout.setSlotSize('left', 300);
+    layout.bind('resize', () => false);
+
+    layout.reset();
+
+    assert.equal(leftWidth(), 240, 'back to the authored size, veto or not');
+  });
+
+  it('configure({ bindings }) registers bindings', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    layout.configure({
+      bindings: {
+        resize: (detail) => seen.push(detail.size),
+        collapse: (detail) => seen.push(detail.collapsed),
+      },
+    });
+
+    layout.setSlotSize('left', 260);
+    layout.setSlotCollapsed('left', true);
+
+    assert.deepEqual(seen, [260, true]);
+  });
+});

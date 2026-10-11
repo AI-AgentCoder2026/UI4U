@@ -16,6 +16,8 @@ import { append, clear, delegate, el, on, setText, uid } from '../../core/dom.js
  * @typedef {object} FormOptions
  * @property {ValidateOn} [validateOn] When fields are re-checked. Default `'submit'`.
  * @property {boolean} [noValidate] Submit without validating. Default `false`.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ submit: ({ values }) => values.email !== '' }`.
  */
 
 // The default, `submit`, is absent: an unknown value falls back to it.
@@ -57,6 +59,14 @@ const FIELD_SELECTOR = 'ui-input, ui-checkbox, ui-radio-group, ui-dropdown';
  * constraint-validation bubble would pre-empt the submit event entirely, and
  * this component reports every failure itself — accessibly, with focus moved to
  * the first bad field.
+ *
+ * Binds to `submit` — `detail: { values, event }`, the same payload the event
+ * carries. A binding that returns `false` takes the submit over: the native
+ * event is prevented, and no validation, error marking, summary or `ui4u:submit`
+ * happens. There is no `invalid` binding — by the time the form reports a
+ * blocked submit it has already marked the fields and moved focus, and undoing
+ * that afterwards would only leave the page describing failures that are no
+ * longer there.
  */
 export class Form extends UI4UElement {
   static get observedAttributes() {
@@ -163,10 +173,11 @@ export class Form extends UI4UElement {
    * form.configure({ validateOn: 'change', noValidate: false });
    */
   configure(options = {}) {
-    const { validateOn, noValidate } = options;
+    const { validateOn, noValidate, bindings } = options;
 
     if (validateOn !== undefined) this.validateOn = validateOn;
     if (noValidate !== undefined) this.noValidate = noValidate;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -338,6 +349,17 @@ export class Form extends UI4UElement {
 
   /** @param {SubmitEvent|Event} event */
   #onSubmit(event) {
+    /*
+     * Guarded at the very top, before a field has been looked at. A binding
+     * that takes the submit over means the component does nothing at all — no
+     * validation pass, no errors, no summary, no focus move — and the browser
+     * is told no as well, because nothing was ever going to handle this.
+     */
+    if (!this.runBinding('submit', { values: this.values, event })) {
+      event.preventDefault();
+      return;
+    }
+
     if (this.noValidate) {
       this.emit('ui4u:submit', { values: this.values, event, validated: false });
       return;
@@ -353,6 +375,8 @@ export class Form extends UI4UElement {
 
     // The browser is told no; nothing invalid ever leaves through the platform.
     event.preventDefault();
+    // Reported, not guarded: the fields are already marked and the summary is
+    // already rendered, so there is no un-marking a veto could stand behind.
     this.emit('ui4u:invalid', { errors, values: this.values, event });
     this.#focusFirst(errors);
   }

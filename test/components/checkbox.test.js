@@ -567,3 +567,133 @@ describe('ui-checkbox teardown', () => {
     assert.equal(box.checkValidity().valid, true);
   });
 });
+
+describe('ui-checkbox bindings', () => {
+  afterEach(() => cleanup());
+
+  /**
+   * What a click does natively: the control has already toggled itself by the
+   * time `change` fires, so the tests have to do the same to mean anything.
+   *
+   * @param {Element} box
+   * @param {boolean} checked
+   * @param {boolean} [indeterminate]
+   */
+  function toggle(box, checked, indeterminate = false) {
+    const native = nativeOf(box);
+    native.checked = checked;
+    native.indeterminate = indeterminate;
+    native.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  /**
+   * @param {string} [attributes]
+   * @returns {Element}
+   */
+  function checkbox(attributes = '') {
+    return mount(
+      `<ui-checkbox label="One" name="releases" value="weekly" ${attributes}></ui-checkbox>`
+    ).querySelector('ui-checkbox');
+  }
+
+  it('runs a change binding with the detail the event carries', () => {
+    const box = checkbox();
+    /** @type {any[]} */
+    const seen = [];
+    box.bind('change', (detail) => seen.push(detail));
+
+    toggle(box, true);
+
+    assert.deepEqual(seen, [{ value: 'weekly', name: 'releases', checked: true }]);
+  });
+
+  it('a binding returning false puts the control back where the user found it', () => {
+    const box = checkbox();
+    /** @type {unknown[]} */
+    const events = [];
+    box.addEventListener('ui4u:change', () => events.push('change'));
+    box.bind('change', () => false);
+
+    toggle(box, true);
+
+    assert.equal(box.checked, false, 'the box is unticked again');
+    assert.equal(nativeOf(box).checked, false, 'the native control agrees');
+    assert.deepEqual(events, [], 'and a vetoed change is never announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    const box = checkbox();
+    box.bind('change', (_detail, event) => event.preventDefault());
+
+    toggle(box, true);
+
+    assert.equal(box.checked, false);
+    assert.equal(nativeOf(box).checked, false);
+  });
+
+  it('a binding returning undefined lets the tick through, and ui4u:change still fires', () => {
+    const box = checkbox();
+    /** @type {any[]} */
+    const events = [];
+    box.addEventListener('ui4u:change', (event) => events.push(event.detail));
+    box.bind('change', () => undefined);
+
+    toggle(box, true);
+
+    assert.equal(box.checked, true);
+    assert.equal(nativeOf(box).checked, true);
+    assert.deepEqual(events, [{ value: 'weekly', name: 'releases', checked: true }]);
+  });
+
+  it('a vetoed change also puts the mixed state back', () => {
+    // A "select all" box the browser un-mixes the moment it is clicked.
+    const box = checkbox('indeterminate');
+    box.bind('change', () => false);
+
+    toggle(box, true, false);
+
+    assert.equal(box.checked, false);
+    assert.equal(box.indeterminate, true, 'the mixed state survived');
+    assert.equal(nativeOf(box).indeterminate, true);
+    assert.equal(box.hasAttribute('indeterminate'), true);
+  });
+
+  it('a veto leaves a readonly box alone without undoing a real tick', () => {
+    const box = checkbox('readonly');
+    /** @type {unknown[]} */
+    const events = [];
+    box.addEventListener('ui4u:change', () => events.push('change'));
+    // A readonly box never reaches a binding at all, so nothing can be vetoed.
+    box.bind('change', () => {
+      throw new Error('a readonly box must not run its binding');
+    });
+
+    click(nativeOf(box));
+
+    assert.equal(box.checked, false);
+    assert.deepEqual(events, []);
+  });
+
+  it('a vetoed box is not wedged — the next real tick works normally', () => {
+    const box = checkbox();
+    box.bind('change', () => false);
+
+    toggle(box, true);
+    assert.equal(box.checked, false, 'the first tick was undone');
+
+    box.unbind('change');
+    toggle(box, true);
+    assert.equal(box.checked, true, 'and the second was not');
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    const box = checkbox();
+    /** @type {unknown[]} */
+    const seen = [];
+    box.configure({ bindings: { change: (detail) => seen.push(detail.checked) } });
+
+    toggle(box, true);
+
+    assert.deepEqual(seen, [true]);
+  });
+});

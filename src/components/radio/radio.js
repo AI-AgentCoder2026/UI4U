@@ -18,6 +18,8 @@ import { el, on, setText, uid } from '../../core/dom.js';
  * @property {boolean} [disabled] Disables every option at once.
  * @property {boolean} [required] An unanswered group is invalid.
  * @property {boolean} [srOnly] Hides the legend visually, keeping it for AT.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ change: ({ value }) => value !== 'enterprise' }`.
  *
  * @typedef {object} RadioValidityResult
  * @property {boolean} valid
@@ -299,15 +301,28 @@ export class Radio extends UI4UElement {
   }
 
   #onNativeChange() {
-    this.emit(
-      'ui4u:change',
-      { value: this.value, name: this.name, checked: this.checked },
-      {
+    const detail = { value: this.value, name: this.name, checked: this.checked };
+
+    // Inside a group the group owns the decision: `#select()` there runs the
+    // binding and restores the selection, so running one here as well would
+    // offer the same interaction twice and veto it twice.
+    if (this.#group) {
+      this.emit('ui4u:change', detail, {
         // Inside a group the group emits one bubbled `ui4u:change` of its own;
         // a second one from every option would double up for consumers.
         bubbles: false,
-      }
-    );
+      });
+      return;
+    }
+
+    // Standalone: the platform has already ticked the control, so a veto
+    // unticks it rather than merely skipping the event.
+    if (!this.runBinding('change', detail)) {
+      if (this.#native) this.#native.checked = false;
+      return;
+    }
+
+    this.emit('ui4u:change', detail, { bubbles: false });
   }
 
   /** @returns {HTMLElement|null} */
@@ -346,6 +361,13 @@ export class Radio extends UI4UElement {
  * loose set of radios.
  *
  * Listens for `ui4u:change` — `detail: { value, name }`.
+ *
+ * Binds to `change` with the same name and detail, on the group and on a
+ * standalone option alike. A binding that returns `false` puts the selection
+ * back: the shared `name` has already unchecked the previous option by the time
+ * any handler could run, so a veto restores that one rather than simply
+ * skipping the event. The `value` attribute is what makes this possible — it
+ * records the last committed selection, which is exactly the state to restore.
  *
  * @example
  * group.configure({ label: 'Plan', required: true, value: 'team' });
@@ -498,7 +520,7 @@ export class RadioGroup extends UI4UElement {
    * group.configure({ label: 'Plan', required: true, value: 'team' });
    */
   configure(options = {}) {
-    const { label, name, value, hint, error, disabled, required, srOnly } = options;
+    const { label, name, value, hint, error, disabled, required, srOnly, bindings } = options;
 
     if (label !== undefined) this.label = label;
     if (name !== undefined) this.name = name;
@@ -508,6 +530,7 @@ export class RadioGroup extends UI4UElement {
     if (disabled !== undefined) this.disabled = disabled;
     if (required !== undefined) this.required = required;
     if (srOnly !== undefined) this.srOnly = srOnly;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -798,6 +821,28 @@ export class RadioGroup extends UI4UElement {
    * @param {Radio} selected
    */
   #select(selected) {
+    // The last committed selection, read before anything changes. The shared
+    // `name` has already applied mutual exclusion by the time this runs, so
+    // this is the only record of what the group looked like a moment ago.
+    const previous = this.getString('value', '');
+
+    /*
+     * Guarded before the group is re-tabbable and the attribute rewritten.
+     *
+     * A veto has to restore the previous selection rather than merely skip the
+     * emit: the browser has already applied the group's mutual exclusion, so
+     * "do nothing" would mean leaving the newly chosen option ticked. Re-ticking
+     * the previous option is what puts the group back; when there was no
+     * previous selection, unticking restores the empty state instead.
+     */
+    if (!this.runBinding('change', { value: selected.value, name: this.name })) {
+      const restored = this.#radios.find((radio) => radio.value === previous);
+      if (restored) restored.checked = true;
+      else selected.checked = false;
+      this.#syncTabIndex();
+      return;
+    }
+
     for (const radio of this.#radios) {
       if (radio !== selected && radio.checked) radio.checked = false;
     }

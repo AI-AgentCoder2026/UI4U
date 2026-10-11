@@ -8,6 +8,8 @@ import { el, on, uid } from '../../core/dom.js';
  * @property {boolean} [open] Whether the content starts expanded.
  * @property {string} [summary] Text for the always-visible trigger.
  * @property {DisclosureVariant} [variant] Visual treatment. Default `'glass'`.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ change: ({ open }) => open }`.
  */
 
 /**
@@ -24,6 +26,12 @@ import { el, on, uid } from '../../core/dom.js';
  * ```
  *
  * Listens for `ui4u:change` — `detail: { open }`.
+ *
+ * Binds to `change` with the same name and detail. A binding that returns
+ * `false` leaves the disclosure exactly as it was, so the summary click, the
+ * `open()`/`close()`/`toggle()` methods and the `expanded` setter all share one
+ * veto. Writing the `open` attribute yourself is the way to skip it: that is
+ * authored state, not an action the component performs.
  */
 export class Disclosure extends UI4UElement {
   static get observedAttributes() {
@@ -72,11 +80,12 @@ export class Disclosure extends UI4UElement {
    * disclosure.configure({ summary: 'Advanced', open: true });
    */
   configure(options = {}) {
-    const { open, summary, variant = 'glass' } = options;
+    const { open, summary, variant = 'glass', bindings } = options;
 
     if (summary !== undefined) this.setAttribute('summary', summary);
     this.setAttribute('variant', variant);
     if (open !== undefined) this.expanded = open;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -202,7 +211,12 @@ export class Disclosure extends UI4UElement {
   /** @param {boolean} next @returns {this} */
   #set(next) {
     if (!this.#built) this.#build();
+    // Already in the requested state: nothing to take over, and nothing to do.
     if (next === this.expanded) return this;
+
+    // Guarded before the attribute is written, so a veto leaves the trigger,
+    // the region and the summary exactly as they were.
+    if (!this.runBinding('change', { open: next })) return this;
 
     this.#syncing = true;
     if (next) this.setAttribute('open', '');

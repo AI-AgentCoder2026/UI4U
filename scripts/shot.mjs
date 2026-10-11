@@ -33,6 +33,8 @@ const PAGES = [
   ['checkbox', devices['Desktop Chrome'].viewport],
   ['radio', devices['Desktop Chrome'].viewport],
   ['dropdown', devices['Desktop Chrome'].viewport],
+  ['toolbar', devices['Desktop Chrome'].viewport],
+  ['button-group', devices['Desktop Chrome'].viewport],
 ];
 
 const only = process.argv[2];

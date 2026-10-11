@@ -1,0 +1,87 @@
+/**
+ * ui-toolbar
+ *
+ * A bar of controls that is one tab stop. The styling is deliberately thin —
+ * the children are the author's own `ui-input` / `ui-button` elements and they
+ * keep their own appearance, so the toolbar only owns spacing, the surface it
+ * sits on, and the orientation the arrow keys follow.
+ */
+
+ui-toolbar {
+  --ui4u-toolbar-padding: var(--ui4u-space-2);
+  --ui4u-toolbar-gap: var(--ui4u-space-2);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui4u-toolbar-gap);
+  padding: var(--ui4u-toolbar-padding);
+  border-radius: var(--ui4u-radius-md);
+  background: var(--ui4u-surface-2);
+  border: 1px solid var(--ui4u-divider);
+}
+
+ui-toolbar[data-orientation='vertical'] {
+  flex-direction: column;
+  align-items: stretch;
+  height: 100%;
+}
+
+/*
+ * A toolbar with a `label` renders it as a visible caption. The attribute is
+ * what carries the accessible name; this is only a visual echo of it, so it
+ * must stay in the accessibility tree too rather than being re-announced.
+ */
+ui-toolbar[data-label]::before {
+  content: attr(data-label);
+  align-self: center;
+  padding-inline-end: var(--ui4u-space-2);
+  color: var(--ui4u-text-subtle);
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-wide);
+  text-transform: uppercase;
+}
+
+ui-toolbar[data-orientation='vertical'][data-label]::before {
+  align-self: flex-start;
+}
+
+/* `sr-only` hides the echo without losing the name. */
+ui-toolbar[data-sr-only]::before {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* No label means no echo, however the bar is styled. */
+ui-toolbar:not([data-label])::before {
+  content: none;
+}
+
+/* Controls fill a vertical bar so the row of inputs lines up. */
+ui-toolbar[data-orientation='vertical'] > * {
+  flex: 1 1 auto;
+}
+
+/* A trailing group is pushed to the far end without an extra element. */
+ui-toolbar > [data-toolbar-end] {
+  margin-inline-start: auto;
+}
+
+ui-toolbar[data-orientation='vertical'] > [data-toolbar-end] {
+  margin-inline-start: 0;
+  margin-block-start: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-toolbar > * {
+    transition: none;
+  }
+}

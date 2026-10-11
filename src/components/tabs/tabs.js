@@ -13,6 +13,8 @@ import { el, on, uid } from '../../core/dom.js';
  *   navigation; `'manual'` requires Enter/Space. Default `'automatic'`.
  * @property {TabsVariant} [variant] Visual treatment. Default `'glass'`.
  * @property {string} [label] Accessible name for the tab list.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ change: (detail) => detail.index !== 2 }`.
  */
 
 /**
@@ -39,6 +41,11 @@ export class Tab extends UI4UElement {}
  * ```
  *
  * Listens for `ui4u:change` — `detail: { index, label, tab }`.
+ *
+ * Binds to `change` with the same name and detail. A binding that returns
+ * `false` — or calls `event.preventDefault()` — keeps the currently active tab
+ * exactly where it is, however the switch was asked for: a click, an arrow key,
+ * `next()`/`previous()`, the `active` setter or the attribute.
  */
 export class Tabs extends UI4UElement {
   static get observedAttributes() {
@@ -103,6 +110,7 @@ export class Tabs extends UI4UElement {
    *
    * @example
    * tabs.configure({ variant: 'underline', activation: 'manual', active: 2 });
+   * tabs.configure({ bindings: { change: ({ index }) => index !== 2 } });
    */
   configure(options = {}) {
     const {
@@ -111,6 +119,7 @@ export class Tabs extends UI4UElement {
       activation = 'automatic',
       variant = 'glass',
       label,
+      bindings,
     } = options;
 
     this.setAttribute('orientation', orientation);
@@ -118,6 +127,7 @@ export class Tabs extends UI4UElement {
     this.setAttribute('variant', variant);
     if (label !== undefined) this.setAttribute('label', label);
     if (active !== undefined) this.active = active;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -254,6 +264,28 @@ export class Tabs extends UI4UElement {
     const total = this.#panels.length;
     const next = Math.min(Math.max(index, 0), total - 1);
     const changed = next !== this.#index;
+
+    /*
+     * Guarded here, before a single attribute is touched, because `#go` is the
+     * one path every switch comes through — click, arrow key, `next()`,
+     * `previous()`, the `active` setter and the attribute alike. Guarding each
+     * caller would be four chances to forget one.
+     *
+     * Only a real change is offered: re-running `#go` for the panel already
+     * shown is not an action a consumer could take over, and the initial build
+     * lands here too.
+     */
+    if (
+      changed &&
+      !this.runBinding('change', {
+        index: next,
+        label: this.#panels[next]?.getAttribute('label') ?? '',
+        tab: this.#panels[next] ?? null,
+      })
+    ) {
+      return;
+    }
+
     this.#index = next;
 
     this.#buttons.forEach((button, i) => {

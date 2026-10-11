@@ -285,3 +285,83 @@ describe('ui-disclosure keyboard reachability', () => {
     assert.equal(disclosure.expanded, false, 'a letter key must not toggle');
   });
 });
+
+describe('ui-disclosure bindings', () => {
+  let disclosure;
+
+  beforeEach(() => {
+    disclosure = mount(SAMPLE).querySelector('ui-disclosure');
+  });
+
+  afterEach(() => cleanup());
+
+  it('runs a change binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    disclosure.bind('change', (detail) => seen.push(detail));
+
+    disclosure.open();
+
+    assert.deepEqual(seen, [{ open: true }]);
+  });
+
+  it('a binding returning false leaves the disclosure closed', () => {
+    const changes = collectChanges(disclosure);
+    disclosure.bind('change', () => false);
+
+    disclosure.open();
+
+    assert.equal(disclosure.expanded, false, 'not open');
+    assert.equal(disclosure.hasAttribute('open'), false);
+    assert.equal(contentOf(disclosure).hidden, true, 'the content is still hidden');
+    assert.equal(triggerOf(disclosure).getAttribute('aria-expanded'), 'false');
+    assert.deepEqual(changes, []);
+  });
+
+  it('a binding calling preventDefault vetoes just as well', () => {
+    disclosure.bind('change', (_detail, event) => event.preventDefault());
+
+    click(triggerOf(disclosure));
+
+    assert.equal(disclosure.expanded, false);
+    assert.equal(contentOf(disclosure).hidden, true);
+  });
+
+  it('a binding returning undefined lets the disclosure open, and ui4u:change still fires', () => {
+    const changes = collectChanges(disclosure);
+    disclosure.bind('change', () => undefined);
+
+    disclosure.open();
+
+    assert.equal(disclosure.expanded, true);
+    assert.equal(contentOf(disclosure).hidden, false);
+    assert.equal(triggerOf(disclosure).getAttribute('aria-expanded'), 'true');
+    assert.deepEqual(changes, [{ open: true }]);
+  });
+
+  it('guards the shared path, so a click on the summary is vetoed too', () => {
+    disclosure.bind('change', () => false);
+
+    click(triggerOf(disclosure));
+    assert.equal(disclosure.expanded, false, 'the click did not toggle it open');
+
+    // And the other direction, from an already-open disclosure.
+    disclosure.unbind('change');
+    disclosure.open();
+    disclosure.bind('change', () => false);
+    click(triggerOf(disclosure));
+
+    assert.equal(disclosure.expanded, true, 'nor closed it again');
+    assert.equal(contentOf(disclosure).hidden, false);
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    disclosure.configure({ bindings: { change: (detail) => seen.push(detail) } });
+
+    disclosure.open();
+
+    assert.deepEqual(seen, [{ open: true }]);
+  });
+});

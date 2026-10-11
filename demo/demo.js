@@ -109,6 +109,93 @@ function wireThemeToggle(button = document.querySelector('[data-theme-toggle]'))
   });
 }
 
+/** Where the project lives. One place to change if the repo ever moves. */
+const REPO_URL = 'https://github.com/AI-AgentCoder2026/UI4U';
+
+/**
+ * Every demo page, in reading order.
+ *
+ * One list, so the index cards and the prev/next nav cannot drift apart: the
+ * index is generated from this same array. Links are plain relative filenames,
+ * which resolve identically under `/demo/` in dev and flattened on Pages.
+ */
+const DEMOS = [
+  { file: 'index.html', label: 'Home' },
+  { file: 'tabs.html', label: 'ui-tabs' },
+  { file: 'disclosure.html', label: 'ui-disclosure' },
+  { file: 'button.html', label: 'ui-button' },
+  { file: 'tooltip.html', label: 'ui-tooltip' },
+  { file: 'popup.html', label: 'ui-popup' },
+  { file: 'input.html', label: 'ui-input' },
+  { file: 'checkbox.html', label: 'ui-checkbox' },
+  { file: 'radio.html', label: 'ui-radio' },
+  { file: 'dropdown.html', label: 'ui-dropdown' },
+  { file: 'form.html', label: 'ui-form' },
+  { file: 'sidebar.html', label: 'ui-sidebar' },
+  { file: 'layout.html', label: 'ui-layout' },
+  { file: 'tablegrid.html', label: 'ui-tablegrid' },
+  { file: 'toolbar.html', label: 'ui-toolbar' },
+  { file: 'button-group.html', label: 'ui-button-group' },
+];
+
+/**
+ * @param {string} href
+ * @param {string} text
+ * @param {string} [className]
+ * @returns {HTMLAnchorElement}
+ */
+function navLink(href, text, className = '') {
+  const link = document.createElement('a');
+  link.href = href;
+  link.className = className;
+  // `textContent`, never innerHTML — a label is still text.
+  link.textContent = text;
+  return link;
+}
+
+/**
+ * Appends a prev / home / next bar and a repository link to every demo page.
+ *
+ * Generated rather than authored into thirteen files, so a new demo cannot ship
+ * without navigation and none of them can drift apart.
+ *
+ * @returns {void}
+ */
+function wireDemoNav() {
+  const page = document.querySelector('.page');
+  if (!page) return;
+
+  const current = location.pathname.split('/').pop() || 'index.html';
+  const index = DEMOS.findIndex((demo) => demo.file === current);
+  if (index === -1) return;
+
+  /** @type {HTMLElement} */
+  const nav = document.createElement('nav');
+  nav.className = 'demo-nav';
+  nav.setAttribute('aria-label', 'Demo navigation');
+
+  const previous = DEMOS[index - 1];
+  const next = DEMOS[index + 1];
+
+  // `aria-disabled` rather than `aria-hidden`, so the slot keeps its place in
+  // the tab order at the ends of the list instead of vanishing.
+  if (previous) nav.appendChild(navLink(previous.file, `← ${previous.label}`, 'demo-nav__link'));
+  else nav.appendChild(navLink('#', '← Previous', 'demo-nav__link demo-nav__link--off'));
+
+  nav.appendChild(navLink('index.html', 'All demos', 'demo-nav__link demo-nav__link--home'));
+
+  if (next) nav.appendChild(navLink(next.file, `${next.label} →`, 'demo-nav__link'));
+  else nav.appendChild(navLink('#', 'Next →', 'demo-nav__link demo-nav__link--off'));
+
+  const repo = navLink(REPO_URL, 'GitHub', 'demo-nav__link demo-nav__link--repo');
+  repo.rel = 'noopener noreferrer';
+  repo.target = '_blank';
+  nav.appendChild(repo);
+
+  page.appendChild(nav);
+}
+
 highlightAll();
 wireCopyButtons();
 wireThemeToggle();
+wireDemoNav();

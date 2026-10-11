@@ -38,7 +38,7 @@ test('every component has a card and every card has a name', async ({ page }) =>
   // One card per registered component. A hard number, because a new component
   // that nobody linked here would otherwise ship silently missing from the
   // index — and nothing else would notice.
-  expect(cards.length).toBe(13);
+  expect(cards.length).toBe(15);
   expect(cards.filter((name) => !name)).toEqual([]);
   expect(new Set(cards).size).toBe(cards.length, 'no duplicate component names');
 });

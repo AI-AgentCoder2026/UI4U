@@ -1,0 +1,195 @@
+/**
+ * ui-button-group
+ *
+ * The segmented look: the buttons are JOINED into one control rather than a row
+ * of loose buttons. That means no gaps, no inner radii on the shared edges, the
+ * radius only on the two outer corners, and separators drawn on the shared
+ * edges between unselected buttons — a selected segment hides them, which is
+ * what reads as a thumb sliding across one surface.
+ *
+ * Every value is a `--ui4u-*` token. The handful of measurements without a
+ * global token — the radius, the divider, the joined padding — are declared
+ * once on the element itself as `--ui4u-button-group-*`, so overriding them is
+ * a token override, never a fork of this file.
+ *
+ * Mobile-first: the row is sized for touch, and the wide-screen refinement only
+ * widens the segment padding.
+ */
+
+ui-button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui4u-space-2);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-button-group-radius: var(--ui4u-radius-md);
+  --ui4u-button-group-pad: var(--ui4u-space-1);
+  --ui4u-button-group-divider: 1px;
+  --ui4u-button-group-border-width: 1px;
+  --ui4u-button-group-surface: var(--ui4u-surface-2);
+  --ui4u-button-group-selected-surface: var(--ui4u-surface);
+  --ui4u-button-group-hover-surface: var(--ui4u-surface-3);
+  --ui4u-button-group-label-color: var(--ui4u-text-muted);
+  --ui4u-button-group-font-size: var(--ui4u-font-size-sm);
+  --ui4u-button-group-disabled-opacity: 0.55;
+  --ui4u-button-group-touch: 2.75rem;
+}
+
+/*
+ * The joined row is one control, so it keeps the button scale but with a 44px
+ * touch height: a segmented control that is easier to miss than a single button
+ * would be a regression on a phone.
+ *
+ * The knob is declared on the child `ui-button`, not here, because `button.css`
+ * declares it on that same element — a custom property set on an element wins
+ * over an inherited one, so a parent's override would simply be ignored. This
+ * is still a token override: nothing in button.css is forked.
+ */
+ui-button-group ui-button {
+  --ui4u-button-height-sm: var(--ui4u-button-group-touch);
+  --ui4u-button-height-md: var(--ui4u-button-group-touch);
+  --ui4u-button-height-lg: var(--ui4u-button-group-touch);
+}
+
+/* --- the joined row ------------------------------------------------------ */
+
+ui-button-group .ui4u-button-group__options {
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  max-width: 100%;
+  padding: var(--ui4u-button-group-pad);
+  background: var(--ui4u-button-group-surface);
+  border: var(--ui4u-button-group-border-width) solid var(--ui4u-border);
+  border-radius: var(--ui4u-button-group-radius);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-base) var(--ui4u-ease-out);
+}
+
+/*
+ * The inner corners are the outer radius minus the row padding, so a segment
+ * still reads as sitting inside a rounded pill instead of poking out of it.
+ */
+ui-button-group {
+  --ui4u-button-group-radius-inner: calc(
+    var(--ui4u-button-group-radius) - var(--ui4u-button-group-pad)
+  );
+}
+
+/* --- the segments -------------------------------------------------------- */
+
+/*
+ * Specificity note. These rules compose around `ui-button`, whose own stylesheet
+ * styles `.ui4u-button__control` per variant AND per hover state — selectors as
+ * specific as `(0,5,1)`. Matching that here by hand would be brittle, and
+ * source order is not a guarantee: `ui4u.css` concatenates both files. So every
+ * rule below carries the `[data-variant][data-size]` pair that `ui-button` always
+ * writes at build time, which puts a grouped control deterministically above the
+ * ungrouped one regardless of which file loads first.
+ */
+ui-button-group ui-button[data-variant][data-size] .ui4u-button__control {
+  /* No gaps, no shared-edge rounding: the segments are one control. */
+  border-radius: 0;
+  border-color: transparent;
+  color: var(--ui4u-text-muted);
+  background: transparent;
+  box-shadow: none;
+  padding-inline: var(--ui4u-space-4);
+  transition:
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-base) var(--ui4u-ease-out);
+}
+
+/* The radius lives on the two outer corners only. */
+ui-button-group ui-button[data-variant][data-size]:first-child .ui4u-button__control {
+  border-start-start-radius: var(--ui4u-button-group-radius-inner);
+  border-end-start-radius: var(--ui4u-button-group-radius-inner);
+}
+
+ui-button-group ui-button[data-variant][data-size]:last-child .ui4u-button__control {
+  border-start-end-radius: var(--ui4u-button-group-radius-inner);
+  border-end-end-radius: var(--ui4u-button-group-radius-inner);
+}
+
+/*
+ * Separators are drawn on the leading edge of every segment but the first — and
+ * never on a selected segment, so the pressed one sits cleanly on the row
+ * surface instead of carrying a line down its side.
+ */
+ui-button-group
+  ui-button[data-variant][data-size]
+  + ui-button[data-variant][data-size]
+  .ui4u-button__control:not([aria-checked='true']) {
+  border-inline-start: var(--ui4u-button-group-divider) solid var(--ui4u-border-strong);
+}
+
+ui-button-group
+  ui-button[data-variant][data-size]
+  .ui4u-button__control:hover:not([disabled]):not([aria-checked='true']) {
+  color: var(--ui4u-text);
+  background: var(--ui4u-button-group-hover-surface);
+}
+
+/* --- the selected segment ------------------------------------------------ */
+
+ui-button-group
+  ui-button[data-variant][data-size]
+  .ui4u-button__control[aria-checked='true']:not([disabled]) {
+  color: var(--ui4u-text);
+  background: var(--ui4u-button-group-selected-surface);
+  box-shadow: var(--ui4u-shadow-sm), var(--ui4u-shadow-inset);
+}
+
+/* --- label, hint and error ----------------------------------------------- */
+
+ui-button-group .ui4u-button-group__label {
+  color: var(--ui4u-button-group-label-color);
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+}
+
+ui-button-group .ui4u-button-group__hint,
+ui-button-group .ui4u-button-group__error {
+  margin: 0;
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-button-group-font-size);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-button-group .ui4u-button-group__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-button-group .ui4u-button-group__error {
+  color: var(--ui4u-danger);
+}
+
+/* An invalid group is visible from the control itself, not only from its text. */
+ui-button-group[aria-invalid='true'] .ui4u-button-group__options {
+  border-color: var(--ui4u-danger);
+}
+
+/* A disabled group gives back its pressed-segment contrast. */
+ui-button-group[aria-disabled='true'] .ui4u-button-group__options {
+  opacity: var(--ui4u-button-group-disabled-opacity);
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+
+@media (min-width: 48rem) {
+  ui-button-group ui-button[data-variant][data-size] .ui4u-button__control {
+    padding-inline: var(--ui4u-space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-button-group .ui4u-button-group__options,
+  ui-button-group ui-button .ui4u-button__control {
+    transition: none;
+  }
+}

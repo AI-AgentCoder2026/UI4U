@@ -625,3 +625,143 @@ describe('ui-sidebar teardown', () => {
     assert.equal(sidebar.activeIndex, 0);
   });
 });
+
+describe('ui-sidebar bindings', () => {
+  let sidebar;
+
+  beforeEach(() => {
+    sidebar = mount(THREE_ITEMS).querySelector('ui-sidebar');
+  });
+
+  afterEach(() => cleanup());
+
+  it('runs a change binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    sidebar.bind('change', (detail) => seen.push(detail));
+
+    click(toggleOf(sidebar));
+
+    assert.deepEqual(seen, [{ expanded: false, rail: true }]);
+  });
+
+  it('a binding returning false leaves the sidebar exactly as it was', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    sidebar.addEventListener('ui4u:change', () => events.push('change'));
+    sidebar.bind('change', () => false);
+
+    click(toggleOf(sidebar));
+
+    assert.equal(sidebar.expanded, true, 'still expanded');
+    assert.equal(sidebar.hasAttribute('collapsed'), false);
+    assert.equal(toggleOf(sidebar).getAttribute('aria-expanded'), 'true');
+    assert.deepEqual(events, [], 'and a vetoed collapse is never announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    sidebar.bind('change', (_detail, event) => event.preventDefault());
+
+    click(toggleOf(sidebar));
+
+    assert.equal(sidebar.expanded, true);
+  });
+
+  it('runs a navigate binding with the detail the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    sidebar.bind('navigate', (detail) => seen.push(detail));
+
+    click(controlsOf(sidebar)[2]);
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].index, 2);
+    assert.equal(seen[0].href, '');
+    assert.equal(seen[0].item, sidebar.querySelectorAll('ui-sidebar-item')[2]);
+  });
+
+  it('a vetoed navigate leaves the active item, its attributes and focus alone', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    sidebar.addEventListener('ui4u:navigate', () => events.push('navigate'));
+    sidebar.bind('navigate', () => false);
+
+    click(controlsOf(sidebar)[1]);
+
+    assert.equal(sidebar.activeIndex, 0, 'the active item did not move');
+    assert.equal(controlsOf(sidebar)[0].getAttribute('aria-current'), 'page');
+    assert.equal(controlsOf(sidebar)[1].hasAttribute('aria-current'), false);
+    assert.equal(controlsOf(sidebar)[1].tabIndex, -1, 'the tab stop stayed put');
+    assert.deepEqual(events, []);
+  });
+
+  it('guards the shared path, so Enter and the arrow keys are vetoed too', () => {
+    sidebar.bind('navigate', () => false);
+
+    press(controlsOf(sidebar)[2], 'Enter');
+    assert.equal(sidebar.activeIndex, 0, 'Enter was vetoed');
+
+    press(controlsOf(sidebar)[0], 'ArrowDown');
+    assert.equal(sidebar.activeIndex, 0, 'the arrow key moved focus only, not the active item');
+  });
+
+  it('expands on focus even when a binding vetoes expansion', () => {
+    // A collapsed rail only exposes labels through `title`, so refusing to
+    // expand on focus would strand a keyboard user in an unlabelled strip.
+    // The component keeping focus out of that trap is not an action anybody
+    // asked for, so a binding must not be able to veto it.
+    const rail = mount(THREE_ITEMS).querySelector('ui-sidebar');
+    rail.setAttribute('expanded', '');
+    rail.setAttribute('data-narrow', 'false');
+    rail.bind('change', () => false);
+
+    const control = controlsOf(rail)[0];
+    control.dispatchEvent(new window.FocusEvent('focusin', { bubbles: true }));
+
+    assert.equal(rail.expanded, true, 'focus expansion is not vetoable');
+  });
+
+  it('a binding returning undefined lets the default through, and the events still fire', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    sidebar.addEventListener('ui4u:navigate', () => events.push('navigate'));
+    sidebar.addEventListener('ui4u:change', () => events.push('change'));
+    sidebar.bind('navigate', () => undefined);
+    sidebar.bind('change', () => undefined);
+
+    click(controlsOf(sidebar)[1]);
+    click(toggleOf(sidebar));
+
+    assert.deepEqual(events, ['navigate', 'change']);
+    assert.equal(sidebar.activeIndex, 1);
+    assert.equal(sidebar.expanded, false);
+  });
+
+  it('never offers the initial activation or the drawer auto-collapse', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    const host = mount(
+      '<ui-sidebar label="Main"><ui-sidebar-item label="One"></ui-sidebar-item></ui-sidebar>'
+    );
+    host.querySelector('ui-sidebar').bind('navigate', (detail) => seen.push(detail));
+    host.querySelector('ui-sidebar').bind('change', (detail) => seen.push(detail));
+
+    assert.deepEqual(seen, [], 'the component placing itself asks nothing of a consumer');
+  });
+
+  it('configure({ bindings }) registers bindings', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    sidebar.configure({
+      bindings: {
+        navigate: (detail) => seen.push(detail.index),
+        change: (detail) => seen.push(detail.expanded),
+      },
+    });
+
+    click(controlsOf(sidebar)[1]);
+    click(toggleOf(sidebar));
+
+    assert.deepEqual(seen, [1, false]);
+  });
+});

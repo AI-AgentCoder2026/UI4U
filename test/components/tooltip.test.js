@@ -677,3 +677,110 @@ describe('core/position', () => {
     assert.equal(surface.style.left, '', 'no position written without layout');
   });
 });
+
+describe('ui-tooltip bindings', () => {
+  afterEach(() => cleanup());
+
+  it('runs a show binding before the surface appears', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+
+    /** @type {any[]} */
+    const seen = [];
+    tooltip.bind('show', (detail) => {
+      seen.push(detail);
+      // Observed while still closed — that is the whole point of the binding.
+      assert.equal(tooltip.visible, false);
+      assert.equal(surfaceOf(tooltip).hidden, true);
+    });
+
+    tooltip.show();
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].placement, 'top');
+    assert.equal(tooltip.visible, true);
+  });
+
+  it('a binding returning false leaves the surface closed, from focus or hover alike', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+    /** @type {unknown[]} */
+    const shown = [];
+    tooltip.addEventListener('ui4u:show', () => shown.push('show'));
+
+    tooltip.bind('show', () => false);
+
+    tooltip.show();
+    assert.equal(tooltip.visible, false, 'a direct show() was vetoed');
+    assert.equal(surfaceOf(tooltip).hidden, true, 'and nothing was left on screen');
+
+    tooltip.dispatchEvent(new Event('focusin', { bubbles: true }));
+    assert.equal(tooltip.visible, false, 'keyboard focus was vetoed too');
+
+    pointer(tooltip, 'pointerover');
+    tooltip.show();
+    assert.equal(tooltip.visible, false, 'and so was a hover');
+
+    assert.deepEqual(shown, [], 'a vetoed show is never announced');
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+    tooltip.bind('show', (_detail, event) => event.preventDefault());
+
+    tooltip.show();
+
+    assert.equal(tooltip.visible, false);
+  });
+
+  it('a binding returning undefined lets the surface through, and ui4u:show still fires', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+    /** @type {unknown[]} */
+    const shown = [];
+    tooltip.addEventListener('ui4u:show', () => shown.push('show'));
+    tooltip.bind('show', () => undefined);
+
+    tooltip.show();
+
+    assert.equal(tooltip.visible, true);
+    assert.equal(surfaceOf(tooltip).hidden, false);
+    assert.deepEqual(shown, ['show']);
+  });
+
+  it('has no hide binding: the component must always be able to retract', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+    tooltip.bind('hide', () => false);
+
+    tooltip.show();
+    tooltip.hide();
+
+    assert.equal(tooltip.visible, false, 'hide is not the consumer decision');
+    assert.equal(surfaceOf(tooltip).hidden, true);
+
+    // And the component is not stranded by its own veto.
+    tooltip.show();
+    assert.equal(tooltip.visible, true, 'it can still open again');
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    const tooltip = mount(
+      '<ui-tooltip content="Rebuild"><button>Go</button></ui-tooltip>'
+    ).querySelector('ui-tooltip');
+    /** @type {unknown[]} */
+    const seen = [];
+    tooltip.configure({ bindings: { show: (detail) => seen.push(detail) } });
+
+    tooltip.show();
+
+    assert.equal(seen.length, 1);
+    assert.equal(tooltip.visible, true);
+  });
+});

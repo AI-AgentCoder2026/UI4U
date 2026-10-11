@@ -397,6 +397,124 @@ required, multiple, open })`, `open()`, `close()`, `toggle()`, `focus()`,
   `{ valid, message, value, name }` shape as every other field, which is what
   lets one selector in `ui-form` cover all of them.
 
+## 12. `ui-toolbar`
+
+```html
+<ui-toolbar label="Filters">
+  <ui-input label="Search"></ui-input>
+  <ui-dropdown label="Status"></ui-dropdown>
+  <ui-button variant="primary" data-toolbar-end>Apply</ui-button>
+</ui-toolbar>
+```
+
+- **API** — `configure({ label, orientation, srOnly })`, `focus()`,
+  `refresh()`, plus `items`, `label`, `orientation` and `srOnly`.
+- **One tab stop** — any number of controls inside is a single tab stop, so Tab
+  enters and leaves the whole bar in one press. That is the entire point: a row
+  of filters is otherwise unusable without tabbing through every field.
+- **Arrow keys move within the bar** — Right/Down and Left/Up (following
+  `orientation`), clamping at the ends rather than wrapping, and emitting
+  `ui4u:navigate`. On a clamp the tab stop still follows the control the user is
+  on, so tabbing out and back returns them where they left off. `Tab` is never
+  intercepted, so the bar is not a keyboard trap.
+- **Light DOM** — children stay where the author put them, so `ui-input`,
+  `ui-button`, `ui-dropdown` and anything else keep working exactly as they do
+  on their own.
+- **In a `ui-layout`** — a toolbar may sit directly in any slot as a thin,
+  non-resizable band: an app bar. It takes its height from its controls, is
+  never given a splitter, and cannot be collapsed, because there is nothing to
+  drag and no closed state.
+- **On a `ui-tablegrid`** — a toolbar written before the `<table>` becomes that
+  grid's own toolbar, the row of search, filters and bulk actions that belongs to
+  the table rather than the page around it. It is left exactly where it was
+  written and reached through the `toolbar` getter, never moved or removed by
+  the grid.
+- **Finding the controls** — a selector plus explicit `disabled` / `hidden` /
+  `aria-hidden` checks, deliberately _not_ the geometry-filtering `focusables()`
+  helper. That helper returns nothing at all without layout — including in this
+  repo's own node:test harness — and a toolbar that cannot see its own controls
+  outside a browser would be untestable and unverifiable.
+- **A11y** — `role="toolbar"` named by `label`; `sr-only` hides the visible
+  caption without losing the name.
+
+## 13. Event bindings
+
+Every component inherits a binding API from `UI4UElement`, so a consumer can
+observe _and override_ without a framework.
+
+```js
+field.bind('change', (detail) => {
+  if (!detail.amount) return false; // veto: the field changes nothing
+});
+
+field.configure({ bindings: { change: handler, input: handler } });
+field.unbind('change', handler);
+field.bindingNames; // ['change']
+```
+
+- **Runs before the action** — `runBinding(name, detail)` returns `false` when a
+  handler vetoes, and the component skips its own behaviour. The guard sits at
+  the top of the action, before any mutation, because a veto that lands after
+  the state has already changed leaves the component half-changed — worse than
+  no veto at all.
+- **Two ways to veto** — return `false`, or call `preventDefault()` on the
+  cancelable event handed to the handler.
+- **Either spelling** — `bind('change', …)` and `bind('ui4u:change', …)` land in
+  the same bucket, because both are natural at their call sites and silently
+  registering under the wrong key would make a binding that never fires.
+- **Robust** — handlers run in registration order and the first veto ends the
+  chain; a handler that throws is reported and skipped rather than taking the
+  component down; a handler may unbind itself mid-run.
+- **Additive** — the existing `ui4u:*` events, their detail shapes and their
+  ordering are untouched. A binding that returns anything else lets the default
+  proceed and the event still fires, so "tell me" and "I am handling this" are
+  both expressible without breaking existing consumers.
+- **Honest about the limit** — where a component's default has already happened
+  by the time its event fires (a tooltip that has already appeared), there is
+  no veto, because pretending otherwise would be worse than saying so.
+
+## 14. `ui-button-group`
+
+A segmented control: several buttons that together represent **one choice**.
+
+```html
+<ui-button-group label="View" name="view" value="grid">
+  <ui-button value="grid">Grid</ui-button>
+  <ui-button value="table">Table</ui-button>
+</ui-button-group>
+```
+
+- **API** — `configure({ label, name, value, hint, error, disabled, required })`,
+  `select(value)`, `focus()`, `refresh()`, `checkValidity()`,
+  `clearValidity()`, `reportValidity()`, and getters for `buttons`, `label`,
+  `name`, `value`, `hint`, `error`, `disabled`, `required` and `srOnly`.
+- **It wraps real `<ui-button>` children** rather than drawing its own, so the
+  buttons keep their variant, size, loading and disabled behaviour and can
+  carry icons.
+- **One tab stop** — only the selected button (or the first enabled one when
+  nothing is selected) keeps `tabindex="0"`; the rest are `-1`.
+- **Arrow keys move _and_ select** — Right/Down and Left/Up, plus Home/End to
+  jump to the ends. Movement **clamps at the ends and never wraps**.
+- **The clamp needs an explicit `preventDefault()`** before the boundary check.
+  Chromium's native radio handling wraps on arrow keys, so returning early at
+  the end without preventing it lets the browser move the selection anyway. A
+  unit test asserts `defaultPrevented === true` so the contract is pinned even
+  though jsdom itself has no arrow behaviour to observe.
+- **`Tab` is never intercepted**, so the group is not a keyboard trap. Clicking
+  the selected button keeps it selected rather than toggling it off, because a
+  choice is not a switch.
+- **A11y** — `role="radiogroup"` on the group and `role="radio"` with
+  `aria-checked` on each button. That is precisely what a segmented control is,
+  and it is why it differs from `ui-radio-group`: the keyboard model is the
+  same, but the presentation is one joined control rather than a stack of
+  circles.
+- **Validity** — `checkValidity()` returns the same
+  `{ valid, message, value, name }` shape every other field uses, so `ui-form`
+  discovers it with the same selector.
+- **Bindings** — a `change` binding runs before the selection mutates and can
+  veto it, leaving the group exactly as it was.
+- **Events** — `ui4u:change` with `detail: { value, name }`.
+
 ## Definition of done, for every component
 
 - [ ] `src/components/<name>/<name>.js` with JSDoc `@param`/`@returns` and one runnable `@example`

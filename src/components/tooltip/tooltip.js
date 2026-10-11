@@ -11,6 +11,8 @@ import { normalizePlacement, position } from '../../core/position.js';
  * @property {number} [delay] Milliseconds before a pointer hover opens the
  *   surface. Default `0`. Keyboard focus always opens immediately.
  * @property {boolean} [disabled] Suppresses showing without unmounting.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ show: () => false }`.
  */
 
 /** Elements that are reachable with a keyboard without an explicit tabindex. */
@@ -33,6 +35,13 @@ const FOCUSABLE =
  * walk into.
  *
  * Listens for `ui4u:show` and `ui4u:hide` — `detail: { placement }`.
+ *
+ * Binds to `show`, with the same detail: a binding that returns `false` keeps
+ * the surface closed, whichever way it was asked for — hover, focus or a direct
+ * `show()`. There is deliberately no `hide` binding: the component also hides
+ * itself on teardown, when `disabled` is set and when `content` is removed, and
+ * a vetoed hide would strand `#visible` at `true` so the surface could never
+ * open again. Retracting is not a decision a consumer gets to make.
  */
 export class Tooltip extends UI4UElement {
   static get observedAttributes() {
@@ -104,12 +113,13 @@ export class Tooltip extends UI4UElement {
    * tooltip.configure({ content: 'Rebuild the index', placement: 'bottom', delay: 200 });
    */
   configure(options = {}) {
-    const { content, placement = 'top', delay = 0, disabled = false } = options;
+    const { content, placement = 'top', delay = 0, disabled = false, bindings } = options;
 
     if (content !== undefined) this.setAttribute('content', content);
     this.setAttribute('placement', placement);
     this.reflect('delay', delay);
     this.reflect('disabled', disabled || null);
+    this.bindAll(bindings);
 
     if (disabled) this.hide();
 
@@ -123,6 +133,12 @@ export class Tooltip extends UI4UElement {
     if (this.disabled || !this.content) return this;
     // Already open — one open, one `ui4u:show`.
     if (this.#visible) return this;
+
+    // Guarded while the surface is still hidden, which is the whole point of
+    // this one being bindable: a binding that says no leaves no tooltip behind.
+    // The detail carries the REQUESTED placement, because nothing is measured
+    // until the surface is shown — `ui4u:show` reports the side it landed on.
+    if (!this.runBinding('show', { placement: this.placement })) return this;
 
     this.#clearTimer();
 

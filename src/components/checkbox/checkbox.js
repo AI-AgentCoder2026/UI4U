@@ -14,6 +14,8 @@ import { el, on, setText, uid } from '../../core/dom.js';
  * @property {boolean} [required] The box must be ticked for the field to be valid.
  * @property {boolean} [readonly] The user may not change it; `checked` is then the state.
  * @property {boolean} [srOnly] Hides the label visually, keeping it for AT.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ change: ({ checked }) => checked }`.
  *
  * @typedef {object} CheckboxValidityResult
  * @property {boolean} valid
@@ -42,6 +44,13 @@ const FALLBACK_MESSAGE = 'Please tick this box to continue.';
  *
  * Listens for `ui4u:change` — `detail: { value, name, checked }` — emitted in
  * addition to the native event, which still fires untouched.
+ *
+ * Binds to `change` with the same name and detail. A binding that returns
+ * `false` puts the control back where the user found it — the browser has
+ * already toggled it by the time any `change` handler could run, so a veto
+ * cannot merely skip the event; it has to undo the tick. The native event
+ * still fires either way, because the platform's own interaction already
+ * happened and no component gets to un-happen it.
  *
  * @example
  * box.configure({ label: 'Accept terms', required: true, hint: 'Required to sign up.' });
@@ -257,6 +266,7 @@ export class Checkbox extends UI4UElement {
       required,
       readonly,
       srOnly,
+      bindings,
     } = options;
 
     if (label !== undefined) this.label = label;
@@ -270,6 +280,7 @@ export class Checkbox extends UI4UElement {
     if (required !== undefined) this.required = required;
     if (readonly !== undefined) this.readonly = readonly;
     if (srOnly !== undefined) this.srOnly = srOnly;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -537,6 +548,11 @@ export class Checkbox extends UI4UElement {
   #onNativeChange() {
     const native = this.#native;
 
+    // Read before the mirror below overwrites it: the attribute is the source
+    // of truth for the mixed state, so this is the pre-click value a veto has
+    // to restore.
+    const wasIndeterminate = this.indeterminate;
+
     // The browser clears `indeterminate` when the box is clicked. Mirror that
     // back onto the attribute so the two never disagree — see the `indeterminate`
     // getter for why the attribute is the source of truth.
@@ -546,7 +562,25 @@ export class Checkbox extends UI4UElement {
 
     if (this.readonly) return;
 
-    this.emit('ui4u:change', { value: this.value, name: this.name, checked: this.checked });
+    const detail = { value: this.value, name: this.name, checked: this.checked };
+
+    /*
+     * The platform has already toggled the control by the time `change` fires,
+     * so a veto has to put it back rather than merely skip the emit — the same
+     * approach as `#revertWhenReadonly()`, because cancelling a checkbox click
+     * with `preventDefault()` depends on host activation behaviour.
+     *
+     * `change` only ever fires when the box has toggled, so inverting the live
+     * state restores exactly what the user saw. The mixed state goes back
+     * through the setter, which mirrors it onto the control as well.
+     */
+    if (!this.runBinding('change', detail)) {
+      if (native) native.checked = !native.checked;
+      this.indeterminate = wasIndeterminate;
+      return;
+    }
+
+    this.emit('ui4u:change', detail);
   }
 
   /** @param {string} name @param {unknown} value */

@@ -159,6 +159,8 @@ export class TableGrid extends UI4UElement {
   #selectAllBox = null;
   /** @type {HTMLElement|null} */
   #copyButton = null;
+  /** An author-supplied `<ui-toolbar>` acting as this grid's toolbar. @type {HTMLElement|null} */
+  #toolbar = null;
   /** @type {HTMLElement|null} */
   #filterBar = null;
   /** Advanced search criteria. @type {TableFilter[]} */
@@ -320,6 +322,16 @@ export class TableGrid extends UI4UElement {
   get pageCount() {
     if (!this.perPage) return 1;
     return Math.max(1, Math.ceil(this.#matched.length / this.perPage));
+  }
+
+  /**
+   * The author's `<ui-toolbar>` acting as this grid's toolbar, or `null` when
+   * the grid has none.
+   *
+   * @returns {HTMLElement|null}
+   */
+  get toolbar() {
+    return this.#toolbar;
   }
 
   /**
@@ -808,6 +820,24 @@ export class TableGrid extends UI4UElement {
     const table = /** @type {HTMLTableElement|null} */ (this.querySelector('table'));
     if (!table) return;
 
+    /*
+     * A `ui-toolbar` written before the `<table>` becomes the grid's own
+     * toolbar — the row of search, filters and bulk actions that belongs to the
+     * table rather than to the page around it. It is left exactly where the
+     * author put it; the grid only claims it so it can label and expose it.
+     */
+    const authoredToolbar = /** @type {HTMLElement|null} */ (
+      this.querySelector(':scope > ui-toolbar')
+    );
+    if (authoredToolbar) {
+      authoredToolbar.setAttribute('data-toolbar', 'grid');
+      authoredToolbar.setAttribute('role', 'toolbar');
+      if (!authoredToolbar.hasAttribute('aria-label') && !authoredToolbar.hasAttribute('label')) {
+        authoredToolbar.setAttribute('aria-label', 'Table actions');
+      }
+      this.#toolbar = authoredToolbar;
+    }
+
     const head = table.tHead;
     const body = table.tBodies[0] ?? table.createTBody();
     if (!head || head.rows.length === 0) return;
@@ -917,6 +947,9 @@ export class TableGrid extends UI4UElement {
     this.#filterBar = null;
     this.#pager = null;
     this.#selectAllBox = null;
+    // An author-supplied toolbar is theirs, not ours: it is re-claimed on the
+    // next build, never removed here.
+    this.#toolbar = null;
     this.#page = 1;
     // The user's selection belongs to their data, not to one rendering of it,
     // so it deliberately survives a rebuild — but not a disconnect.

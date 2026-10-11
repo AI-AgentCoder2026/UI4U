@@ -17,6 +17,8 @@ const NARROW_QUERY = '(max-width: 48rem)';
  * @property {SidebarSide} [side] Which edge it sits on. Default `'left'`.
  * @property {string} [width] CSS length for the full width, e.g. `'16rem'`.
  * @property {string} [rail] CSS length for the collapsed (rail) width.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings — `change` for expand/collapse, `navigate` for activation.
  *
  * @typedef {object} SidebarChangeDetail
  * @property {boolean} expanded
@@ -60,6 +62,19 @@ export class SidebarItem extends UI4UElement {}
  *
  * Emits `ui4u:change` — `detail: { expanded, rail }` — and `ui4u:navigate` —
  * `detail: { item, index, href }`.
+ *
+ * Binds to `change` and `navigate` with the same names and details. A binding
+ * that returns `false` keeps the sidebar exactly as it was: a vetoed `navigate`
+ * moves neither the active item nor focus, and a vetoed `change` leaves the
+ * drawer shut and the trap unarmed.
+ *
+ * The binding covers every path through `#setExpanded` that a consumer asked
+ * for. Three paths deliberately bypass it: the initial `expanded` attribute,
+ * the drawer collapse the component performs when the viewport narrows, and
+ * the expansion that fires when focus enters a collapsed rail. All three are
+ * the component making sure it is not covering the page and not trapping focus
+ * in a strip — not actions anybody requested, so a consumer vetoing one would
+ * strand a keyboard user in an unlabelled rail.
  */
 export class Sidebar extends UI4UElement {
   static get observedAttributes() {
@@ -177,12 +192,13 @@ export class Sidebar extends UI4UElement {
    * sidebar.configure({ side: 'right', width: '18rem', rail: '4rem', expanded: true });
    */
   configure(options = {}) {
-    const { expanded, side = 'left', width, rail } = options;
+    const { expanded, side = 'left', width, rail, bindings } = options;
 
     this.setAttribute('side', side);
     if (width !== undefined) this.width = width;
     if (rail !== undefined) this.rail = rail;
     if (expanded !== undefined) this.expanded = expanded;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -483,11 +499,23 @@ export class Sidebar extends UI4UElement {
    * are only reachable through each control's `title`.
    *
    * @param {boolean} next
+   * @param {{ binding?: boolean }} [options] pass `binding: false` for an expansion
+   *   the component performs for the user's own sake rather than on request
    * @returns {this}
    */
-  #setExpanded(next) {
+  #setExpanded(next, { binding = true } = {}) {
     if (!this.#built) this.#build();
     const changed = next !== this.expanded;
+
+    /*
+     * Guarded before the attribute is written, so a veto leaves the drawer
+     * shut, the backdrop hidden and no focus trap armed. An unchanged request
+     * is not offered: there is no action to take over.
+     */
+    if (changed && binding && !this.runBinding('change', { expanded: next, rail: !next })) {
+      return this;
+    }
+
     if (next) this.#trapArmed = true;
 
     this.#syncing = true;
@@ -564,7 +592,14 @@ export class Sidebar extends UI4UElement {
   /** Focus entering a collapsed rail expands it rather than trapping the user. */
   #expandOnFocus() {
     if (this.expanded) return;
-    this.#setExpanded(true);
+    /*
+     * Deliberately unguarded. Refusing to expand would leave focus inside a
+     * collapsed strip whose labels are only reachable through `title` — the
+     * user could not tell where they were. This is the component keeping focus
+     * out of a trap, not an action anyone asked for, so a binding must not be
+     * able to veto it.
+     */
+    this.#setExpanded(true, { binding: false });
   }
 
   /**
@@ -584,6 +619,22 @@ export class Sidebar extends UI4UElement {
     if (!this.#records.length) return;
 
     const next = Math.min(Math.max(index, 0), this.#records.length - 1);
+    const record = this.#records[next];
+
+    /*
+     * Guarded before `#index` moves, so a veto leaves the active item, the
+     * `active` attributes, the tab stop and focus all as they were.
+     *
+     * The initial `silent` pass at build time is not an activation and is
+     * never offered — that is the component placing itself, and a consumer
+     * cannot have vetoed a page it has not seen yet.
+     */
+    if (
+      !silent &&
+      !this.runBinding('navigate', { item: record.item, index: next, href: record.href })
+    )
+      return;
+
     this.#index = next;
 
     this.#records.forEach((record, i) => {
@@ -597,10 +648,7 @@ export class Sidebar extends UI4UElement {
 
     if (focus) this.#records[next].control.focus();
 
-    if (!silent) {
-      const record = this.#records[next];
-      this.emit('ui4u:navigate', { item: record.item, index: next, href: record.href });
-    }
+    if (!silent) this.emit('ui4u:navigate', { item: record.item, index: next, href: record.href });
   }
 
   /** @param {KeyboardEvent} event */

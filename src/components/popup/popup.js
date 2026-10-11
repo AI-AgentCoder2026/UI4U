@@ -12,6 +12,8 @@ import { focusTrap } from '../../core/focus-trap.js';
  * @property {boolean} [dismissible] Close on Escape and backdrop click. Default `true`.
  * @property {'left' | 'right'} [side] Edge for `drawer` mode. Default `'right'`.
  * @property {string} [label] Accessible name.
+ * @property {Record<string, (detail: any, event: CustomEvent) => unknown>} [bindings]
+ *   Semantic bindings, e.g. `{ cancel: ({ mode }) => mode !== 'modal' }`.
  */
 
 /**
@@ -31,6 +33,15 @@ import { focusTrap } from '../../core/focus-trap.js';
  * trap the tooltip hit.
  *
  * Listens for `ui4u:open`, `ui4u:close` and `ui4u:cancel`.
+ *
+ * Binds to `open`, `close` and `cancel` — a binding that returns `false` stops
+ * the popup acting, which for `cancel` is what makes "are you sure?" possible:
+ * the popup stays open and nothing is closed behind the consumer's back. The
+ * focus trap follows whatever these bindings allow, so a vetoed `open` never
+ * steals focus either.
+ *
+ * Setting the `open` attribute yourself skips all three: the state is already
+ * decided by then, and a binding could not un-decide it.
  */
 export class Popup extends UI4UElement {
   static get observedAttributes() {
@@ -96,13 +107,14 @@ export class Popup extends UI4UElement {
    * popup.configure({ mode: 'drawer', side: 'left', open: true });
    */
   configure(options = {}) {
-    const { mode, open, dismissible, side, label } = options;
+    const { mode, open, dismissible, side, label, bindings } = options;
 
     if (mode !== undefined) this.setAttribute('mode', mode);
     if (dismissible !== undefined) this.setAttribute('dismissible', String(dismissible));
     if (side !== undefined) this.setAttribute('side', side);
     if (label !== undefined) this.setAttribute('label', label);
     if (open !== undefined) this.isOpen = open;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -111,6 +123,10 @@ export class Popup extends UI4UElement {
   openPopup() {
     if (!this.#built) this.#build();
     if (this.isOpen) return this;
+
+    // Before the attribute, so a veto leaves it closed: no surface, no trap,
+    // and focus stays where the user put it.
+    if (!this.runBinding('open', { mode: this.mode })) return this;
 
     this.#syncing = true;
     this.setAttribute('open', '');
@@ -125,6 +141,9 @@ export class Popup extends UI4UElement {
   /** @returns {this} */
   closePopup() {
     if (!this.isOpen) return this;
+
+    // Before the attribute, so a veto leaves it open with its trap intact.
+    if (!this.runBinding('close', { mode: this.mode })) return this;
 
     this.#syncing = true;
     this.removeAttribute('open');
@@ -171,6 +190,11 @@ export class Popup extends UI4UElement {
     if (oldValue === newValue || !this.#built || this.#syncing) return;
 
     if (name === 'open') {
+      /*
+       * No binding on this path: the attribute has already been added or
+       * removed, so the state is decided and a veto could not undo it. Guard
+       * the public methods — `openPopup()` / `closePopup()` — instead.
+       */
       if (this.isOpen) {
         this.#applyState();
         this.#activateTrap();
@@ -302,6 +326,14 @@ export class Popup extends UI4UElement {
 
   #dismiss() {
     if (!this.dismissible) return;
+
+    /*
+     * Guarded before anything is emitted or closed, rather than merely
+     * announced: this is the one interaction a consumer most often wants to
+     * answer first, and a veto must leave the popup standing.
+     */
+    if (!this.runBinding('cancel', { mode: this.mode })) return;
+
     this.emit('ui4u:cancel', { mode: this.mode });
     this.closePopup();
   }

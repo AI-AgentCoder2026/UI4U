@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { cleanup, mount, setupDom } from '../helpers/dom.js';
 
@@ -628,5 +628,96 @@ describe('ui-form field discovery', () => {
 
     form.fields[0].value = 'my';
     assert.equal(form.validate().valid, true);
+  });
+});
+
+describe('ui-form bindings', () => {
+  let form;
+
+  beforeEach(() => {
+    form = mount(TWO_FIELDS).querySelector('ui-form');
+  });
+
+  afterEach(() => cleanup());
+
+  it('runs a submit binding with the same payload the event carries', () => {
+    /** @type {any[]} */
+    const seen = [];
+    form.bind('submit', (detail) => seen.push(detail));
+    fieldNamed(form, 'email').value = 'a@b.test';
+
+    submit(form);
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].values.email, 'a@b.test');
+    assert.equal(typeof seen[0].event, 'object');
+  });
+
+  it('a binding returning false takes the submit over entirely', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    form.addEventListener('ui4u:submit', () => events.push('submit'));
+    form.addEventListener('ui4u:invalid', () => events.push('invalid'));
+    form.bind('submit', () => false);
+
+    const event = submit(form);
+
+    assert.deepEqual(events, [], 'no submit and no invalid report');
+    assert.equal(event.defaultPrevented, true, 'and the browser was told no as well');
+    assert.deepEqual(
+      summaryEntries(form),
+      [],
+      'no error summary for a validation pass the form never ran'
+    );
+    assert.equal(
+      fieldNamed(form, 'email').hasAttribute('invalid'),
+      false,
+      'and no field was marked'
+    );
+  });
+
+  it('a binding calling preventDefault vetoes in exactly the same way', () => {
+    /** @type {unknown[]} */
+    const events = [];
+    form.addEventListener('ui4u:submit', () => events.push('submit'));
+    form.bind('submit', (_detail, event) => event.preventDefault());
+
+    submit(form);
+
+    assert.deepEqual(events, []);
+  });
+
+  it('a binding returning undefined lets the submit through, and ui4u:submit still fires', () => {
+    /** @type {any[]} */
+    const seen = [];
+    form.addEventListener('ui4u:submit', (event) => seen.push(event.detail));
+    form.bind('submit', () => undefined);
+    fieldNamed(form, 'email').value = 'a@b.test';
+
+    submit(form);
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].values.email, 'a@b.test');
+    assert.equal(seen[0].validated, true);
+  });
+
+  it('a vetoed submit still lets the values be read', () => {
+    fieldNamed(form, 'email').value = 'a@b.test';
+    form.bind('submit', () => false);
+
+    submit(form);
+
+    assert.equal(form.values.email, 'a@b.test', 'reading is not an action the binding owns');
+  });
+
+  it('configure({ bindings }) registers a binding', () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    form.configure({ bindings: { submit: (detail) => seen.push(detail.values.email) } });
+    fieldNamed(form, 'email').value = 'a@b.test';
+
+    submit(form);
+
+    assert.deepEqual(seen, ['a@b.test']);
   });
 });
