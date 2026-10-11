@@ -97,21 +97,22 @@ popup.addEventListener('ui4u:cancel', () =&gt; console.log('dismissed by Esc or 
 
       <ui-disclosure summary="Focus behaviour" variant="ghost">
         <p>
-          In <code>modal</code> mode focus is trapped: <kbd>Tab</kbd> and
-          <kbd>Shift</kbd>+<kbd>Tab</kbd> cycle within the dialog, and focus cannot be
-          pulled out by clicking the backdrop. Closing returns focus to whatever was
-          focused beforehand — usually the button that opened it.
+          In <code>modal</code> mode focus is trapped: <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd
+            >Tab</kbd
+          >
+          cycle within the dialog, and focus cannot be pulled out by clicking the backdrop. Closing
+          returns focus to whatever was focused beforehand — usually the button that opened it.
         </p>
         <p>
-          <code>popover</code> and <code>drawer</code> deliberately do <em>not</em> trap
-          focus; a drawer is a side panel you carry on working with. Only
-          <code>modal</code> sets <code>aria-modal="true"</code>.
+          <code>popover</code> and <code>drawer</code> deliberately do <em>not</em> trap focus; a
+          drawer is a side panel you carry on working with. Only <code>modal</code> sets
+          <code>aria-modal="true"</code>.
         </p>
         <p>
-          The surface is portalled to <code>&lt;body&gt;</code>. Without that, an ancestor
-          with a <code>backdrop-filter</code> or <code>transform</code> would become the
-          containing block for its <code>position: fixed</code> coordinates and the dialog
-          would open somewhere unrelated.
+          The surface is portalled to <code>&lt;body&gt;</code>. Without that, an ancestor with a
+          <code>backdrop-filter</code> or <code>transform</code> would become the containing block
+          for its <code>position: fixed</code> coordinates and the dialog would open somewhere
+          unrelated.
         </p>
       </ui-disclosure>
     </div>

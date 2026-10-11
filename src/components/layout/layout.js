@@ -43,7 +43,9 @@ export const SLOTS = ['top', 'left', 'right', 'center', 'bottom'];
  */
 export function readSlot(node) {
   const value = node.getAttribute('slot');
-  return SLOTS.includes(/** @type {PanelSlot} */ (value)) ? /** @type {PanelSlot} */ (value) : 'center';
+  return SLOTS.includes(/** @type {PanelSlot} */ (value))
+    ? /** @type {PanelSlot} */ (value)
+    : 'center';
 }
 
 /**
@@ -256,9 +258,13 @@ export class Layout extends UI4UElement {
       if (!SLOTS.includes(slot)) continue;
 
       node.style.gridArea = slot;
-      if (node.hasAttribute('label')) node.setAttribute('aria-label', node.getAttribute('label') ?? '');
+      if (node.hasAttribute('label'))
+        node.setAttribute('aria-label', node.getAttribute('label') ?? '');
       else if (!node.hasAttribute('aria-label')) {
-        node.setAttribute('aria-label', `${slot} ${node.localName === 'ui-layout' ? 'region' : 'panel'}`);
+        node.setAttribute(
+          'aria-label',
+          `${slot} ${node.localName === 'ui-layout' ? 'region' : 'panel'}`
+        );
       }
 
       this.#panels.set(slot, this.#readSpec(node));

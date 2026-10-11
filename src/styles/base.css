@@ -18,7 +18,8 @@ ui-panel,
 ui-popup,
 ui-tooltip,
 ui-button,
-ui-input {
+ui-input,
+ui-form {
   box-sizing: border-box;
 }
 
@@ -31,7 +32,8 @@ ui-panel,
 ui-popup,
 ui-tooltip,
 ui-button,
-ui-input {
+ui-input,
+ui-form {
   font-family: var(--ui4u-font-sans);
   color: var(--ui4u-text);
 }

@@ -59,9 +59,7 @@ export class Button extends UI4UElement {
   /** @returns {ButtonVariant} */
   get variant() {
     const value = this.getString('variant', 'primary');
-    return VARIANTS.includes(value)
-      ? /** @type {ButtonVariant} */ (value)
-      : 'primary';
+    return VARIANTS.includes(value) ? /** @type {ButtonVariant} */ (value) : 'primary';
   }
 
   set variant(next) {

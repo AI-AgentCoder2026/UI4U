@@ -8,9 +8,8 @@ setupDom();
 
 const { Tooltip } = await import('../../src/components/tooltip/tooltip.js');
 const { define, isDefined } = await import('../../src/core/registry.js');
-const { normalizePlacement, oppositePlacement, PLACEMENTS } = await import(
-  '../../src/core/position.js'
-);
+const { normalizePlacement, oppositePlacement, PLACEMENTS } =
+  await import('../../src/core/position.js');
 
 define('ui-tooltip', Tooltip);
 
@@ -154,7 +153,9 @@ describe('ui-tooltip rendering', () => {
 
   it('accepts every documented placement', () => {
     for (const placement of PLACEMENTS) {
-      const container = mount(`<ui-tooltip content="x" placement="${placement}"><b>t</b></ui-tooltip>`);
+      const container = mount(
+        `<ui-tooltip content="x" placement="${placement}"><b>t</b></ui-tooltip>`
+      );
       const element = container.querySelector('ui-tooltip');
       assert.equal(element.placement, placement);
       cleanup();
@@ -653,9 +654,12 @@ describe('core/position', () => {
     const host = mount('<button type="button">trigger</button><span id="surface">s</span>');
 
     // jsdom reports zero-size rects, so this is the SSR/no-layout path.
-    assert.equal(position(host.querySelector('button'), host.querySelector('#surface'), {
-      placement: 'left',
-    }), 'left');
+    assert.equal(
+      position(host.querySelector('button'), host.querySelector('#surface'), {
+        placement: 'left',
+      }),
+      'left'
+    );
   });
 
   it('does not throw on missing elements', async () => {

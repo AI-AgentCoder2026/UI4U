@@ -59,7 +59,9 @@ const LENGTH = /^\d*\.?\d+(px|rem|em|ch|%|vh|vw|vmin|vmax)$/i;
  * resolveGap('huge'); // 'md'
  */
 export function resolveGap(name) {
-  const value = String(name ?? '').trim().toLowerCase();
+  const value = String(name ?? '')
+    .trim()
+    .toLowerCase();
   return /** @type {GapToken[]} */ (GAP_NAMES).includes(/** @type {GapToken} */ (value))
     ? /** @type {GapToken} */ (value)
     : DEFAULT_GAP;

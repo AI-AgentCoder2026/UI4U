@@ -48,11 +48,11 @@
         <div>
           <h1><code>ui-layout</code></h1>
           <p class="lede">
-            A resizable workspace. Every region has its own handle — including the
-            ones above and below the middle row. Drag a separator, or focus one and use
-            <kbd>←</kbd> <kbd>→</kbd> for the side panels,
-            <kbd>↑</kbd> <kbd>↓</kbd> for top and bottom, then <kbd>Home</kbd>,
-            <kbd>End</kbd> and <kbd>Enter</kbd>. Double-click a separator to reset it.
+            A resizable workspace. Every region has its own handle — including the ones above and
+            below the middle row. Drag a separator, or focus one and use
+            <kbd>←</kbd> <kbd>→</kbd> for the side panels, <kbd>↑</kbd> <kbd>↓</kbd> for top and
+            bottom, then <kbd>Home</kbd>, <kbd>End</kbd> and <kbd>Enter</kbd>. Double-click a
+            separator to reset it.
           </p>
         </div>
         <button type="button" data-theme-toggle>Toggle theme</button>
@@ -84,41 +84,67 @@
       </div>
 
       <ui-layout id="demo" step="16">
-        <ui-panel slot="top" label="Header" size="56" min="32" max="160" resizable>UI4U workspace</ui-panel>
+        <ui-panel slot="top" label="Header" size="56" min="32" max="160" resizable
+          >UI4U workspace</ui-panel
+        >
 
         <!--
           A slot can hold a nested layout instead of a panel, which is what makes
           the component recursive: this sidebar is a workspace of its own, with
           its own rail, its own centre and its own bottom bar.
         -->
-        <ui-layout slot="left" label="Explorer" size="260" min="180" max="420" resizable collapsible step="12">
-          <ui-panel slot="left" label="Explorer rail" size="92" min="64" max="200" resizable>Rail</ui-panel>
+        <ui-layout
+          slot="left"
+          label="Explorer"
+          size="260"
+          min="180"
+          max="420"
+          resizable
+          collapsible
+          step="12"
+        >
+          <ui-panel slot="left" label="Explorer rail" size="92" min="64" max="200" resizable
+            >Rail</ui-panel
+          >
           <ui-panel slot="center" label="Explorer body">Explorer body</ui-panel>
-          <ui-panel slot="bottom" label="Explorer filters" size="44" min="28" max="120" resizable>Filters</ui-panel>
+          <ui-panel slot="bottom" label="Explorer filters" size="44" min="28" max="120" resizable
+            >Filters</ui-panel
+          >
         </ui-layout>
 
         <ui-panel slot="center" label="Workspace">
-          <h3>Centre</h3>
+          <h2>Centre</h2>
           <p>
             This panel takes whatever the others leave — it is the flexible
-            <code>minmax(0, 1fr)</code> track. Resize the separators either side of
-            it and watch this region absorb the change.
+            <code>minmax(0, 1fr)</code> track. Resize the separators either side of it and watch
+            this region absorb the change.
           </p>
           <p>
             The sidebar on the left is not a panel: it is another
-            <code>ui-layout</code> with a rail, a body and a filter bar. Drag its
-            internal separator without touching this layout's — they resize
-            independently.
+            <code>ui-layout</code> with a rail, a body and a filter bar. Drag its internal separator
+            without touching this layout's — they resize independently.
           </p>
         </ui-panel>
 
         <!-- A nested layout can equally sit on the right, with its own centre. -->
-        <ui-layout slot="right" label="Inspector" size="240" min="180" max="420" resizable step="12">
+        <ui-layout
+          slot="right"
+          label="Inspector"
+          size="240"
+          min="180"
+          max="420"
+          resizable
+          step="12"
+        >
           <ui-panel slot="center" label="Inspector body">Inspector</ui-panel>
-          <ui-panel slot="right" label="Inspector details" size="80" min="60" max="180" resizable>•••</ui-panel>
+          <ui-panel slot="right" label="Inspector details" size="80" min="60" max="180" resizable
+            >•••</ui-panel
+          >
         </ui-layout>
 
-        <ui-panel slot="bottom" label="Status" size="64" min="40" max="200" resizable>Ready · drag any separator — including the ones above and below</ui-panel>
+        <ui-panel slot="bottom" label="Status" size="64" min="40" max="200" resizable
+          >Ready · drag any separator — including the ones above and below</ui-panel
+        >
       </ui-layout>
 
       <div class="log" id="log" role="status" aria-live="polite">Waiting for a change…</div>
@@ -181,17 +207,15 @@ ui-layout {
 
       <ui-disclosure summary="Recursion" variant="ghost">
         <p>
-          Any slot can hold a <code>ui-layout</code> instead of a
-          <code>ui-panel</code>, so a sidebar can be a workspace of its own —
-          with its own rail, centre and bottom bar — to any depth. The example
-          above nests three deep: an outer workspace, an explorer inside its left
+          Any slot can hold a <code>ui-layout</code> instead of a <code>ui-panel</code>, so a
+          sidebar can be a workspace of its own — with its own rail, centre and bottom bar — to any
+          depth. The example above nests three deep: an outer workspace, an explorer inside its left
           slot, and an inspector inside its right slot.
         </p>
         <p>
-          Each nested layout keeps its own separators, sizes and keyboard step,
-          and resizing one does not disturb the others. Events still bubble, so
-          every <code>ui4u:resize</code> carries the
-          <code>layout</code> that emitted it.
+          Each nested layout keeps its own separators, sizes and keyboard step, and resizing one
+          does not disturb the others. Events still bubble, so every
+          <code>ui4u:resize</code> carries the <code>layout</code> that emitted it.
         </p>
 
         <figure class="demo-code">
@@ -245,9 +269,9 @@ explorerLayout.reset();             // restores that subtree only</code></pre>
           Every separator is a <code>role="separator"</code> carrying
           <code>aria-orientation</code> — <code>vertical</code> for the ones between
           left/centre/right, <code>horizontal</code> for top/centre/bottom — plus
-          <code>aria-valuenow</code>, <code>aria-valuemin</code> and
-          <code>aria-valuemax</code> when a bound is enforced, so assistive tech
-          announces the live size rather than leaving the drag an unlabelled gesture.
+          <code>aria-valuenow</code>, <code>aria-valuemin</code> and <code>aria-valuemax</code> when
+          a bound is enforced, so assistive tech announces the live size rather than leaving the
+          drag an unlabelled gesture.
         </p>
       </ui-disclosure>
     </div>

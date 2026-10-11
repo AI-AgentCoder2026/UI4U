@@ -1,0 +1,312 @@
+/**
+ * ui-sidebar / ui-sidebar-item
+ *
+ * Every value comes from a `--ui4u-*` token. Mobile-first: below 48rem the
+ * sidebar becomes an off-canvas drawer and the toggle becomes the opener —
+ * which is why the toggle sits outside the sliding panel in the markup.
+ */
+
+ui-sidebar {
+  /* Component knobs. Override these, never fork this file. */
+  --ui4u-sidebar-width: 16rem;
+  --ui4u-sidebar-rail: 4rem;
+  --ui4u-sidebar-radius: var(--ui4u-radius-lg);
+  --ui4u-sidebar-gap: var(--ui4u-space-2);
+  --ui4u-sidebar-surface: var(--ui4u-surface-glass-strong);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--ui4u-sidebar-width);
+  max-width: 100%;
+  min-height: 0;
+  color: var(--ui4u-text);
+  font-family: var(--ui4u-font-sans);
+}
+
+ui-sidebar:focus {
+  outline: none;
+}
+
+/*
+ * A right-hand sidebar must sit on the right, whichever side of it the author
+ * wrote it in the markup.
+ *
+ * `margin-inline-start: auto` handles a block parent; `order` handles a flex
+ * parent, where the sibling usually grows to fill the row and leaves no free
+ * space for an auto margin to absorb. Both are harmless in drawer mode, where
+ * the host is `position: fixed` and out of flow.
+ */
+ui-sidebar[data-side='right'] {
+  margin-inline-start: auto;
+  order: 1;
+}
+
+ui-sidebar .ui4u-sidebar__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-sidebar-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  padding: var(--ui4u-space-4) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-sidebar-radius);
+  background: var(--ui4u-sidebar-surface);
+  box-shadow: var(--ui4u-shadow-sm), var(--ui4u-shadow-inset);
+  transition:
+    width var(--ui4u-duration-base) var(--ui4u-ease-out),
+    transform var(--ui4u-duration-base) var(--ui4u-ease-out);
+}
+
+ui-sidebar .ui4u-sidebar__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-space-1);
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* --- toggle ---------------------------------------------------------------- */
+
+ui-sidebar .ui4u-sidebar__toggle {
+  position: absolute;
+  z-index: var(--ui4u-z-base);
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--ui4u-space-6);
+  height: var(--ui4u-space-7);
+  padding: 0;
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-tight);
+  color: var(--ui4u-text-muted);
+  background: var(--ui4u-surface-3);
+  border: 1px solid var(--ui4u-border);
+  cursor: pointer;
+  transition:
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-sidebar .ui4u-sidebar__toggle:hover {
+  color: var(--ui4u-text);
+  background: var(--ui4u-surface-2);
+}
+
+ui-sidebar .ui4u-sidebar__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-sidebar[data-side='left'] .ui4u-sidebar__toggle {
+  left: calc(100% - var(--ui4u-space-6));
+  border-left: 0;
+  border-radius: 0 var(--ui4u-radius-md) var(--ui4u-radius-md) 0;
+  transform: translateY(-50%);
+}
+
+ui-sidebar[data-side='right'] .ui4u-sidebar__toggle {
+  right: calc(100% - var(--ui4u-space-6));
+  border-right: 0;
+  border-radius: var(--ui4u-radius-md) 0 0 var(--ui4u-radius-md);
+  transform: translateY(-50%);
+}
+
+/* --- items ----------------------------------------------------------------- */
+
+ui-sidebar-item {
+  display: block;
+}
+
+ui-sidebar .ui4u-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--ui4u-space-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--ui4u-space-7);
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 0;
+  border-radius: var(--ui4u-radius-md);
+  font-family: var(--ui4u-font-sans);
+  font-size: var(--ui4u-font-size-md);
+  font-weight: var(--ui4u-weight-medium);
+  line-height: var(--ui4u-line-tight);
+  color: var(--ui4u-text-muted);
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-sidebar .ui4u-sidebar__link:hover {
+  color: var(--ui4u-text);
+  background: var(--ui4u-surface-3);
+}
+
+ui-sidebar .ui4u-sidebar__link:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-sidebar .ui4u-sidebar__link[aria-current='page'] {
+  color: var(--ui4u-primary);
+  background: var(--ui4u-primary-soft);
+  font-weight: var(--ui4u-weight-semibold);
+  box-shadow: var(--ui4u-glow-primary);
+}
+
+ui-sidebar .ui4u-sidebar__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui4u-space-5);
+  font-size: var(--ui4u-font-size-md);
+}
+
+ui-sidebar .ui4u-sidebar__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- rail mode ------------------------------------------------------------- */
+
+ui-sidebar[data-rail='true'] {
+  width: var(--ui4u-sidebar-rail);
+}
+
+ui-sidebar[data-rail='true'] .ui4u-sidebar__panel {
+  overflow: visible;
+}
+
+ui-sidebar[data-rail='true'] .ui4u-sidebar__label {
+  display: none;
+}
+
+ui-sidebar[data-rail='true'] .ui4u-sidebar__link {
+  justify-content: center;
+  padding-inline: var(--ui4u-space-1);
+}
+
+/* --- narrow viewport drawer -----------------------------------------------
+ * The panel is a descendant of `ui-sidebar`, so these descendant selectors
+ * are valid. The backdrop is portalled to <body> by the component and is
+ * therefore styled by its own class only — see below.
+ */
+
+@media (max-width: 48rem) {
+  ui-sidebar[data-drawer='true'] {
+    position: fixed;
+    z-index: var(--ui4u-z-sidebar);
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: auto;
+    background: transparent;
+    border: 0;
+  }
+
+  ui-sidebar[data-drawer='true'][data-side='right'] {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+  }
+
+  /*
+   * A closed drawer is parked off-canvas, but the host is still a fixed box
+   * roughly as wide as the panel. Without this it keeps sitting on top of the
+   * page and swallowing every tap in that column, even though nothing is drawn
+   * there. The toggle opts back in, so the drawer stays openable.
+   */
+  ui-sidebar[data-drawer='true']:not([data-expanded='true']) {
+    pointer-events: none;
+  }
+
+  ui-sidebar[data-drawer='true']:not([data-expanded='true']) .ui4u-sidebar__toggle {
+    pointer-events: auto;
+  }
+
+  ui-sidebar[data-drawer='true'] .ui4u-sidebar__panel {
+    width: min(var(--ui4u-sidebar-width), 86vw);
+    height: 100%;
+    border-radius: 0;
+  }
+
+  ui-sidebar[data-drawer='true'][data-side='left'] .ui4u-sidebar__panel {
+    transform: translateX(-100%);
+  }
+
+  ui-sidebar[data-drawer='true'][data-side='right'] .ui4u-sidebar__panel {
+    transform: translateX(100%);
+  }
+
+  ui-sidebar[data-drawer='true'][data-expanded='true'][data-side='left'] .ui4u-sidebar__panel {
+    transform: translateX(0);
+  }
+
+  ui-sidebar[data-drawer='true'][data-expanded='true'][data-side='right'] .ui4u-sidebar__panel {
+    transform: translateX(0);
+  }
+
+  /* The toggle must stay reachable while the panel is off-canvas, so in the
+   * drawer it moves to the screen edge instead of the panel's edge. */
+  ui-sidebar[data-drawer='true'] .ui4u-sidebar__toggle {
+    top: var(--ui4u-space-4);
+    left: auto;
+    right: auto;
+    height: var(--ui4u-space-7);
+    transform: none;
+    border: 1px solid var(--ui4u-border);
+    border-radius: var(--ui4u-radius-md);
+    background: var(--ui4u-sidebar-surface);
+  }
+
+  ui-sidebar[data-drawer='true'][data-side='left'] .ui4u-sidebar__toggle {
+    left: var(--ui4u-space-4);
+  }
+
+  ui-sidebar[data-drawer='true'][data-side='right'] .ui4u-sidebar__toggle {
+    right: var(--ui4u-space-4);
+  }
+}
+
+/*
+ * Portalled backdrop: appended to <body>, so it is NOT a descendant of
+ * `ui-sidebar` and can only be styled by its own class. An
+ * `ui-sidebar .ui4u-sidebar__backdrop` rule would never match.
+ */
+.ui4u-sidebar__backdrop {
+  position: fixed;
+  z-index: calc(var(--ui4u-z-sidebar) - 1);
+  inset: 0;
+  background: var(--ui4u-overlay);
+  opacity: 0;
+  transition: opacity var(--ui4u-duration-base) var(--ui4u-ease-out);
+}
+
+.ui4u-sidebar__backdrop[hidden] {
+  display: none;
+}
+
+.ui4u-sidebar__backdrop:not([hidden]) {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-sidebar .ui4u-sidebar__panel,
+  ui-sidebar .ui4u-sidebar__link,
+  ui-sidebar .ui4u-sidebar__toggle,
+  .ui4u-sidebar__backdrop {
+    transition: none;
+  }
+}

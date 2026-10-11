@@ -32,17 +32,15 @@ import { injectStyle as inject, hasStyle } from './core/styles.js';
 
 /* ------------------------------------------------------------- components */
 import { Tab, Tabs, TABS_STYLE_ID, tabsCss } from './components/tabs/index.js';
-import {
-  Disclosure,
-  DISCLOSURE_STYLE_ID,
-  disclosureCss,
-} from './components/disclosure/index.js';
+import { Disclosure, DISCLOSURE_STYLE_ID, disclosureCss } from './components/disclosure/index.js';
 import { Button, BUTTON_STYLE_ID, buttonCss } from './components/button/index.js';
 import { Tooltip, TOOLTIP_STYLE_ID, tooltipCss } from './components/tooltip/index.js';
 import { Layout, Panel, LAYOUT_STYLE_ID, layoutCss } from './components/layout/index.js';
 import { Popup, POPUP_STYLE_ID, popupCss } from './components/popup/index.js';
 import { Input, INPUT_STYLE_ID, inputCss } from './components/input/index.js';
 import { Grid, GRID_STYLE_ID, gridCss } from './components/grid/index.js';
+import { Form, FORM_STYLE_ID, formCss } from './components/form/index.js';
+import { Sidebar, SidebarItem, SIDEBAR_STYLE_ID, sidebarCss } from './components/sidebar/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -82,6 +80,13 @@ export {
   Grid,
   GRID_STYLE_ID,
   gridCss,
+  Form,
+  FORM_STYLE_ID,
+  formCss,
+  Sidebar,
+  SidebarItem,
+  SIDEBAR_STYLE_ID,
+  sidebarCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -115,6 +120,17 @@ export const components = [
   { tag: 'ui-popup', ctor: Popup, styleId: POPUP_STYLE_ID, css: popupCss },
   { tag: 'ui-input', ctor: Input, styleId: INPUT_STYLE_ID, css: inputCss },
   { tag: 'ui-grid', ctor: Grid, styleId: GRID_STYLE_ID, css: gridCss },
+  { tag: 'ui-form', ctor: Form, styleId: FORM_STYLE_ID, css: formCss },
+  {
+    tag: 'ui-sidebar-item',
+    ctor: SidebarItem,
+  },
+  {
+    tag: 'ui-sidebar',
+    ctor: Sidebar,
+    styleId: SIDEBAR_STYLE_ID,
+    css: sidebarCss,
+  },
 ];
 
 /**
@@ -155,6 +171,8 @@ export const UI4U = {
   Popup,
   Input,
   Grid,
+  Form,
+  Sidebar,
   UI4UElement,
   Emitter,
   define: defineElement,

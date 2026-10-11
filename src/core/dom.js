@@ -174,7 +174,8 @@ export function focusables(root) {
 
   return /** @type {HTMLElement[]} */ (
     [...root.querySelectorAll(selector)].filter((node) => {
-      if (node.hasAttribute('disabled') || node.getAttribute('aria-hidden') === 'true') return false;
+      if (node.hasAttribute('disabled') || node.getAttribute('aria-hidden') === 'true')
+        return false;
       return node.offsetWidth > 0 || node.offsetHeight > 0 || node === document.activeElement;
     })
   );
@@ -187,9 +188,7 @@ export function focusables(root) {
  * @returns {boolean}
  */
 export function prefersReducedMotion() {
-  return (
-    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 /**

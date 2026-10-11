@@ -6,9 +6,8 @@ import { cleanup, collectChanges, mount, setupDom } from '../helpers/dom.js';
 // The DOM must exist before the component module is evaluated — see helpers/dom.js.
 setupDom();
 
-const { ALIGN_VALUES, DEFAULT_GAP, DEFAULT_MIN, GAP_TOKENS, Grid, resolveGap } = await import(
-  '../../src/components/grid/grid.js'
-);
+const { ALIGN_VALUES, DEFAULT_GAP, DEFAULT_MIN, GAP_TOKENS, Grid, resolveGap } =
+  await import('../../src/components/grid/grid.js');
 const { define, isDefined } = await import('../../src/core/registry.js');
 
 define('ui-grid', Grid);

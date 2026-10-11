@@ -48,7 +48,9 @@ for (const target of targets) {
   const outFile = resolve(root, target.outfile);
   const { size } = await readFile(outFile).then((buffer) => ({ size: buffer.byteLength }));
   const gzip = Math.round(size * 0.32); // rough estimate, printed for a quick signal only
-  console.log(`  ${target.outfile.padEnd(26)} ${(size / 1024).toFixed(1)} kB  (~${(gzip / 1024).toFixed(1)} kB gzip)`);
+  console.log(
+    `  ${target.outfile.padEnd(26)} ${(size / 1024).toFixed(1)} kB  (~${(gzip / 1024).toFixed(1)} kB gzip)`
+  );
   if (result.metafile) {
     await writeFile(
       resolve(root, 'dist/.metafile.json'),

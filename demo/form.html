@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Form</title>
+    <meta
+      name="description"
+      content="ui-form — a validating form wrapper around a real form element: an error summary with role=alert, per-field errors and focus moved to the first failure."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-form</code></h1>
+          <p class="lede">
+            A validating wrapper around a <strong>real</strong> <code>&lt;form&gt;</code>. It
+            discovers its descendant <code>ui-input</code> fields by <code>name</code>, marks every
+            failure, moves focus to the first bad field and refuses to submit while anything is
+            invalid.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">validateOn</span>
+          <ui-tabs id="opt-validate-on" variant="underline" label="Validate on">
+            <ui-tab label="submit"></ui-tab>
+            <ui-tab label="change"></ui-tab>
+            <ui-tab label="blur"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-button id="toggle-novalidate" variant="secondary" type="button"
+          >Toggle no-validate</ui-button
+        >
+        <ui-button id="reset-validity" variant="ghost" type="button">Reset validity</ui-button>
+        <ui-button id="clear" variant="ghost" type="button">Clear form</ui-button>
+      </div>
+
+      <ui-form id="demo" validate-on="submit">
+        <ui-input
+          name="fullName"
+          label="Full name"
+          autocomplete="name"
+          placeholder="Ada Lovelace"
+          required
+        ></ui-input>
+
+        <ui-input
+          name="email"
+          label="Email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          hint="We never share it."
+          required
+        ></ui-input>
+
+        <ui-input
+          id="pw"
+          name="password"
+          label="Password"
+          type="password"
+          autocomplete="new-password"
+          hint="At least 8 characters."
+          required
+        ></ui-input>
+
+        <ui-input
+          id="confirm"
+          name="confirmPassword"
+          label="Confirm password"
+          type="password"
+          autocomplete="new-password"
+          required
+        ></ui-input>
+
+        <ui-input
+          name="team"
+          label="Team or company"
+          placeholder="Analytical Engines"
+          hint="ui-form validates ui-input fields — the consent slot is a field here."
+          required
+        ></ui-input>
+
+        <ui-button type="submit">Create account</ui-button>
+      </ui-form>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for a submit…</div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-form validate-on="submit"&gt;
+  &lt;ui-input name="email" label="Email" type="email" required&gt;&lt;/ui-input&gt;
+  &lt;ui-button type="submit"&gt;Save&lt;/ui-button&gt;
+&lt;/ui-form&gt;
+
+&lt;!-- The error summary is rendered by the component: a role="alert"
+     region listing every failure, each entry jumping to its field. --&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const form = document.querySelector('ui-form');
+
+// Options object — never a long positional argument list.
+form.configure({ validateOn: 'change', noValidate: false });
+
+// Imperative validation. Marks every failing field and returns the failures:
+// { valid: false, errors: [{ name, message, field }] }
+const { valid, errors } = form.validate();
+form.resetValidity();  // drops the error states and hides the summary
+
+// ui4u:submit fires ONLY when valid, and carries the values plus the
+// native submit event — so the page can still cancel navigation.
+form.addEventListener('ui4u:submit', (event) =&gt; {
+  event.detail.event.preventDefault();
+  console.log(event.detail.values);
+});
+
+// ui4u:invalid fires when a submit is blocked, with the same errors array.
+form.addEventListener('ui4u:invalid', (event) =&gt; {
+  console.log(event.detail.errors);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-form-* custom properties. */
+ui-form {
+  --ui4u-form-gap: var(--ui4u-space-6);
+  --ui4u-form-summary-radius: var(--ui4u-radius-lg);
+  --ui4u-form-summary-padding: var(--ui4u-space-5);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const form = document.getElementById('demo');
+      const log = document.getElementById('log');
+      const password = document.getElementById('pw');
+      const confirm = document.getElementById('confirm');
+
+      // ui-input has no `minlength` option yet — and deliberately exposes the
+      // real control, so the native constraint is one assignment away.
+      password.input.minLength = 8;
+
+      // A cross-field rule is just the author-set error ui-form already reports.
+      const checkMatch = () => {
+        const value = confirm.value;
+        confirm.clearValidity();
+        if (value && value !== password.value) {
+          confirm.error = 'The two passwords do not match.';
+        }
+      };
+
+      password.addEventListener('ui4u:input', checkMatch);
+      confirm.addEventListener('ui4u:input', checkMatch);
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real form.
+      document.getElementById('opt-validate-on').addEventListener('ui4u:change', (event) => {
+        form.configure({ validateOn: event.detail.label });
+        log.textContent = `validateOn → ${form.validateOn}`;
+      });
+
+      document.getElementById('toggle-novalidate').addEventListener('click', () => {
+        form.configure({ noValidate: !form.noValidate });
+        log.textContent = form.noValidate
+          ? 'noValidate → on, the form submits even when fields fail'
+          : 'noValidate → off, invalid fields block the submit';
+      });
+
+      document.getElementById('reset-validity').addEventListener('click', () => {
+        form.resetValidity();
+        log.textContent = 'resetValidity() → error states dropped, summary hidden';
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        for (const field of form.fields) field.value = '';
+        confirm.clearValidity();
+        form.resetValidity();
+        log.textContent = 'Cleared';
+      });
+
+      form.addEventListener('ui4u:invalid', (event) => {
+        const { errors } = event.detail;
+        const names = errors.map((error) => error.name).join(', ');
+        log.textContent = `ui4u:invalid → submit blocked, ${errors.length} problem(s): ${names}`;
+      });
+
+      form.addEventListener('ui4u:submit', (event) => {
+        // The native submit event is still cancellable here, so the demo page
+        // stays put instead of navigating away.
+        event.detail.event.preventDefault();
+        const { values } = event.detail;
+        log.textContent = `ui4u:submit → accepted: ${Object.keys(values).join(', ')}`;
+        form.resetValidity();
+      });
+    </script>
+  </body>
+</html>

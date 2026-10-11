@@ -90,7 +90,10 @@ test('an empty required field fails validation and surfaces the message', async 
 
   await expect(page.locator(`${MAIN} .ui4u-input__error`)).toBeVisible();
   await expect(page.locator('#log')).toHaveText(/valid: false/);
-  await expect(page.locator(`${MAIN} input.ui4u-input__native`)).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator(`${MAIN} input.ui4u-input__native`)).toHaveAttribute(
+    'aria-invalid',
+    'true'
+  );
 });
 
 test('a filled email passes validation', async ({ page }) => {
@@ -108,7 +111,10 @@ test('the size picker drives the field through ui-tabs, not a select', async ({ 
   await expect(page.locator(MAIN)).toHaveAttribute('data-size', 'lg');
 
   await page.locator('#opt-type [role="tab"]', { hasText: 'password' }).click();
-  await expect(page.locator(`${MAIN} input.ui4u-input__native`)).toHaveAttribute('type', 'password');
+  await expect(page.locator(`${MAIN} input.ui4u-input__native`)).toHaveAttribute(
+    'type',
+    'password'
+  );
 });
 
 test('the state toggles mirror onto the native control', async ({ page }) => {

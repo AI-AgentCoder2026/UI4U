@@ -260,9 +260,7 @@ export class Tooltip extends UI4UElement {
    * @returns {HTMLElement}
    */
   #resolveTrigger() {
-    const focusable = /** @type {HTMLElement|null} */ (
-      this.querySelector(FOCUSABLE) ?? null
-    );
+    const focusable = /** @type {HTMLElement|null} */ (this.querySelector(FOCUSABLE) ?? null);
     if (focusable) return focusable;
 
     if (!this.hasAttribute('tabindex')) {

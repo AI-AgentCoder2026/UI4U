@@ -50,7 +50,8 @@ export function setupDom(body = '') {
 
   for (const key of EXPOSED) {
     if (dom.window[key] !== undefined) {
-      globalThis[key] = key === 'getComputedStyle' ? dom.window[key].bind(dom.window) : dom.window[key];
+      globalThis[key] =
+        key === 'getComputedStyle' ? dom.window[key].bind(dom.window) : dom.window[key];
     }
   }
 

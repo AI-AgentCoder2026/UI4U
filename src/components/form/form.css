@@ -1,0 +1,105 @@
+/**
+ * ui-form
+ *
+ * Deliberately restrained: a form is a container, so the only thing it draws is
+ * the error summary. Every value is a `--ui4u-*` token; the measurements without
+ * a global token are declared once on the element as `--ui4u-form-*`, so
+ * overriding them is a token override, never a fork of this file.
+ */
+
+ui-form {
+  display: block;
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-form-gap: var(--ui4u-space-4);
+  --ui4u-form-summary-padding: var(--ui4u-space-4);
+  --ui4u-form-summary-border-width: 1px;
+  --ui4u-form-summary-radius: var(--ui4u-radius-md);
+  --ui4u-form-summary-font: var(--ui4u-font-size-sm);
+  --ui4u-form-summary-gap: var(--ui4u-space-2);
+  --ui4u-form-list-marker-color: var(--ui4u-danger);
+}
+
+/* --- the native form ------------------------------------------------------ */
+
+ui-form .ui4u-form__native {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-form-gap);
+  margin: 0;
+}
+
+/* --- error summary -------------------------------------------------------- */
+
+ui-form .ui4u-form__summary {
+  padding: var(--ui4u-form-summary-padding);
+  border: var(--ui4u-form-summary-border-width) solid var(--ui4u-danger);
+  border-radius: var(--ui4u-form-summary-radius);
+  font-size: var(--ui4u-form-summary-font);
+  line-height: var(--ui4u-line-normal);
+  color: var(--ui4u-text);
+  background: var(--ui4u-danger-soft);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-form .ui4u-form__summary[hidden] {
+  display: none;
+}
+
+ui-form .ui4u-form__summary-title {
+  margin-block: 0 var(--ui4u-form-summary-gap);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-normal);
+}
+
+ui-form .ui4u-form__summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-form-summary-gap);
+  margin-block: 0;
+  padding-inline-start: var(--ui4u-space-5);
+}
+
+ui-form .ui4u-form__summary-item {
+  margin-block: 0;
+}
+
+/* A real `<button>`, not a styled `<a>`: it moves focus without navigating. */
+ui-form .ui4u-form__summary-link {
+  padding: 0;
+  border: 0;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-danger);
+  background: none;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+  transition: color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-form .ui4u-form__summary-link:hover {
+  color: var(--ui4u-danger-hover);
+}
+
+ui-form .ui4u-form__summary-link:focus-visible {
+  outline: none;
+  border-radius: var(--ui4u-radius-xs);
+  color: var(--ui4u-danger-hover);
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-form {
+    --ui4u-form-gap: var(--ui4u-space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-form .ui4u-form__summary-link {
+    transition: none;
+  }
+}

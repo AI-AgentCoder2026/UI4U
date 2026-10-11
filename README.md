@@ -14,21 +14,21 @@ ui-tabs · 26.1 kB minified (~8.3 kB gzip) including tokens and themes
 
 Early, and deliberately incremental. Shipped:
 
-| Component | Demo | Notes |
-| --- | --- | --- |
-| `ui-tabs` | [`demo/tabs.html`](demo/tabs.html) | Keyboard nav, automatic + manual activation, 3 variants |
+| Component       | Demo                                           | Notes                                                                   |
+| --------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `ui-tabs`       | [`demo/tabs.html`](demo/tabs.html)             | Keyboard nav, automatic + manual activation, 3 variants                 |
 | `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
-| `ui-button` | [`demo/button.html`](demo/button.html) | 5 variants, 3 sizes, loading and disabled states |
-| `ui-tooltip` | [`demo/tooltip.html`](demo/tooltip.html) | Hover + focus, viewport flipping, `Escape` to dismiss |
-| `ui-layout` | [`demo/layout.html`](demo/layout.html) | All five regions resizable, recursive, keyboard + pointer splitters |
-| `ui-popup` | [`demo/popup.html`](demo/popup.html) | Modal with a real focus trap, plus popover and drawer modes |
-| `ui-input` | [`demo/input.html`](demo/input.html) | Native input preserved, label/hint/error wiring, validation surface |
-| `ui-grid` | [`demo/grid.html`](demo/grid.html) | Fluid auto-fit columns driven entirely by CSS |
+| `ui-button`     | [`demo/button.html`](demo/button.html)         | 5 variants, 3 sizes, loading and disabled states                        |
+| `ui-tooltip`    | [`demo/tooltip.html`](demo/tooltip.html)       | Hover + focus, viewport flipping, `Escape` to dismiss                   |
+| `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters     |
+| `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes             |
+| `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface     |
+| `ui-grid`       | [`demo/grid.html`](demo/grid.html)             | Fluid auto-fit columns driven entirely by CSS                           |
 
 ![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
 
-Planned, in roadmap order: `ui-form` · `ui-sidebar`.
-The full delivery plan lives in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Every component from the original roadmap has shipped. What to build next, and what the
+audits found, is written up in [`docs/REVIEW.md`](docs/REVIEW.md).
 
 ## Install
 
@@ -142,7 +142,7 @@ Themes are token overrides. Set `data-theme` on `<html>` to switch, or override 
 directly.
 
 ```html
-<html data-theme="dark">
+<html data-theme="dark"></html>
 ```
 
 Built-in themes: `light`, `dark`, `contrast`, plus an automatic `prefers-color-scheme`
@@ -176,13 +176,13 @@ The demo is published at **https://ai-agentcoder2026.github.io/UI4U/** — the `
 
 Build outputs:
 
-| File | For |
-| --- | --- |
-| `dist/ui4u.esm.js` | bundlers, `import` |
-| `dist/ui4u.cjs` | Node `require` |
-| `dist/ui4u.global.js` | `<script>` tags, exposes `window.UI4U` |
-| `dist/ui4u.esm.min.js` | bundlers, minified |
-| `dist/ui4u.css` | optional stylesheet instead of runtime injection |
+| File                   | For                                              |
+| ---------------------- | ------------------------------------------------ |
+| `dist/ui4u.esm.js`     | bundlers, `import`                               |
+| `dist/ui4u.cjs`        | Node `require`                                   |
+| `dist/ui4u.global.js`  | `<script>` tags, exposes `window.UI4U`           |
+| `dist/ui4u.esm.min.js` | bundlers, minified                               |
+| `dist/ui4u.css`        | optional stylesheet instead of runtime injection |
 
 ## Contributing
 

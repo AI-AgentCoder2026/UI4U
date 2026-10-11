@@ -19,9 +19,8 @@
           <h1><code>ui-grid</code></h1>
           <p class="lede">
             A responsive grid container that measures nothing. Options resolve to
-            <code>--ui4u-grid-*</code> custom properties and
-            <code>grid-template-columns</code> does the rest — resize the window and the
-            column count changes with no JavaScript involved.
+            <code>--ui4u-grid-*</code> custom properties and <code>grid-template-columns</code> does
+            the rest — resize the window and the column count changes with no JavaScript involved.
           </p>
         </div>
         <button type="button" data-theme-toggle>Toggle theme</button>
@@ -67,8 +66,8 @@
       <h2>Fluid grid</h2>
       <p>
         <code>min="16rem"</code> with no <code>columns</code>: the grid is
-        <code>repeat(auto-fit, minmax(16rem, 1fr))</code>. Twelve cards below, so the
-        reflow is obvious at any width.
+        <code>repeat(auto-fit, minmax(16rem, 1fr))</code>. Twelve cards below, so the reflow is
+        obvious at any width.
       </p>
 
       <ui-grid id="demo-grid" min="16rem" gap="md" label="Component cards">
@@ -93,8 +92,8 @@
       <h2>Fixed grid</h2>
       <p>
         <code>columns="3"</code> pins the track count at every width. It wins when both
-        <code>columns</code> and <code>min</code> are authored — a grid that must hold a
-        known number of columns cannot also be fluid.
+        <code>columns</code> and <code>min</code> are authored — a grid that must hold a known
+        number of columns cannot also be fluid.
       </p>
 
       <ui-grid id="fixed-grid" columns="3" gap="sm">

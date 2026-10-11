@@ -139,7 +139,7 @@ test('the demo drives its options through UI4U components, not raw selects', asy
   await expect(page.locator(MAIN)).toHaveAttribute('data-orientation', 'vertical');
 
   await page.locator('#opt-activation [role="tab"]', { hasText: 'manual' }).click();
-  await expect(
-    page.locator('#opt-activation [role="tab"][aria-selected="true"]')
-  ).toHaveText('manual');
+  await expect(page.locator('#opt-activation [role="tab"][aria-selected="true"]')).toHaveText(
+    'manual'
+  );
 });

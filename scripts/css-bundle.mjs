@@ -89,5 +89,9 @@ export async function buildCssBundle(root) {
   await mkdir(resolve(root, 'dist'), { recursive: true });
   await writeFile(outFile, css, 'utf8');
 
-  return { css, files: files.map((file) => relative(root, file).replace(/\\/g, '/')), bytes: Buffer.byteLength(css) };
+  return {
+    css,
+    files: files.map((file) => relative(root, file).replace(/\\/g, '/')),
+    bytes: Buffer.byteLength(css),
+  };
 }

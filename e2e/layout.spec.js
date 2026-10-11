@@ -27,8 +27,7 @@ const skipOnMobile = (isMobile) =>
   test.skip(Boolean(isMobile), 'separators are removed on narrow viewports');
 
 /** Stacking only happens on narrow viewports. */
-const skipOnDesktop = (isMobile) =>
-  test.skip(!isMobile, 'narrow-viewport behaviour only');
+const skipOnDesktop = (isMobile) => test.skip(!isMobile, 'narrow-viewport behaviour only');
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/layout.html');
@@ -46,7 +45,9 @@ test('a nested layout can stand in for a panel in any slot', async ({ page }) =>
 
   await expect(explorer).toHaveAttribute('aria-label', 'Explorer');
   await expect(explorer).toHaveAttribute('role', 'region');
-  await expect(explorer).toHaveAttribute('aria-valuenow', null).catch(() => {});
+  await expect(explorer)
+    .toHaveAttribute('aria-valuenow', null)
+    .catch(() => {});
 
   // The nested layout brought its own panels and its own separators: one column
   // (rail | body) and one row (body | filters).
@@ -200,7 +201,10 @@ test('collapses and restores the nested explorer', async ({ page, isMobile }) =>
   await expect(explorer).toBeVisible();
 });
 
-test('clicking a separator focuses it, so arrows work straight after', async ({ page, isMobile }) => {
+test('clicking a separator focuses it, so arrows work straight after', async ({
+  page,
+  isMobile,
+}) => {
   skipOnMobile(isMobile);
 
   // Regression: the drag handler calls preventDefault() on pointerdown to avoid
@@ -232,7 +236,9 @@ test('resizes by dragging a separator', async ({ page, isMobile }) => {
 
   await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
   await page.mouse.down();
-  await page.mouse.move(handle.x + handle.width / 2 + 80, handle.y + handle.height / 2, { steps: 10 });
+  await page.mouse.move(handle.x + handle.width / 2 + 80, handle.y + handle.height / 2, {
+    steps: 10,
+  });
   await page.mouse.up();
 
   expect((await explorer.boundingBox()).width).toBeGreaterThan(before + 40);
@@ -288,7 +294,10 @@ test('gives every region a handle, including top and bottom', async ({ page, isM
   expect((await bottom.boundingBox()).height).toBeGreaterThan(bottomBefore);
 });
 
-test('row separators are horizontal, column separators are vertical', async ({ page, isMobile }) => {
+test('row separators are horizontal, column separators are vertical', async ({
+  page,
+  isMobile,
+}) => {
   skipOnMobile(isMobile);
 
   for (const sep of await page.locator(`${MAIN} > .ui4u-layout__splitter--row`).all()) {

@@ -5,16 +5,16 @@ page and tests exist — see the component contract in [`AGENTS.md`](../AGENTS.m
 
 ## Status
 
-| Phase | Component | State |
-| --- | --- | --- |
-| 1 | `ui-button` | ✅ shipped |
-| 1 | `ui-tooltip` | ✅ shipped (also brought in `core/position.js`) |
-| 1 | `ui-popup` | ✅ shipped (also brought in `core/focus-trap.js`) |
-| 2 | `ui-input` | ✅ shipped |
-| 2 | `ui-form` | ⏳ next |
-| 3 | `ui-grid` | ✅ shipped |
-| 3 | `ui-sidebar` | ⏳ planned |
-| 3 | `ui-layout` | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
+| Phase | Component    | State                                                           |
+| ----- | ------------ | --------------------------------------------------------------- |
+| 1     | `ui-button`  | ✅ shipped                                                      |
+| 1     | `ui-tooltip` | ✅ shipped (also brought in `core/position.js`)                 |
+| 1     | `ui-popup`   | ✅ shipped (also brought in `core/focus-trap.js`)               |
+| 2     | `ui-input`   | ✅ shipped                                                      |
+| 2     | `ui-form`    | ⏳ next                                                         |
+| 3     | `ui-grid`    | ✅ shipped                                                      |
+| 3     | `ui-sidebar` | ⏳ planned                                                      |
+| 3     | `ui-layout`  | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
 
 Shared helpers extracted so far: `core/position.js`, `core/pointer.js`,
 `core/size.js`, `core/focus-trap.js`. `dom.js` still owns `focusables()` and
@@ -25,25 +25,25 @@ second one.
 
 The order is driven by dependencies, not by importance.
 
-| Phase | Component | Why here |
-| --- | --- | --- |
-| 1 | `ui-button` | Everything interactive needs it; form, popup and input all submit through it |
-| 1 | `ui-tooltip` | First consumer of the positioning helper, which popup then reuses |
-| 1 | `ui-popup` | Needs the focus trap; sidebar's mobile drawer will reuse it |
-| 2 | `ui-input` | Pure presentational field, no behaviour to get wrong |
-| 2 | `ui-form` | Depends on `ui-input`'s validity surface |
-| 3 | `ui-grid` | CSS-only, low risk, useful in every other demo |
-| 3 | `ui-sidebar` | Reuses popup's drawer behaviour on narrow screens |
-| 3 | `ui-layout` | Largest surface; benefits from grid and sidebar being settled |
+| Phase | Component    | Why here                                                                     |
+| ----- | ------------ | ---------------------------------------------------------------------------- |
+| 1     | `ui-button`  | Everything interactive needs it; form, popup and input all submit through it |
+| 1     | `ui-tooltip` | First consumer of the positioning helper, which popup then reuses            |
+| 1     | `ui-popup`   | Needs the focus trap; sidebar's mobile drawer will reuse it                  |
+| 2     | `ui-input`   | Pure presentational field, no behaviour to get wrong                         |
+| 2     | `ui-form`    | Depends on `ui-input`'s validity surface                                     |
+| 3     | `ui-grid`    | CSS-only, low risk, useful in every other demo                               |
+| 3     | `ui-sidebar` | Reuses popup's drawer behaviour on narrow screens                            |
+| 3     | `ui-layout`  | Largest surface; benefits from grid and sidebar being settled                |
 
 ## Shared infrastructure to extract first
 
-| Module | Purpose | Needed by |
-| --- | --- | --- |
-| `core/focus-trap.js` | Tab containment + focus restoration | popup, sidebar |
-| `core/position.js` | Placement, flipping, clamping to viewport | tooltip, popup |
-| `core/pointer.js` | Unified pointer/touch drag with capture | layout, sidebar |
-| `core/size.js` | Clamp a number between a min and max | layout, sidebar |
+| Module               | Purpose                                   | Needed by       |
+| -------------------- | ----------------------------------------- | --------------- |
+| `core/focus-trap.js` | Tab containment + focus restoration       | popup, sidebar  |
+| `core/position.js`   | Placement, flipping, clamping to viewport | tooltip, popup  |
+| `core/pointer.js`    | Unified pointer/touch drag with capture   | layout, sidebar |
+| `core/size.js`       | Clamp a number between a min and max      | layout, sidebar |
 
 `dom.js` already owns `focusables()`; it moves to `core/focus-trap.js` and is
 re-exported from `dom.js` so nothing breaks.

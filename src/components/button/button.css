@@ -90,7 +90,8 @@ ui-button[data-variant='primary'] .ui4u-button__control {
   box-shadow: var(--ui4u-shadow-sm);
 }
 
-ui-button[data-variant='primary'] .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
+ui-button[data-variant='primary']
+  .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
   background: var(--ui4u-primary-hover);
   box-shadow: var(--ui4u-shadow-md), var(--ui4u-glow-primary);
 }
@@ -110,7 +111,8 @@ ui-button[data-variant='secondary'] .ui4u-button__control {
   backdrop-filter: var(--ui4u-glass-blur);
 }
 
-ui-button[data-variant='secondary'] .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
+ui-button[data-variant='secondary']
+  .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
   background: var(--ui4u-surface-3);
   border-color: var(--ui4u-border-strong);
 }
@@ -123,7 +125,8 @@ ui-button[data-variant='ghost'] .ui4u-button__control {
   border-color: transparent;
 }
 
-ui-button[data-variant='ghost'] .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
+ui-button[data-variant='ghost']
+  .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
   color: var(--ui4u-primary);
   background: var(--ui4u-primary-soft);
 }
@@ -136,7 +139,8 @@ ui-button[data-variant='danger'] .ui4u-button__control {
   box-shadow: var(--ui4u-shadow-sm);
 }
 
-ui-button[data-variant='danger'] .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
+ui-button[data-variant='danger']
+  .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
   background: var(--ui4u-danger-hover);
   box-shadow: var(--ui4u-shadow-md);
 }
@@ -149,7 +153,8 @@ ui-button[data-variant='subtle'] .ui4u-button__control {
   border-color: var(--ui4u-border-subtle);
 }
 
-ui-button[data-variant='subtle'] .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
+ui-button[data-variant='subtle']
+  .ui4u-button__control:hover:not([disabled]):not([aria-disabled='true']) {
   color: var(--ui4u-text);
   background: var(--ui4u-surface-3);
 }

@@ -19,7 +19,16 @@ Element.prototype.getBoundingClientRect = function stub() {
     if (!match) return 0;
     return Number.parseFloat(match[1]) * (match[2] === 'rem' ? REM : 1);
   };
-  return { width: parse(width), height: parse(height), top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0 };
+  return {
+    width: parse(width),
+    height: parse(height),
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    x: 0,
+    y: 0,
+  };
 };
 
 const { Layout, Panel } = await import('../../src/components/layout/layout.js');
@@ -119,7 +128,10 @@ describe('ui-layout grid generation', () => {
 
     assert.equal(layout.getAttribute('role'), 'region');
     assert.ok(layout.getAttribute('aria-label'));
-    assert.equal(layout.querySelector('ui-panel[slot="left"]').getAttribute('aria-label'), 'Sidebar');
+    assert.equal(
+      layout.querySelector('ui-panel[slot="left"]').getAttribute('aria-label'),
+      'Sidebar'
+    );
   });
 
   it('does nothing when there are no panels', () => {
@@ -395,7 +407,11 @@ describe('ui-layout collapse', () => {
     assert.equal(widthOf(layout, 'left'), 0);
 
     press(splitter, 'Enter');
-    assert.equal(widthOf(layout, 'left'), 240, 'restored to the authored size, not the dragged one');
+    assert.equal(
+      widthOf(layout, 'left'),
+      240,
+      'restored to the authored size, not the dragged one'
+    );
     assert.notEqual(resized, 240);
   });
 
@@ -605,7 +621,11 @@ describe('ui-layout nesting', () => {
 
     outer.remove();
 
-    assert.equal(outer.querySelectorAll(':scope > [role="separator"]').length, 0, 'outer separators gone');
+    assert.equal(
+      outer.querySelectorAll(':scope > [role="separator"]').length,
+      0,
+      'outer separators gone'
+    );
     assert.equal(outer.querySelectorAll(':scope > ui-panel').length, 3, 'outer panels kept');
     assert.ok(inner.isConnected === false);
     assert.equal(

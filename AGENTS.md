@@ -4,13 +4,13 @@ UI4U — a framework-agnostic UI library for mobile and desktop web, built from 
 
 ## Setup commands
 
-- Install deps:  `npm install`
-- Build:         `npm run build`     — esbuild: `src/index.js` → `dist/` (ESM, CJS, global, minified ESM, combined CSS)
-- Build (site):  `npm run build:pages` — static demo site in `.pages/` for GitHub Pages
-- Dev:           `npm run dev`       — esbuild watch + static demo server
-- Test:          `npm test`          — node:test unit specs
+- Install deps: `npm install`
+- Build: `npm run build` — esbuild: `src/index.js` → `dist/` (ESM, CJS, global, minified ESM, combined CSS)
+- Build (site): `npm run build:pages` — static demo site in `.pages/` for GitHub Pages
+- Dev: `npm run dev` — esbuild watch + static demo server
+- Test: `npm test` — node:test unit specs
 - Test (browser): `npm run test:e2e` — Playwright smoke tests over `demo/`
-- Lint:          `npm run lint`      — ESLint flat config
+- Lint: `npm run lint` — ESLint flat config
 
 ## Project layout
 
@@ -39,13 +39,16 @@ Every component follows the same shape — keep new ones consistent:
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout` · `popup` · `input` · `grid`
+Shipped: `tabs` · `disclosure` · `button` · `tooltip` · `layout` · `popup` · `input` · `grid` · `form` · `sidebar`
 
-Roadmap: `form` (validation) · `sidebar`
+Roadmap: none outstanding. Next candidates and the audit findings live in `docs/REVIEW.md`.
 
 The delivery plan, with per-component API and acceptance criteria, lives in `docs/ROADMAP.md`.
 
 Ship a component only when its demo page and tests exist; add the rest as the project grows.
+
+- Never use `innerHTML` — build nodes or set `textContent`. An error summary renders
+  field labels and validation messages, which can contain user input.
 
 ## Demo pages
 

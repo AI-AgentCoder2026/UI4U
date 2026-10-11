@@ -54,8 +54,7 @@ export function focusTrap(root, { initialFocus = null } = {}) {
 
       // Prefer an explicit target, then the first focusable thing inside, and
       // finally the container itself so focus never lands on <body>.
-      const target =
-        initialFocus ?? firstStop() ?? /** @type {HTMLElement} */ (root);
+      const target = initialFocus ?? firstStop() ?? /** @type {HTMLElement} */ (root);
       if (typeof target.focus === 'function') {
         target.focus({ preventScroll: true });
       }

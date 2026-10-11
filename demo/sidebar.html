@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Sidebar</title>
+    <meta
+      name="description"
+      content="ui-sidebar — a navigation landmark with a collapse toggle, rail mode and an off-canvas drawer on narrow screens."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-sidebar</code></h1>
+          <p class="lede">
+            A navigation landmark with roving arrow-key focus, a collapse toggle, a rail mode that
+            expands on focus, and an off-canvas drawer below
+            <code>48rem</code>. Try <kbd>↓</kbd> <kbd>↑</kbd>, <kbd>Home</kbd> and <kbd>End</kbd>.
+          </p>
+        </div>
+        <button type="button" data-theme-toggle>Toggle theme</button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">State</span>
+          <ui-tabs id="opt-state" variant="underline" label="State">
+            <ui-tab label="expanded"></ui-tab>
+            <ui-tab label="rail"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Side</span>
+          <ui-tabs id="opt-side" variant="underline" label="Side">
+            <ui-tab label="left"></ui-tab>
+            <ui-tab label="right"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="demo-shell">
+        <ui-sidebar id="demo" expanded label="Demo sections" width="15rem" rail="4rem">
+          <ui-sidebar-item label="Overview" icon="◈" active></ui-sidebar-item>
+          <ui-sidebar-item label="Components" icon="◫" href="#components"></ui-sidebar-item>
+          <ui-sidebar-item label="Theming" icon="◐" href="#theming"></ui-sidebar-item>
+          <ui-sidebar-item label="Keyboard" icon="⌨" href="#keyboard"></ui-sidebar-item>
+          <ui-sidebar-item label="Sign out" icon="⏻"></ui-sidebar-item>
+        </ui-sidebar>
+
+        <div class="demo-content">
+          <h2 id="components">Components</h2>
+          <p>
+            Items are authored as light DOM. <code>ui-sidebar</code> renders the real
+            <code>&lt;a href&gt;</code> or <code>&lt;button&gt;</code> inside each
+            <code>&lt;ui-sidebar-item&gt;</code> and owns every role, <code>aria-*</code>
+            attribute and tab stop, so the two can never disagree.
+          </p>
+
+          <h2 id="theming">Rail mode</h2>
+          <p>
+            Collapsed, the sidebar becomes a narrow rail. Focus entering a collapsed rail expands it
+            again, and every control keeps its label as a
+            <code>title</code> — so a bare glyph is never the only thing a keyboard or screen reader
+            user has.
+          </p>
+
+          <h2 id="keyboard">Keyboard</h2>
+          <p>
+            <kbd>↑</kbd> <kbd>↓</kbd> move between items on the left, <kbd>←</kbd> <kbd>→</kbd> on
+            the right, <kbd>Home</kbd> and <kbd>End</kbd> jump to the ends, and <kbd>Enter</kbd> or
+            <kbd>Space</kbd> activates. Only the active item is in the tab order.
+          </p>
+        </div>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for an event…</div>
+
+      <ui-disclosure summary="Source">
+        <p>
+          Everything below is the whole integration — markup, behaviour, events and theming. The
+          blocks are copyable.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-sidebar expanded label="Main"&gt;
+  &lt;ui-sidebar-item label="Overview" active&gt;&lt;/ui-sidebar-item&gt;
+  &lt;ui-sidebar-item label="Components" href="/demo/tabs.html"&gt;&lt;/ui-sidebar-item&gt;
+&lt;/ui-sidebar&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">// Importing the entry registers every element and injects the styles.
+import 'ui4u';
+
+const sidebar = document.querySelector('ui-sidebar');
+
+// Options object — never a long positional argument list.
+sidebar.configure({
+  expanded: true,
+  side: 'left',
+  width: '16rem',
+  rail: '4rem',
+});
+
+sidebar.open();
+sidebar.close();
+sidebar.toggle();
+
+sidebar.addEventListener('ui4u:change', (event) =&gt; {
+  const { expanded, rail } = event.detail;
+  console.log('expanded:', expanded, 'rail:', rail);
+});
+
+sidebar.addEventListener('ui4u:navigate', (event) =&gt; {
+  const { item, index, href } = event.detail;
+  console.log('item', index, href);
+});</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Component knobs live on the element, values from tokens. */
+ui-sidebar {
+  --ui4u-sidebar-width: 18rem;
+  --ui4u-sidebar-rail: 4.5rem;
+  --ui4u-sidebar-radius: 0;
+}
+
+/* A theme is a token override on any ancestor — never a fork. */
+[data-theme='light'] {
+  --ui4u-primary: #7c3aed;
+}</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">Install</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">npm install ui4u
+
+# Or drop in the prebuilt bundle and stylesheet:
+#   &lt;link rel="stylesheet" href="ui4u.css" /&gt;
+#   &lt;script src="ui4u.global.js"&gt;&lt;/script&gt;</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="ui-disclosure" variant="ghost">
+        <p>
+          You are looking at one right now. <code>ui-disclosure</code> powers every collapsible
+          section on this page — the trigger is a real <code>&lt;button&gt;</code>, so it is
+          keyboard reachable and announces its state through <code>aria-expanded</code>.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-disclosure summary="Source"&gt;
+  &lt;p&gt;Anything can go in here.&lt;/p&gt;
+&lt;/ui-disclosure&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+          </figcaption>
+          <pre><code data-highlight="js">const panel = document.querySelector('ui-disclosure');
+
+panel.configure({ summary: 'Advanced', variant: 'ghost', open: true });
+
+panel.open();
+panel.close();
+panel.toggle();</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const sidebar = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real sidebar.
+      document.getElementById('opt-state').addEventListener('ui4u:change', (event) => {
+        const rail = event.detail.label === 'rail';
+        if (rail) sidebar.close();
+        else sidebar.open();
+      });
+
+      document.getElementById('opt-side').addEventListener('ui4u:change', (event) => {
+        sidebar.configure({ side: event.detail.label });
+      });
+
+      // Tabs state and sidebar state are two-way: the sidebar's own toggle keeps
+      // the picker honest when it is used directly.
+      const statePicker = document.getElementById('opt-state');
+      sidebar.addEventListener('ui4u:change', (event) => {
+        statePicker.active = event.detail.expanded ? 0 : 1;
+        log.textContent = `ui4u:change → expanded ${event.detail.expanded}, rail ${event.detail.rail}`;
+      });
+
+      sidebar.addEventListener('ui4u:navigate', (event) => {
+        log.textContent = `ui4u:navigate → ${event.detail.item.getAttribute('label')} (index ${event.detail.index})`;
+      });
+    </script>
+    <style>
+      /*
+       * Page-local layout for the shell the sidebar lives in. Component styles
+       * stay in the component; this is demo furniture.
+       */
+      .demo-shell {
+        display: flex;
+        gap: var(--ui4u-space-4);
+        align-items: flex-start;
+        margin-bottom: var(--ui4u-space-5);
+      }
+
+      .demo-content {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: var(--ui4u-space-5);
+        border: 1px solid var(--ui4u-border);
+        border-radius: var(--ui4u-radius-lg);
+        background: var(--ui4u-surface-glass);
+      }
+
+      .demo-content h2 {
+        margin: var(--ui4u-space-5) 0 var(--ui4u-space-2);
+        font-size: var(--ui4u-font-size-lg);
+      }
+
+      .demo-content h2:first-child {
+        margin-top: 0;
+      }
+    </style>
+  </body>
+</html>

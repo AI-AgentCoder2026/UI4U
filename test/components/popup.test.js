@@ -123,9 +123,9 @@ describe('ui-popup open and close', () => {
   let popup;
 
   beforeEach(() => {
-    popup = mount(
-      '<ui-popup label="T"><button id="a">A</button></ui-popup>'
-    ).querySelector('ui-popup');
+    popup = mount('<ui-popup label="T"><button id="a">A</button></ui-popup>').querySelector(
+      'ui-popup'
+    );
   });
 
   afterEach(() => cleanup());
@@ -206,7 +206,9 @@ describe('ui-popup dismissal', () => {
   afterEach(() => cleanup());
 
   const build = (attrs = '') =>
-    mount(`<ui-popup label="T" open ${attrs}><button>A</button></ui-popup>`).querySelector('ui-popup');
+    mount(`<ui-popup label="T" open ${attrs}><button>A</button></ui-popup>`).querySelector(
+      'ui-popup'
+    );
 
   it('closes on Escape and emits ui4u:cancel first', () => {
     const popup = build();

@@ -79,7 +79,9 @@ describe('ui-disclosure rendering', () => {
   });
 
   it('renders summary text as text, never as markup', () => {
-    const risky = mount('<ui-disclosure summary="&lt;img src=x onerror=alert(1)&gt;"></ui-disclosure>');
+    const risky = mount(
+      '<ui-disclosure summary="&lt;img src=x onerror=alert(1)&gt;"></ui-disclosure>'
+    );
     const label = risky.querySelector('.ui4u-disclosure__label');
     assert.equal(label.querySelector('img'), null);
     assert.equal(label.textContent, '<img src=x onerror=alert(1)>');

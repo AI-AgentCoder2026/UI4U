@@ -81,10 +81,7 @@ test('nested disclosures keep independent state', async ({ page }) => {
 test('the variant picker restyles the top-level panels only', async ({ page }) => {
   await page.locator('#opt-variant [role="tab"]', { hasText: 'solid' }).click();
 
-  await expect(page.locator('ui-disclosure').first()).toHaveAttribute(
-    'data-variant',
-    'solid'
-  );
+  await expect(page.locator('ui-disclosure').first()).toHaveAttribute('data-variant', 'solid');
 });
 
 test('the Source panel is a ui-disclosure and opens on click', async ({ page }) => {

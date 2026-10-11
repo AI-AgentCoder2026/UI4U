@@ -73,6 +73,12 @@ export class Input extends UI4UElement {
   #hint = null;
   /** @type {HTMLElement|null} */
   #error = null;
+  /**
+   * True while `error` holds a message this component produced during
+   * `reportValidity()`, as opposed to one the author set.
+   * @type {boolean}
+   */
+  #selfReported = false;
   #built = false;
 
   /* ------------------------------------------------------------------ api */
@@ -132,6 +138,9 @@ export class Input extends UI4UElement {
   }
 
   set error(next) {
+    // Assigning `error` directly is an author decision, so it stops being a
+    // self-reported validation message.
+    this.#selfReported = false;
     this.#setTextAttribute('error', next);
   }
 
@@ -282,6 +291,7 @@ export class Input extends UI4UElement {
    * form.addEventListener('ui4u:input', () => field.clearValidity());
    */
   clearValidity() {
+    this.#selfReported = false;
     if (this.hasAttribute('error')) this.removeAttribute('error');
     if (typeof this.#native?.setCustomValidity === 'function') this.#native.setCustomValidity('');
     return this;
@@ -302,7 +312,11 @@ export class Input extends UI4UElement {
     const name = this.name;
     const error = this.error;
 
-    if (error) return { valid: false, message: error, value, name };
+    // An author-supplied error is a deliberate override and always wins. An
+    // error this component set itself during `reportValidity()` must not —
+    // otherwise correcting the field would leave it permanently invalid,
+    // because the error it is judged by came from the error it produced.
+    if (error && !this.#selfReported) return { valid: false, message: error, value, name };
 
     const native = this.#native;
     if (!native) return { valid: true, message: '', value, name };
@@ -328,8 +342,14 @@ export class Input extends UI4UElement {
   reportValidity() {
     const result = this.checkValidity();
 
-    if (result.valid) this.clearValidity();
-    else if (!this.error) this.error = result.message;
+    if (result.valid) {
+      this.clearValidity();
+    } else if (!this.error) {
+      this.error = result.message;
+      // Set after the assignment: the setter marks an error as author-supplied,
+      // and this one came from us.
+      this.#selfReported = true;
+    }
 
     if (typeof this.#native?.reportValidity === 'function') this.#native.reportValidity();
     return this;

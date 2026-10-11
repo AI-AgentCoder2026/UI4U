@@ -19,9 +19,8 @@
           <h1><code>ui-tooltip</code></h1>
           <p class="lede">
             A hint anchored to its light DOM trigger. Hover it, or
-            <kbd>Tab</kbd> to it and the surface appears too — keyboard users get the
-            same information, just not at the cost of a delay. Press
-            <kbd>Esc</kbd> to dismiss.
+            <kbd>Tab</kbd> to it and the surface appears too — keyboard users get the same
+            information, just not at the cost of a delay. Press <kbd>Esc</kbd> to dismiss.
           </p>
         </div>
         <button type="button" data-theme-toggle>Toggle theme</button>
@@ -58,16 +57,12 @@
         <h2>Triggers</h2>
         <p>
           The button below is the trigger and stays yours. The component adds
-          <code>aria-describedby</code> pointing at the surface it generated, and removes it
-          again on disconnect.
+          <code>aria-describedby</code> pointing at the surface it generated, and removes it again
+          on disconnect.
         </p>
 
         <div class="controls" id="demo-triggers">
-          <ui-tooltip
-            id="rebuild"
-            content="Rebuild the index — Ctrl+Shift+R"
-            placement="top"
-          >
+          <ui-tooltip id="rebuild" content="Rebuild the index — Ctrl+Shift+R" placement="top">
             <button type="button">Rebuild</button>
           </ui-tooltip>
 
@@ -86,9 +81,8 @@
         <h2>Flipping</h2>
         <p>
           The four edge triggers are pinned close to the viewport boundary. Each asks for
-          <code>top</code> or <code>left</code>, where it would overflow — the positioning
-          helper flips it to the opposite side, or clamps it back inside when neither side
-          fits.
+          <code>top</code> or <code>left</code>, where it would overflow — the positioning helper
+          flips it to the opposite side, or clamps it back inside when neither side fits.
         </p>
 
         <div class="controls">
@@ -106,9 +100,9 @@
 
       <ui-disclosure summary="Theming">
         <p>
-          Every value is a <code>--ui4u-*</code> token. Override one on the element to theme
-          a single tooltip — including its own
-          <code>--ui4u-tooltip-bg</code> and <code>--ui4u-tooltip-radius</code>.
+          Every value is a <code>--ui4u-*</code> token. Override one on the element to theme a
+          single tooltip — including its own <code>--ui4u-tooltip-bg</code> and
+          <code>--ui4u-tooltip-radius</code>.
         </p>
         <div class="controls" id="accent-demo">
           <button type="button" data-accent="var(--ui4u-primary)">primary</button>

@@ -117,9 +117,9 @@ describe('ui-input rendering', () => {
   });
 
   it('leaves the author children untouched', () => {
-    const field = mount('<ui-input label="Name"><span class="mine">kept</span></ui-input>').querySelector(
-      'ui-input'
-    );
+    const field = mount(
+      '<ui-input label="Name"><span class="mine">kept</span></ui-input>'
+    ).querySelector('ui-input');
 
     assert.ok(field.querySelector('span.mine'), 'the author markup is still in the host');
   });
@@ -144,9 +144,9 @@ describe('ui-input aria wiring', () => {
   afterEach(() => cleanup());
 
   it('describes the control with the hint', () => {
-    const field = mount('<ui-input label="Email" hint="We never share it."></ui-input>').querySelector(
-      'ui-input'
-    );
+    const field = mount(
+      '<ui-input label="Email" hint="We never share it."></ui-input>'
+    ).querySelector('ui-input');
 
     assert.equal(nativeOf(field).getAttribute('aria-describedby'), hintOf(field).id);
     assert.equal(hintOf(field).hidden, false);
@@ -162,7 +162,9 @@ describe('ui-input aria wiring', () => {
   });
 
   it('drops aria-describedby when neither hint nor error exists', () => {
-    const field = mount('<ui-input label="Email" hint="Later"></ui-input>').querySelector('ui-input');
+    const field = mount('<ui-input label="Email" hint="Later"></ui-input>').querySelector(
+      'ui-input'
+    );
 
     assert.notEqual(nativeOf(field).getAttribute('aria-describedby'), null);
 
@@ -303,7 +305,9 @@ describe('ui-input events', () => {
   afterEach(() => cleanup());
 
   it('emits ui4u:input alongside the native event', () => {
-    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector('ui-input');
+    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector(
+      'ui-input'
+    );
     /** @type {Array<{ value: string, name: string }>} */
     const seen = [];
     /** @type {Event[]} */
@@ -320,7 +324,9 @@ describe('ui-input events', () => {
   });
 
   it('emits ui4u:change on commit only', () => {
-    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector('ui-input');
+    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector(
+      'ui-input'
+    );
     /** @type {Array<{ value: string, name: string }>} */
     const seen = [];
     field.addEventListener('ui4u:change', (event) => seen.push(event.detail));
@@ -337,7 +343,9 @@ describe('ui-input validation', () => {
   afterEach(() => cleanup());
 
   it('is valid when empty and not required', () => {
-    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector('ui-input');
+    const field = mount('<ui-input label="Email" name="email"></ui-input>').querySelector(
+      'ui-input'
+    );
 
     assert.deepEqual(field.checkValidity(), {
       valid: true,
@@ -371,9 +379,9 @@ describe('ui-input validation', () => {
   });
 
   it('treats an author-set error as invalid, with that message', () => {
-    const field = mount('<ui-input label="Name" error="That name is taken"></ui-input>').querySelector(
-      'ui-input'
-    );
+    const field = mount(
+      '<ui-input label="Name" error="That name is taken"></ui-input>'
+    ).querySelector('ui-input');
     const result = field.checkValidity();
 
     assert.equal(result.valid, false);
@@ -412,9 +420,9 @@ describe('ui-input text rendering', () => {
   });
 
   it('renders the label as text, never as markup', () => {
-    const field = mount('<ui-input label="&lt;script&gt;x&lt;/script&gt;"></ui-input>').querySelector(
-      'ui-input'
-    );
+    const field = mount(
+      '<ui-input label="&lt;script&gt;x&lt;/script&gt;"></ui-input>'
+    ).querySelector('ui-input');
 
     assert.equal(labelOf(field).textContent, '<script>x</script>');
     assert.equal(labelOf(field).querySelector('script'), null);
@@ -439,9 +447,9 @@ describe('ui-input teardown', () => {
   afterEach(() => cleanup());
 
   it('removes generated markup and restores the authored children', () => {
-    const field = mount('<ui-input label="Email" size="lg"><span class="mine">kept</span></ui-input>').querySelector(
-      'ui-input'
-    );
+    const field = mount(
+      '<ui-input label="Email" size="lg"><span class="mine">kept</span></ui-input>'
+    ).querySelector('ui-input');
 
     field.remove();
 
@@ -487,5 +495,30 @@ describe('ui-input teardown', () => {
     assert.equal(field.value, '');
     assert.equal(field.size, 'md');
     assert.equal(field.checkValidity().valid, true);
+  });
+
+  it('does not stay invalid forever after reportValidity()', () => {
+    const field = mount('<ui-input label="Email" type="email" required></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    // Empty and required: the component reports the failure onto itself.
+    field.reportValidity();
+    assert.equal(field.error !== '', true, 'an error message is showing');
+    assert.equal(field.checkValidity().valid, false);
+
+    // The user fixes it. A self-reported error must not keep failing the field,
+    // otherwise the form would loop on a message it produced itself.
+    field.input.value = 'ada@example.com';
+
+    assert.equal(field.checkValidity().valid, true, 'valid once corrected');
+  });
+
+  it('still treats an author-supplied error as a deliberate override', () => {
+    const field = mount(
+      '<ui-input label="Email" type="email" value="ada@example.com" error="Taken"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.checkValidity().valid, false);
   });
 });
