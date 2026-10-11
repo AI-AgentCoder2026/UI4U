@@ -34,6 +34,10 @@ import { append, el, on, setText } from '../../core/dom.js';
  * @property {TableFilter[]|null} [filters] Advanced search criteria.
  * @property {string|null} [sort] Key of the column to sort by, from `data-sort`.
  * @property {SortDirection} [direction] Initial sort direction. Default `'asc'`.
+ * @property {Record<string, Function>} [bindings] Event handlers keyed by name —
+ *   `sort`, `search`, `page`, `select`, `copy`. A handler receives
+ *   `(detail, event)` and can veto the component's own behaviour by returning
+ *   `false` or calling `event.preventDefault()`.
  */
 
 /** Operators offered by the advanced search UI, in display order. */
@@ -405,6 +409,7 @@ export class TableGrid extends UI4UElement {
       sort,
       direction,
       searchPlaceholder,
+      bindings,
     } = options;
 
     if (navigate !== undefined) this.setAttribute('navigate', String(navigate));
@@ -434,6 +439,7 @@ export class TableGrid extends UI4UElement {
       else this.setAttribute('sort', sort);
     }
     if (filters !== undefined) this.setFilters(filters ?? []);
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -453,6 +459,11 @@ export class TableGrid extends UI4UElement {
     if (index === -1) return this;
 
     const next = direction ?? (this.sort === key && this.direction === 'asc' ? 'desc' : 'asc');
+
+    // Guarded before any attribute is written, so a veto leaves the previous
+    // sort, the direction and the row order exactly as they were.
+    if (!this.runBinding('sort', { column: key, direction: next })) return this;
+
     if (direction === undefined) this.setAttribute('direction', next);
     else this.setAttribute('direction', direction);
 
@@ -486,6 +497,10 @@ export class TableGrid extends UI4UElement {
     const next = query ?? '';
     if (next === this.query) return this;
 
+    // Guarded before the attribute is written, so a veto leaves the previous
+    // query, the visible rows and the page untouched.
+    if (!this.runBinding('search', { query: next })) return this;
+
     // Setting the attribute is what actually refilters; the attribute callback
     // owns the refilter, page reset and field sync so there is one path.
     this.setAttribute('search', next);
@@ -505,6 +520,9 @@ export class TableGrid extends UI4UElement {
   goToPage(page) {
     const next = Math.min(Math.max(1, Math.trunc(page) || 1), this.pageCount);
     if (next === this.#page) return this;
+
+    // Guarded before the page moves, so a veto keeps the current slice on screen.
+    if (!this.runBinding('page', { page: next, pageCount: this.pageCount })) return this;
 
     this.#page = next;
     this.#applyView();
@@ -542,6 +560,10 @@ export class TableGrid extends UI4UElement {
     if (!this.selectable || !row) return this;
     const { additive = false, range = false } = options;
 
+    // Guarded before the set is touched. Selection is not a single scalar, so
+    // a veto that arrived afterwards could not be undone cleanly.
+    if (!this.runBinding('select', { row, additive, range })) return this;
+
     if (!this.multi && !additive && !range) this.#selected.clear();
 
     if (range && this.multi && this.#anchor) {
@@ -577,6 +599,9 @@ export class TableGrid extends UI4UElement {
   toggleRow(row, additive = false) {
     if (!this.selectable || !row) return this;
 
+    // Guarded before the set is touched, for the same reason as `selectRow`.
+    if (!this.runBinding('select', { row, additive })) return this;
+
     // Whether the row is about to be added or removed has to be decided from
     // the state *before* the clear — otherwise a plain click on an already
     // selected row clears it and then immediately re-adds it.
@@ -609,6 +634,8 @@ export class TableGrid extends UI4UElement {
    */
   selectAll(selected = true) {
     if (!this.selectable) return this;
+    if (!this.runBinding('select', { all: selected })) return this;
+
     this.#selected.clear();
     if (selected) for (const row of this.#matched) this.#selected.add(row);
     this.#syncSelection(true);
@@ -642,6 +669,10 @@ export class TableGrid extends UI4UElement {
       this.emit('ui4u:copy', { text: '', rows: [], copied: false });
       return false;
     }
+
+    // Guarded before the clipboard is touched. Copying is not undoable, so a
+    // veto has to arrive first rather than racing an already-written clipboard.
+    if (!this.runBinding('copy', { text, rows: this.selectedData })) return false;
 
     let copied = false;
     try {

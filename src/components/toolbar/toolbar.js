@@ -11,6 +11,9 @@ import { on } from '../../core/dom.js';
  *   `'horizontal'`.
  * @property {boolean} [srOnly] Hide the visible label but keep it in the
  *   accessibility tree.
+ * @property {Record<string, Function>} [bindings] Event handlers keyed by name
+ *   (`navigate`). A handler receives `(detail, event)` and can veto the move by
+ *   returning `false` or calling `event.preventDefault()`.
  */
 
 /**
@@ -117,11 +120,12 @@ export class Toolbar extends UI4UElement {
    * toolbar.configure({ label: 'Filters', orientation: 'vertical' });
    */
   configure(options = {}) {
-    const { label, orientation, srOnly } = options;
+    const { label, orientation, srOnly, bindings } = options;
 
     if (label !== undefined) this.label = label;
     if (orientation !== undefined) this.orientation = orientation;
     if (srOnly !== undefined) this.srOnly = srOnly;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -275,6 +279,16 @@ export class Toolbar extends UI4UElement {
     if (nextIndex === index) {
       // Clamped at the end. The tab stop still follows the control the user is
       // on, so tabbing out and back returns them to where they left off.
+      this.#applyRoving(active);
+      return;
+    }
+
+    /*
+     * Guarded before focus moves, so a veto genuinely means "stay where you
+     * are". A veto that arrived after the move would have to yank focus back,
+     * which is worse than never leaving.
+     */
+    if (!this.runBinding('navigate', { index: nextIndex, label: this.label, toolbar: this })) {
       this.#applyRoving(active);
       return;
     }

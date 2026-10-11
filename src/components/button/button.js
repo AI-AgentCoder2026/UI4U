@@ -13,6 +13,11 @@ import { append, el, on, uid } from '../../core/dom.js';
  * @property {boolean} [disabled] Blocks activation and mirrors onto the control.
  * @property {boolean} [loading] Marks the control busy and blocks activation.
  * @property {string} [href] Renders an `<a href>` instead of a `<button>`.
+ * @property {Record<string, Function>} [bindings] Event handlers keyed by name
+ *   (`press`). A handler receives `(detail, event)` and can veto the activation
+ *   by returning `false` or calling `event.preventDefault()` — which also
+ *   suppresses the native follow-through, whether that is navigation or a form
+ *   submit.
  */
 
 /** Announced through the polite live region while `loading` is set. */
@@ -144,7 +149,7 @@ export class Button extends UI4UElement {
    * button.configure({ variant: 'danger', size: 'sm', loading: true });
    */
   configure(options = {}) {
-    const { variant, size, type, disabled, loading, href } = options;
+    const { variant, size, type, disabled, loading, href, bindings } = options;
 
     if (variant !== undefined) this.variant = variant;
     if (size !== undefined) this.size = size;
@@ -152,6 +157,7 @@ export class Button extends UI4UElement {
     if (disabled !== undefined) this.disabled = disabled;
     if (loading !== undefined) this.loading = loading;
     if (href !== undefined) this.href = href;
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -308,6 +314,18 @@ export class Button extends UI4UElement {
     // The control fired natively — block the follow-through (navigation, form
     // submit) and report nothing.
     if (this.inactive) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    /*
+     * Guarded before the press is announced, so a veto means "do nothing at
+     * all": no `ui4u:press` and — more importantly — the native follow-through
+     * the handler would otherwise let happen, whether that is an anchor
+     * navigating away or a submit button submitting the form.
+     */
+    if (!this.runBinding('press', { control: this.#control, variant: this.variant })) {
       event.preventDefault();
       event.stopPropagation();
       return;

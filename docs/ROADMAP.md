@@ -452,11 +452,34 @@ field.unbind('change', handler);
 field.bindingNames; // ['change']
 ```
 
+- **Every component has it** — all fifteen accept `configure({ bindings })`, and
+  each guards the semantic actions a consumer would want to take over:
+
+  | Component         | Guarded bindings                           |
+  | ----------------- | ------------------------------------------ |
+  | `ui-button`       | `press`                                    |
+  | `ui-input`        | `input`, `change`                          |
+  | `ui-tabs`         | `change`                                   |
+  | `ui-disclosure`   | `toggle`                                   |
+  | `ui-tooltip`      | `show`                                     |
+  | `ui-popup`        | `open`, `close`                            |
+  | `ui-form`         | `submit`, `reset`                          |
+  | `ui-sidebar`      | `change`, `navigate`                       |
+  | `ui-layout`       | `resize`, `collapse`                       |
+  | `ui-tablegrid`    | `sort`, `search`, `page`, `select`, `copy` |
+  | `ui-checkbox`     | `change`                                   |
+  | `ui-radio`        | `change`                                   |
+  | `ui-dropdown`     | `open`, `close`, `change`                  |
+  | `ui-toolbar`      | `navigate`                                 |
+  | `ui-button-group` | `change`                                   |
+
 - **Runs before the action** — `runBinding(name, detail)` returns `false` when a
   handler vetoes, and the component skips its own behaviour. The guard sits at
   the top of the action, before any mutation, because a veto that lands after
   the state has already changed leaves the component half-changed — worse than
-  no veto at all.
+  no veto at all. `ui-input`'s amount mode shows it best: the guard has to
+  precede the reformat, or a value the binding refused would still have moved
+  the caret.
 - **Two ways to veto** — return `false`, or call `preventDefault()` on the
   cancelable event handed to the handler.
 - **Either spelling** — `bind('change', …)` and `bind('ui4u:change', …)` land in
@@ -471,7 +494,11 @@ field.bindingNames; // ['change']
   both expressible without breaking existing consumers.
 - **Honest about the limit** — where a component's default has already happened
   by the time its event fires (a tooltip that has already appeared), there is
-  no veto, because pretending otherwise would be worse than saying so.
+  no veto, because pretending otherwise would be worse than saying so. The same
+  goes for the sidebar's focus-driven expansion: refusing to expand would strand
+  a keyboard user inside a collapsed strip whose labels are only reachable
+  through `title`, so the component keeping focus out of that trap is not an
+  action anyone asked for and cannot be vetoed.
 
 ## 14. `ui-button-group`
 

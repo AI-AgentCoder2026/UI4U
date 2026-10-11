@@ -31,6 +31,10 @@ import { fromISO, toISO } from './date.js';
  * @property {number} [firstDayOfWeek] `date` only. `0` for Sunday, `1` for Monday.
  * @property {boolean} [range] `date` only. Two clicks make a range.
  * @property {'day' | 'month' | 'year'} [view] `date` only. Level the panel opens at.
+ * @property {Record<string, Function>} [bindings] Event handlers keyed by name
+ *   (`input`, `change`). A handler receives `(detail, event)` and can veto the
+ *   component's own behaviour by returning `false` or calling
+ *   `event.preventDefault()`.
  *
  * @typedef {object} InputValidityResult
  * @property {boolean} valid
@@ -53,6 +57,16 @@ const DATE = 'date';
 
 /** Used only when the platform gives us an empty `validationMessage`. */
 const FALLBACK_MESSAGE = 'Please enter a valid value.';
+
+/**
+ * Event name → binding name. They differ only by the `ui4u:` prefix, which
+ * `runBinding` would strip anyway; spelling both out keeps the call site from
+ * passing a DOM event name where a binding name is expected.
+ */
+const BINDING_NAME = /** @type {const} */ ({
+  'ui4u:input': 'input',
+  'ui4u:change': 'change',
+});
 
 /**
  * A text field that wraps — and keeps — a REAL `<input>` in light DOM. Never a
@@ -334,6 +348,7 @@ export class Input extends UI4UElement {
       firstDayOfWeek,
       range,
       view,
+      bindings,
     } = options;
 
     if (label !== undefined) this.label = label;
@@ -355,6 +370,7 @@ export class Input extends UI4UElement {
     if (firstDayOfWeek !== undefined) this.setAttribute('first-day', firstDayOfWeek);
     if (range !== undefined) this.setAttribute('range', String(Boolean(range)));
     if (view !== undefined) this.setAttribute('view', view);
+    if (bindings !== undefined) this.bindAll(bindings);
 
     return this;
   }
@@ -616,7 +632,9 @@ export class Input extends UI4UElement {
     this.#built = true;
 
     this.track(on(native, 'input', () => this.#onNativeInput()));
-    this.track(on(native, 'change', () => this.#emitValue('ui4u:change')));
+    // Both go through the guarded path. Calling `#emitValue` directly here
+    // would let a `change` binding be registered and then never run.
+    this.track(on(native, 'change', () => this.#onNativeInput('ui4u:change')));
 
     if (this.#isDate) {
       // The panel is the only way in. Leaving the field free-hand would let a
@@ -710,6 +728,14 @@ export class Input extends UI4UElement {
 
   /** @param {'ui4u:input' | 'ui4u:change'} type */
   #onNativeInput(type = 'ui4u:input') {
+    /*
+     * Guarded before anything is reformatted or written back, so a veto leaves
+     * the text exactly as typed. An amount field is re-laid-out on every
+     * keystroke, so reformatting first would move the caret even though the
+     * binding refused the value.
+     */
+    if (!this.runBinding(BINDING_NAME[type], { value: this.value, name: this.name })) return;
+
     if (this.#isAmount) this.#reformatAmount();
     this.#emitValue(type);
   }
