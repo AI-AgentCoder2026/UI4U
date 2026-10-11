@@ -16,7 +16,7 @@
         display: block;
       }
       .table-wrap {
-        max-height: 22rem;
+        max-height: 30rem;
         overflow: auto;
         border-radius: var(--ui4u-radius-lg);
       }
@@ -32,6 +32,27 @@
         z-index: calc(var(--ui4u-z-sticky) + 2);
         padding-block: var(--ui4u-space-2);
         background: var(--ui4u-surface-0);
+      }
+      /*
+       * With search, copy, advanced filters and selection all switched on the
+       * component's chrome is a tall stack, which pushes the table itself below
+       * the fold. This page only re-flows it onto fewer lines — the component
+       * keeps its own vertical layout everywhere else.
+       */
+      #demo {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ui4u-space-2);
+      }
+      #demo > table,
+      #demo > .ui4u-tablegrid__filters,
+      #demo > .ui4u-tablegrid__pager {
+        flex: 1 1 100%;
+      }
+      #demo > .ui4u-tablegrid__toolbar,
+      #demo > .ui4u-tablegrid__copy {
+        margin-bottom: 0;
       }
     </style>
   </head>
@@ -73,6 +94,32 @@
             <ui-tab label="all"></ui-tab>
             <ui-tab label="3"></ui-tab>
             <ui-tab label="4"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Selection</span>
+          <ui-tabs id="opt-select" variant="underline" label="Selection">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="single"></ui-tab>
+            <ui-tab label="multi"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Search</span>
+          <ui-tabs id="opt-search" variant="underline" label="Search">
+            <!-- `quick` first, because ui-tabs announces its first tab on
+                 connect and that has to match the `searchable` attribute
+                 already on the markup. -->
+            <ui-tab label="quick"></ui-tab>
+            <ui-tab label="advanced"></ui-tab>
+            <ui-tab label="off"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Copy</span>
+          <ui-tabs id="opt-copy" variant="underline" label="Copy">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
           </ui-tabs>
         </div>
       </div>
@@ -161,7 +208,8 @@
       <ui-disclosure summary="Source">
         <p>
           The author writes a plain <code>&lt;table&gt;</code>. The component keeps it and adds
-          column groups, sorting, search, pagination and keyboard navigation.
+          column groups, sorting, search, advanced filters, selection, copy, pagination and keyboard
+          navigation — each one opt-in.
         </p>
 
         <figure class="demo-code">
@@ -169,7 +217,16 @@
             <span class="demo-code__lang">HTML</span>
             <button class="demo-code__copy" type="button" data-copy>Copy</button>
           </figcaption>
-          <pre><code data-highlight="html">&lt;ui-tablegrid label="Release downloads" searchable per-page="4" navigate&gt;
+          <pre><code data-highlight="html">&lt;ui-tablegrid
+  label="Release downloads"
+  searchable
+  advanced-search
+  selectable
+  multi
+  copyable
+  per-page="4"
+  navigate
+&gt;
   &lt;table&gt;
     &lt;thead&gt;
       &lt;!-- Optional group row; only the LAST row carries the columns. --&gt;
@@ -200,15 +257,49 @@
           </figcaption>
           <pre><code data-highlight="js">const grid = document.querySelector('ui-tablegrid');
 
-grid.configure({ navigate: true, striped: true, dense: false });
+// Every feature is opt-in, through an option or the matching attribute.
+grid.configure({
+  searchable: true,
+  advancedSearch: true,
+  selectable: true,
+  multi: true,
+  copyable: true,
+  perPage: 10,
+  navigate: true,
+});
 
+// --- sorting -----------------------------------------------------------
 grid.sortBy('downloads', 'desc');
 grid.resetSort();
 
-// Search narrows the rows; sort and paging then apply to what survives.
-grid.search('stable');
+// --- search ------------------------------------------------------------
+grid.search('stable');        // substring of any column
 grid.clearSearch();
 
+// Advanced criteria combine with AND.
+grid.setFilters([
+  { field: 'channel', operator: 'equals', value: 'stable' },
+  { field: 'downloads', operator: 'gte', value: '5000' },
+]);
+grid.addFilter({ field: '*', operator: 'contains', value: 'beta' });
+grid.removeFilter(0);
+grid.clearFilters();
+
+// Operators: contains, not-contains, equals, not-equals,
+// starts-with, ends-with, gt, gte, lt, lte.
+
+// --- selection ---------------------------------------------------------
+grid.selectRow(row, { range: true });
+grid.toggleRow(row, /* additive */ true);
+grid.selectAll();             // every row that survives the filters
+grid.clearSelection();
+
+grid.selectedRows;            // in current sort order
+grid.selectedData;            // [{ version: '1.3.0', downloads: '9260' }, …]
+grid.selectedText;            // tab-separated, ready for a spreadsheet
+
+// --- copy and paging ---------------------------------------------------
+await grid.copySelected();     // emits ui4u:copy either way
 grid.goToPage(2);
 grid.nextPage();
 grid.prevPage();
@@ -218,13 +309,12 @@ grid.pageCount; // pages the filtered rows fill
 grid.rows;      // every matching row, in sort order
 grid.pageRows;  // just the slice on screen
 
-// One record per row, keyed by each sortable column's data-sort.
-grid.data;
-// [{ version: '1.3.0', downloads: '9260', size: '44680' }, …]
+grid.addEventListener('ui4u:select', (event) =&gt; {
+  console.log(event.detail.count, event.detail.data);
+});
 
-grid.addEventListener('ui4u:sort', (event) =&gt; {
-  const { column, direction, rows } = event.detail;
-  console.log(column, direction, rows.length);
+grid.addEventListener('ui4u:copy', (event) =&gt; {
+  if (!event.detail.copied) showFallback(event.detail.text);
 });</code></pre>
         </figure>
       </ui-disclosure>
@@ -249,12 +339,21 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
             belongs to.
           </li>
           <li>
+            Selection uses a real <code>&lt;input type="checkbox"&gt;</code> per row rather than a
+            styled row, and selected rows carry <code>aria-selected</code>. The header checkbox
+            reports <em>some</em> selected with <code>indeterminate</code>.
+          </li>
+          <li>
+            In <code>navigate</code> mode, <kbd>Space</kbd> toggles the row under the cursor and
+            <kbd>Ctrl</kbd>+<kbd>A</kbd> selects every matching row.
+          </li>
+          <li>
             Search and paging <em>hide</em> rows rather than deleting them, so the arrow keys skip
             rows that are not on screen instead of landing on an invisible cell.
           </li>
           <li>
-            The pager status is a <code>role="status"</code> live region, so a page change is
-            announced without moving focus.
+            The filter fields are labelled per row, so a screen reader announces which criterion
+            each control belongs to. The pager status is a <code>role="status"</code> live region.
           </li>
           <li>
             <code>navigate</code> is opt-in. A plain <code>&lt;table&gt;</code> is already navigable
@@ -292,6 +391,26 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
         grid.configure({ perPage: label === 'all' ? null : Number(label) });
       });
 
+      document.getElementById('opt-select').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        grid.configure({
+          selectable: label !== 'off',
+          multi: label === 'multi',
+        });
+      });
+
+      document.getElementById('opt-search').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        grid.configure({
+          searchable: label !== 'off',
+          advancedSearch: label === 'advanced',
+        });
+      });
+
+      document.getElementById('opt-copy').addEventListener('ui4u:change', (event) => {
+        grid.configure({ copyable: event.detail.label === 'on' });
+      });
+
       document.getElementById('sort-downloads').addEventListener('click', () => {
         grid.sortBy('downloads', 'desc');
       });
@@ -317,6 +436,21 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
       grid.addEventListener('ui4u:page', (event) => {
         const { page, pageCount, rows } = event.detail;
         log.textContent = `ui4u:page → ${page} of ${pageCount} · ${rows.length} rows`;
+      });
+
+      grid.addEventListener('ui4u:copy', (event) => {
+        const { rows, copied } = event.detail;
+        log.textContent = copied
+          ? `ui4u:copy → ${rows.length} rows on the clipboard`
+          : 'ui4u:copy → nothing copied';
+      });
+
+      grid.addEventListener('ui4u:select', (event) => {
+        const { count, filters } = { count: event.detail.count, filters: grid.filters };
+        const bits = [];
+        if (count) bits.push(`${count} selected`);
+        if (filters.length) bits.push(`${filters.length} filter(s)`);
+        log.textContent = bits.length ? `state → ${bits.join(' · ')}` : 'state → nothing selected';
       });
     </script>
   </body>

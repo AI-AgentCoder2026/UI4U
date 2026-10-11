@@ -26,6 +26,47 @@ const visibleOrder = async (page) =>
     .locator(`${MAIN} tbody tr`)
     .evaluateAll((rows) => rows.filter((r) => !r.hidden).map((r) => r.cells[0].textContent.trim()));
 
+/**
+ * The Version column of the visible rows.
+ *
+ * Read by content rather than by index: with the selection column on, the
+ * checkbox cell sits at index 0 and pushes every data column along.
+ */
+const visibleVersions = async (page) =>
+  page.locator(`${MAIN} tbody tr`).evaluateAll((rows) =>
+    rows
+      .filter((r) => !r.hidden)
+      .map((r) => {
+        const cell = [...r.cells].find((c) => !c.classList.contains('ui4u-tablegrid__select-cell'));
+        return cell.textContent.trim();
+      })
+  );
+
+/** The Downloads value of the visible rows, as a number. */
+const visibleDownloads = async (page) =>
+  page.locator(`${MAIN} tbody tr`).evaluateAll((rows) =>
+    rows
+      .filter((r) => !r.hidden)
+      .map((r) => {
+        const cell = [...r.cells].find(
+          (c) =>
+            !c.classList.contains('ui4u-tablegrid__select-cell') && c.hasAttribute('data-value')
+        );
+        return Number(cell.getAttribute('data-value'));
+      })
+  );
+
+/** The Size value of the visible rows, as a number. Identified by its "kB" text. */
+const visibleSizes = async (page) =>
+  page.locator(`${MAIN} tbody tr`).evaluateAll((rows) =>
+    rows
+      .filter((r) => !r.hidden)
+      .map((r) => {
+        const cell = [...r.cells].find((c) => c.textContent.includes('kB'));
+        return Number(cell.getAttribute('data-value'));
+      })
+  );
+
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/tablegrid.html');
   await page.waitForSelector(`${MAIN} tbody tr`);
@@ -125,6 +166,29 @@ test('the mode picker switches between table and grid semantics', async ({ page 
 
   await page.locator('#opt-navigate [role="tab"]', { hasText: 'grid' }).click();
   await expect(page.locator(`${MAIN} table`)).toHaveAttribute('role', 'grid');
+});
+
+test('toggling the mode leaves no leftover chrome behind', async ({ page }) => {
+  // Changing `navigate` tears the component down and rebuilds it. Only the
+  // toolbar wrapper must come off with it — leaving an empty one behind stacked
+  // a new gap on every toggle and pushed the table down the page.
+  for (let i = 0; i < 3; i += 1) {
+    await page.locator('#opt-navigate [role="tab"]', { hasText: 'table' }).click();
+    await page.locator('#opt-navigate [role="tab"]', { hasText: 'grid' }).click();
+  }
+
+  await expect(page.locator(`${MAIN} .ui4u-tablegrid__toolbar`)).toHaveCount(1);
+  await expect(page.locator(`${MAIN} .ui4u-tablegrid__search-input`)).toHaveCount(1);
+  await expect(page.locator(`${MAIN} .ui4u-tablegrid__pager`)).toHaveCount(0);
+  await expect(page.locator(`${MAIN} .ui4u-tablegrid__sort`)).toHaveCount(3);
+
+  // The empty wrappers had height from `margin-bottom`; a real one does not
+  // collapse to nothing, so assert exactly one non-zero box.
+  const boxes = await page
+    .locator(`${MAIN} .ui4u-tablegrid__toolbar`)
+    .evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().height));
+
+  expect(boxes.filter((h) => h > 0).length).toBe(1);
 });
 
 test('arrow keys move focus across cells in navigate mode', async ({ page }) => {
@@ -344,6 +408,204 @@ test('arrow keys skip rows that paging has hidden', async ({ page }) => {
   await page.keyboard.press('ArrowDown');
   const still = await page.evaluate(() => document.activeElement.closest('tr').hidden);
   expect(still).toBe(false);
+});
+
+/* --- selection ----------------------------------------------------------- */
+
+test.describe('selection', () => {
+  const pick = async (page, label) => {
+    await page.locator('#opt-select [role="tab"]', { hasText: label }).click();
+  };
+  const rows = (page) => page.locator(`${MAIN} tbody tr:not([hidden])`);
+  const boxes = (page) => page.locator(`${MAIN} tbody .ui4u-tablegrid__select-cell input`);
+
+  test('turns the checkbox column on and off', async ({ page }) => {
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__select-head`)).toHaveCount(0);
+
+    await pick(page, 'single');
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__select-head`)).toHaveCount(1);
+    await expect(boxes(page)).toHaveCount(6);
+
+    await pick(page, 'off');
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__select-head`)).toHaveCount(0);
+    await expect(boxes(page)).toHaveCount(0);
+  });
+
+  test('selects one row at a time by default', async ({ page }) => {
+    await pick(page, 'single');
+
+    await rows(page).nth(0).locator('td').nth(1).click();
+    await expect(rows(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+
+    await rows(page).nth(2).locator('td').nth(1).click();
+    await expect(rows(page).nth(2)).toHaveAttribute('aria-selected', 'true');
+    await expect(rows(page).nth(0)).toHaveAttribute('aria-selected', 'false');
+  });
+
+  test('keeps several rows with Ctrl and a range with Shift', async ({ page }) => {
+    await pick(page, 'multi');
+    const selected = page.locator(`${MAIN} tbody tr[aria-selected="true"]`);
+
+    await rows(page).nth(0).locator('td').nth(1).click();
+    await expect(selected).toHaveCount(1);
+
+    // Ctrl adds without dropping what was already chosen.
+    await rows(page)
+      .nth(2)
+      .locator('td')
+      .nth(1)
+      .click({ modifiers: ['Control'] });
+    await expect(selected).toHaveCount(2);
+
+    // Shift extends from the last anchor, and — like a file list — a range
+    // replaces the selection rather than piling onto it.
+    await rows(page)
+      .nth(4)
+      .locator('td')
+      .nth(1)
+      .click({ modifiers: ['Shift'] });
+    await expect(selected).toHaveCount(3);
+  });
+
+  test('the header checkbox selects everything and shows partial state', async ({ page }) => {
+    await pick(page, 'multi');
+    const master = page.locator(`${MAIN} .ui4u-tablegrid__select-head input`);
+
+    await boxes(page).nth(0).check();
+    await expect(master).toBeChecked({ checked: false });
+
+    await master.check();
+    await expect(page.locator(`${MAIN} tbody tr[aria-selected="true"]`)).toHaveCount(6);
+
+    await master.uncheck();
+    await expect(page.locator(`${MAIN} tbody tr[aria-selected="true"]`)).toHaveCount(0);
+  });
+
+  test('selecting a row reports the count to the demo log', async ({ page }) => {
+    await pick(page, 'multi');
+    await rows(page).nth(0).locator('td').nth(1).click();
+    await rows(page)
+      .nth(1)
+      .locator('td')
+      .nth(1)
+      .click({ modifiers: ['Control'] });
+
+    await expect(page.locator('#log')).toHaveText('state → 2 selected');
+  });
+
+  test('sorting still reads the right column with the checkbox column present', async ({
+    page,
+  }) => {
+    await pick(page, 'multi');
+    await page.locator(`${COLS} th[data-sort="size"] .ui4u-tablegrid__sort`).click();
+
+    expect(await visibleSizes(page)).toEqual([41200, 42380, 43100, 43990, 44210, 44680]);
+  });
+});
+
+/* --- copy ---------------------------------------------------------------- */
+
+test.describe('copy', () => {
+  test('the button is disabled until something is selected, then copies', async ({
+    page,
+    browserName,
+  }) => {
+    if (browserName !== 'chromium') test.skip(true, 'clipboard permissions are Chromium-only');
+
+    await page
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'http://localhost:5173' });
+
+    await page.locator('#opt-select [role="tab"]', { hasText: 'multi' }).click();
+    await page.locator('#opt-copy [role="tab"]', { hasText: 'on' }).click();
+
+    const copy = page.locator(`${MAIN} .ui4u-tablegrid__copy`);
+    await expect(copy).toBeDisabled();
+
+    await page.locator(`${MAIN} tbody .ui4u-tablegrid__select-cell input`).nth(0).check();
+    await expect(copy).toBeEnabled();
+    await copy.click();
+
+    await expect(page.locator('#log')).toHaveText(/ui4u:copy → 1 rows on the clipboard/);
+
+    const text = await page.evaluate(() => navigator.clipboard.readText());
+    expect(text.split(/\r?\n/).filter(Boolean)).toEqual([
+      'Version\tDownloads\tSize\tPublished',
+      '1.0.0\t3900\t41200\t2026-05-01',
+    ]);
+  });
+
+  test('copy is off until it is asked for', async ({ page }) => {
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__copy`)).toHaveCount(0);
+    await page.locator('#opt-copy [role="tab"]', { hasText: 'on' }).click();
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__copy`)).toHaveCount(1);
+  });
+});
+
+/* --- advanced search ----------------------------------------------------- */
+
+test.describe('advanced search', () => {
+  test('renders the builder only when asked for', async ({ page }) => {
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__filters`)).toHaveCount(0);
+
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__filters`)).toHaveCount(1);
+    // Advanced implies the quick field too.
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__search-input`)).toHaveCount(1);
+  });
+
+  test('adds a criterion and filters rows as the value is typed', async ({ page }) => {
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-add`).click();
+
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-field`).selectOption('downloads');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-op`).selectOption('gte');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-value`).fill('5000');
+
+    expect(await visibleDownloads(page)).toEqual([5120, 8421, 9260]);
+  });
+
+  test('compares a numeric column numerically', async ({ page }) => {
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-add`).click();
+
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-field`).selectOption('downloads');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-op`).selectOption('lt');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-value`).fill('1200');
+
+    // 640 and 1,120 are both under 1200. As text, "640" would sort after it.
+    expect(await visibleDownloads(page)).toEqual([1120, 640]);
+  });
+
+  test('combines two criteria and removes one', async ({ page }) => {
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-add`).click();
+
+    const field = page.locator(`${MAIN} .ui4u-tablegrid__filter-field`).first();
+    const op = page.locator(`${MAIN} .ui4u-tablegrid__filter-op`).first();
+    const value = page.locator(`${MAIN} .ui4u-tablegrid__filter-value`).first();
+
+    await field.selectOption('version');
+    await op.selectOption('starts-with');
+    await value.fill('1.2');
+
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-add`).click();
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-field`).nth(1).selectOption('downloads');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-op`).nth(1).selectOption('gte');
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-value`).nth(1).fill('8000');
+
+    expect(await visibleDownloads(page)).toEqual([8421]);
+
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-remove`).first().click();
+    expect(await visibleVersions(page)).toEqual(['1.2.0', '1.3.0']);
+  });
+
+  test('an empty criterion does not hide any rows', async ({ page }) => {
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await page.locator(`${MAIN} .ui4u-tablegrid__filter-add`).click();
+
+    await expect(page.locator(`${MAIN} tbody tr:not([hidden])`)).toHaveCount(6);
+  });
 });
 
 test('the page runs without script errors', async ({ page }) => {

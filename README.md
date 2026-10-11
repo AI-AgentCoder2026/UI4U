@@ -14,20 +14,20 @@ All ten components · 117.8 kB minified (~37.7 kB gzip) including tokens and the
 
 Early, and deliberately incremental. Shipped:
 
-| Component       | Demo                                           | Notes                                                                   |
-| --------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
-| `ui-tabs`       | [`demo/tabs.html`](demo/tabs.html)             | Keyboard nav, automatic + manual activation, 3 variants                 |
-| `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting |
-| `ui-button`     | [`demo/button.html`](demo/button.html)         | 5 variants, 3 sizes, loading and disabled states                        |
-| `ui-tooltip`    | [`demo/tooltip.html`](demo/tooltip.html)       | Hover + focus, viewport flipping, `Escape` to dismiss                   |
-| `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters     |
-| `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes             |
-| `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface     |
-| `ui-form`       | [`demo/form.html`](demo/form.html)             | Validation, inline errors, `role="alert"` error summary                 |
-| `ui-sidebar`    | [`demo/sidebar.html`](demo/sidebar.html)       | Collapsible regions, off-canvas drawer on narrow screens                |
-| `ui-tablegrid`  | [`demo/tablegrid.html`](demo/tablegrid.html)   | Column groups, sorting, search, pagination, opt-in cell navigation      |
+| Component       | Demo                                           | Notes                                                                     |
+| --------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
+| `ui-tabs`       | [`demo/tabs.html`](demo/tabs.html)             | Keyboard nav, automatic + manual activation, 3 variants                   |
+| `ui-disclosure` | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting   |
+| `ui-button`     | [`demo/button.html`](demo/button.html)         | 5 variants, 3 sizes, loading and disabled states                          |
+| `ui-tooltip`    | [`demo/tooltip.html`](demo/tooltip.html)       | Hover + focus, viewport flipping, `Escape` to dismiss                     |
+| `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters       |
+| `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes               |
+| `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface       |
+| `ui-form`       | [`demo/form.html`](demo/form.html)             | Validation, inline errors, `role="alert"` error summary                   |
+| `ui-sidebar`    | [`demo/sidebar.html`](demo/sidebar.html)       | Collapsible regions, off-canvas drawer on narrow screens                  |
+| `ui-tablegrid`  | [`demo/tablegrid.html`](demo/tablegrid.html)   | Column groups, sorting, search, advanced filters, selection, copy, paging |
 
-![ui-tablegrid with column groups, search and paging](docs/screenshots/tablegrid-desktop-dark.png)
+![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
 
 Every component from the original roadmap has shipped. What to build next, and what the
 audits found, is written up in [`docs/REVIEW.md`](docs/REVIEW.md).

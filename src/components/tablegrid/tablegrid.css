@@ -252,6 +252,156 @@ ui-tablegrid .ui4u-tablegrid__page-status {
   font-size: var(--ui4u-font-size-xs);
 }
 
+/* --- selection ----------------------------------------------------------- */
+
+ui-tablegrid .ui4u-tablegrid__select-head,
+ui-tablegrid .ui4u-tablegrid__select-cell {
+  width: 1%;
+  padding-inline: var(--ui4u-space-3);
+  text-align: center;
+  vertical-align: middle;
+}
+
+ui-tablegrid .ui4u-tablegrid__check {
+  width: var(--ui4u-space-4);
+  height: var(--ui4u-space-4);
+  margin: 0;
+  accent-color: var(--ui4u-primary);
+  cursor: pointer;
+}
+
+ui-tablegrid .ui4u-tablegrid__check:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring);
+  border-radius: var(--ui4u-radius-xs);
+}
+
+ui-tablegrid tbody tr[aria-selected='true'] td {
+  background: var(--ui4u-primary-soft);
+}
+
+ui-tablegrid tbody tr[aria-selected='true']:hover td {
+  background: var(--ui4u-primary-soft);
+}
+
+ui-tablegrid tbody tr[aria-selected='true'] td.ui4u-tablegrid__select-cell {
+  border-inline-start: 2px solid var(--ui4u-primary);
+}
+
+/* --- copy ---------------------------------------------------------------- */
+
+ui-tablegrid .ui4u-tablegrid__copy {
+  margin-bottom: var(--ui4u-space-3);
+  padding: var(--ui4u-space-2) var(--ui4u-space-4);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-tablegrid .ui4u-tablegrid__copy:hover:not([disabled]) {
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary);
+}
+
+ui-tablegrid .ui4u-tablegrid__copy:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-tablegrid .ui4u-tablegrid__copy[disabled] {
+  color: var(--ui4u-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* --- advanced search ------------------------------------------------------ */
+
+ui-tablegrid .ui4u-tablegrid__filters {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui4u-space-2);
+  margin-bottom: var(--ui4u-space-3);
+}
+
+/* A criterion is a control cluster, not a full-width band. */
+ui-tablegrid .ui4u-tablegrid__filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui4u-space-2);
+  width: 100%;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter select,
+ui-tablegrid .ui4u-tablegrid__filter input {
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  min-width: 0;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter select:focus-visible,
+ui-tablegrid .ui4u-tablegrid__filter input:focus-visible {
+  outline: none;
+  border-color: var(--ui4u-primary);
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+/* The value is the part that grows; field and operator stay their natural size. */
+ui-tablegrid .ui4u-tablegrid__filter-field,
+ui-tablegrid .ui4u-tablegrid__filter-op {
+  flex: 0 1 auto;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-value {
+  flex: 1 1 8rem;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-remove,
+ui-tablegrid .ui4u-tablegrid__filter-add {
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  cursor: pointer;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-remove {
+  margin-inline-start: auto;
+  line-height: 1;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-add {
+  align-self: flex-start;
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-remove:hover,
+ui-tablegrid .ui4u-tablegrid__filter-add:hover {
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary);
+}
+
+ui-tablegrid .ui4u-tablegrid__filter-remove:focus-visible,
+ui-tablegrid .ui4u-tablegrid__filter-add:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
 /* --- caption ------------------------------------------------------------ */
 
 ui-tablegrid caption {

@@ -4,6 +4,14 @@ import { append, el, on, setText } from '../../core/dom.js';
 /**
  * @typedef {'asc' | 'desc' | 'none'} SortDirection
  *
+ * @typedef {'contains' | 'not-contains' | 'equals' | 'not-equals' | 'starts-with'
+ *   | 'ends-with' | 'gt' | 'gte' | 'lt' | 'lte'} FilterOperator
+ *
+ * @typedef {object} TableFilter
+ * @property {string} field A `data-sort` key, or `'*'` for any column.
+ * @property {FilterOperator} operator How to compare. Default `'contains'`.
+ * @property {string} value The value to compare against.
+ *
  * @typedef {object} TableGridOptions
  * @property {boolean} [navigate] Make cells reachable with the arrow keys, which
  *   switches the table to `role="grid"`. Default `false` — a plain native table
@@ -11,13 +19,40 @@ import { append, el, on, setText } from '../../core/dom.js';
  * @property {boolean} [striped] Zebra-stripe the body rows.
  * @property {boolean} [dense] Tighten the row padding.
  * @property {boolean} [searchable] Render a search field above the table.
+ * @property {boolean} [advancedSearch] Render the field/operator/value filter
+ *   builder. Implies a rebuild when toggled.
+ * @property {boolean} [selectable] Render a checkbox column and let rows be
+ *   selected. Implies a rebuild when toggled.
+ * @property {boolean} [multi] Allow more than one selected row. Only meaningful
+ *   with `selectable`.
+ * @property {boolean} [selectAllHeader] Show the header checkbox that selects or
+ *   clears every matched row. Only meaningful with `selectable`.
+ * @property {boolean} [copyable] Render a button that copies the selected rows
+ *   to the clipboard as tab-separated text.
  * @property {number|null} [perPage] Rows per page. `null` disables paging.
  * @property {string|null} [search] Initial search query.
+ * @property {TableFilter[]|null} [filters] Advanced search criteria.
  * @property {string|null} [sort] Key of the column to sort by, from `data-sort`.
  * @property {SortDirection} [direction] Initial sort direction. Default `'asc'`.
  */
 
+/** Operators offered by the advanced search UI, in display order. */
+const OPERATORS = /** @type {const} */ ([
+  'contains',
+  'not-contains',
+  'equals',
+  'not-equals',
+  'starts-with',
+  'ends-with',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+]);
+
 const NUMERIC = 'number';
+/** Matches every column rather than one field. */
+const ANY_FIELD = '*';
 
 /**
  * A browsable data table.
@@ -65,10 +100,17 @@ export class TableGrid extends UI4UElement {
       'striped',
       'dense',
       'searchable',
+      'advanced-search',
+      'selectable',
+      'multi',
+      'select-all',
+      'copyable',
       'per-page',
       'search',
+      'filters',
       'sort',
       'direction',
+      'search-placeholder',
     ];
   }
 
@@ -100,11 +142,27 @@ export class TableGrid extends UI4UElement {
   /** Roving focus position, as [row, cell]. @type {[number, number]} */
   #cursor = [0, 0];
   /** @type {HTMLElement|null} */
+  #searchToolbar = null;
+  /** @type {HTMLElement|null} */
   #searchInput = null;
   /** @type {HTMLElement|null} */
   #pager = null;
   /** @type {number} */
   #page = 1;
+  /** Rows the user has selected. @type {Set<HTMLTableRowElement>} */
+  #selected = new Set();
+  /** Where a Shift-range starts. @type {HTMLTableRowElement|null} */
+  #anchor = null;
+  /** Cells this component inserted for the selection column, so it can undo them. @type {HTMLElement[]} */
+  #selectionCells = [];
+  /** @type {HTMLInputElement|null} */
+  #selectAllBox = null;
+  /** @type {HTMLElement|null} */
+  #copyButton = null;
+  /** @type {HTMLElement|null} */
+  #filterBar = null;
+  /** Advanced search criteria. @type {TableFilter[]} */
+  #filters = [];
 
   /* ------------------------------------------------------------------ api */
 
@@ -126,6 +184,105 @@ export class TableGrid extends UI4UElement {
   /** @returns {boolean} */
   get searchable() {
     return this.getBoolean('searchable', false);
+  }
+
+  /** @returns {boolean} */
+  get advancedSearch() {
+    return this.getBoolean('advanced-search', false);
+  }
+
+  /** @returns {boolean} */
+  get selectable() {
+    return this.getBoolean('selectable', false);
+  }
+
+  /** @returns {boolean} */
+  get multi() {
+    return this.getBoolean('multi', false);
+  }
+
+  /** @returns {boolean} */
+  get selectAllHeader() {
+    return this.getBoolean('select-all', true);
+  }
+
+  /** @returns {boolean} */
+  get copyable() {
+    return this.getBoolean('copyable', false);
+  }
+
+  /** @returns {string} */
+  get searchPlaceholder() {
+    return this.getString('search-placeholder', 'Filter rows');
+  }
+
+  /** @returns {string} */
+  get selectAllLabel() {
+    return this.label ? `Select every row in ${this.label}` : 'Select every row';
+  }
+
+  /** @returns {string} */
+  get copyLabel() {
+    return this.getString('copy-label', 'Copy');
+  }
+
+  /** Rows currently selected, in their current sort order. @returns {HTMLTableRowElement[]} */
+  get selectedRows() {
+    return this.#rows.filter((row) => this.#selected.has(row));
+  }
+
+  /** @returns {boolean} */
+  get hasSelection() {
+    return this.#selected.size > 0;
+  }
+
+  /**
+   * The selected rows as records, keyed by `data-sort` — the same shape as
+   * `data`, so the two can be handed to the same consumer.
+   *
+   * @returns {Array<Record<string, string>>}
+   */
+  get selectedData() {
+    return this.selectedRows.map((row) => this.#record(row));
+  }
+
+  /**
+   * The selected rows as tab-separated text, with a header row of column
+   * labels. This is what `copySelected()` puts on the clipboard, and it pastes
+   * cleanly into a spreadsheet.
+   *
+   * @returns {string} empty when nothing is selected
+   */
+  get selectedText() {
+    if (this.#selected.size === 0) return '';
+    const columns = this.#columnDefs();
+    const lines = [columns.map((c) => c.label).join('\t')];
+    for (const row of this.selectedRows) {
+      lines.push(columns.map((c) => this.#cellText(row, c.column)).join('\t'));
+    }
+    return lines.join('\n');
+  }
+
+  /**
+   * The active advanced search criteria.
+   *
+   * @returns {TableFilter[]}
+   */
+  get filters() {
+    return this.#filters.map((f) => ({ ...f }));
+  }
+
+  /**
+   * Replaces the advanced search criteria and refilters.
+   *
+   * @param {TableFilter[]} filters
+   * @returns {this}
+   *
+   * @example
+   * grid.filters = [{ field: 'downloads', operator: 'gt', value: '5000' }];
+   */
+  set filters(filters) {
+    this.setFilters(filters);
   }
 
   /** Rows per page, or `0` when paging is off. @returns {number} */
@@ -194,37 +351,63 @@ export class TableGrid extends UI4UElement {
    * @returns {Array<Record<string, string>>}
    */
   get data() {
-    const keys = this.#sortableKeys();
-    return this.#rows.map((row) => {
-      /** @type {Record<string, string>} */
-      const record = {};
-      const cells = [...row.cells];
-      keys.forEach((key, index) => {
-        if (key === null) return;
-        const cell = cells[this.#columnOf(index)];
-        if (cell) record[key] = cell.getAttribute('data-value') ?? (cell.textContent ?? '').trim();
-      });
-      return record;
-    });
+    return this.#rows.map((row) => this.#record(row));
   }
 
   /**
    * Applies options and returns `this`.
    *
+   * Every visual and behavioural feature is opt-in through this object, which
+   * also mirrors the attributes one-for-one: `advancedSearch` ↔
+   * `advanced-search`, `selectAllHeader` ↔ `select-all`, `perPage` ↔
+   * `per-page`.
+   *
    * @param {TableGridOptions} [options]
    * @returns {this}
    *
    * @example
-   * grid.configure({ searchable: true, perPage: 10, sort: 'downloads', direction: 'desc' });
+   * grid.configure({
+   *   searchable: true,
+   *   perPage: 10,
+   *   selectable: true,
+   *   multi: true,
+   *   copyable: true,
+   *   sort: 'downloads',
+   *   direction: 'desc',
+   * });
    */
   configure(options = {}) {
-    const { navigate, striped, dense, searchable, perPage, search, sort, direction } = options;
+    const {
+      navigate,
+      striped,
+      dense,
+      searchable,
+      advancedSearch,
+      selectable,
+      multi,
+      selectAllHeader,
+      copyable,
+      perPage,
+      search,
+      filters,
+      sort,
+      direction,
+      searchPlaceholder,
+    } = options;
 
     if (navigate !== undefined) this.setAttribute('navigate', String(navigate));
     if (striped !== undefined) this.setAttribute('striped', String(striped));
     if (dense !== undefined) this.setAttribute('dense', String(dense));
     if (searchable !== undefined) this.setAttribute('searchable', String(searchable));
+    if (advancedSearch !== undefined) this.setAttribute('advanced-search', String(advancedSearch));
+    if (selectable !== undefined) this.setAttribute('selectable', String(selectable));
+    if (multi !== undefined) this.setAttribute('multi', String(multi));
+    if (selectAllHeader !== undefined) this.setAttribute('select-all', String(selectAllHeader));
+    if (copyable !== undefined) this.setAttribute('copyable', String(copyable));
     if (direction !== undefined) this.setAttribute('direction', direction);
+    if (searchPlaceholder !== undefined) {
+      this.setAttribute('search-placeholder', searchPlaceholder);
+    }
 
     if (perPage !== undefined) {
       if (perPage === null) this.removeAttribute('per-page');
@@ -238,6 +421,7 @@ export class TableGrid extends UI4UElement {
       if (sort === null) this.removeAttribute('sort');
       else this.setAttribute('sort', sort);
     }
+    if (filters !== undefined) this.setFilters(filters ?? []);
 
     return this;
   }
@@ -326,6 +510,221 @@ export class TableGrid extends UI4UElement {
     return this.goToPage(this.#page - 1);
   }
 
+  /* ---------------------------------------------------------- selection */
+
+  /**
+   * Selects a row.
+   *
+   * Without `multi`, any existing selection is replaced. With it, `additive`
+   * adds to the selection and `range` extends from the last anchor — the same
+   * rules as Shift and Ctrl-click in a file list.
+   *
+   * @param {HTMLTableRowElement} row
+   * @param {{ additive?: boolean, range?: boolean }} [options]
+   * @returns {this}
+   *
+   * @example
+   * grid.selectRow(row, { range: true });
+   */
+  selectRow(row, options = {}) {
+    if (!this.selectable || !row) return this;
+    const { additive = false, range = false } = options;
+
+    if (!this.multi && !additive && !range) this.#selected.clear();
+
+    if (range && this.multi && this.#anchor) {
+      const rows = this.#rows;
+      const from = rows.indexOf(this.#anchor);
+      const to = rows.indexOf(row);
+      if (from !== -1 && to !== -1) {
+        const [lo, hi] = from <= to ? [from, to] : [to, from];
+        // A range replaces the selection rather than piling onto it, matching
+        // how Shift-click behaves in every file list.
+        this.#selected.clear();
+        for (let i = lo; i <= hi; i += 1) {
+          const candidate = rows[i];
+          if (candidate) this.#selected.add(candidate);
+        }
+      }
+    } else if (!this.#selected.has(row)) {
+      this.#selected.add(row);
+    }
+
+    this.#anchor = row;
+    this.#syncSelection(true);
+    return this;
+  }
+
+  /**
+   * Flips a row's selected state.
+   *
+   * @param {HTMLTableRowElement} row
+   * @param {boolean} [additive] keep the other selected rows
+   * @returns {this}
+   */
+  toggleRow(row, additive = false) {
+    if (!this.selectable || !row) return this;
+
+    // Whether the row is about to be added or removed has to be decided from
+    // the state *before* the clear — otherwise a plain click on an already
+    // selected row clears it and then immediately re-adds it.
+    const wasSelected = this.#selected.has(row);
+    if (wasSelected) this.#selected.delete(row);
+    else this.#selected.add(row);
+
+    // A plain click always replaces the selection, even with `multi` on —
+    // holding Ctrl is what makes it additive.
+    if (!additive) {
+      this.#selected.clear();
+      if (!wasSelected) this.#selected.add(row);
+    }
+
+    this.#anchor = row;
+    this.#syncSelection(true);
+    return this;
+  }
+
+  /** @param {HTMLTableRowElement} row @returns {boolean} */
+  isSelected(row) {
+    return this.#selected.has(row);
+  }
+
+  /**
+   * Selects every row that survives the current search.
+   *
+   * @param {boolean} [selected] `false` clears instead of selecting
+   * @returns {this}
+   */
+  selectAll(selected = true) {
+    if (!this.selectable) return this;
+    this.#selected.clear();
+    if (selected) for (const row of this.#matched) this.#selected.add(row);
+    this.#syncSelection(true);
+    return this;
+  }
+
+  /** @returns {this} */
+  clearSelection() {
+    this.#selected.clear();
+    this.#anchor = null;
+    this.#syncSelection(true);
+    return this;
+  }
+
+  /* ------------------------------------------------------------- copying */
+
+  /**
+   * Copies the selected rows to the clipboard as tab-separated text.
+   *
+   * Emits `ui4u:copy` either way, so a host can show its own confirmation.
+   * Returns `false` when nothing is selected or the browser refused.
+   *
+   * @returns {Promise<boolean>}
+   *
+   * @example
+   * await grid.copySelected();
+   */
+  async copySelected() {
+    const text = this.selectedText;
+    if (!text) {
+      this.emit('ui4u:copy', { text: '', rows: [], copied: false });
+      return false;
+    }
+
+    let copied = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      }
+    } catch {
+      copied = false;
+    }
+
+    // A non-secure context has no async clipboard API, so fall back to the
+    // synchronous one rather than silently failing.
+    if (!copied) copied = this.#legacyCopy(text);
+
+    this.emit('ui4u:copy', { text, rows: this.selectedData, copied });
+    return copied;
+  }
+
+  /**
+   * @param {string} text
+   * @returns {boolean}
+   */
+  #legacyCopy(text) {
+    const doc = this.ownerDocument;
+    const area = doc.createElement('textarea');
+    area.value = text;
+    area.setAttribute('aria-hidden', 'true');
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    doc.body.appendChild(area);
+
+    let ok = false;
+    try {
+      area.select();
+      ok = doc.execCommand('copy');
+    } catch {
+      ok = false;
+    } finally {
+      area.remove();
+    }
+    return ok;
+  }
+
+  /* ------------------------------------------------------- advanced search */
+
+  /**
+   * Replaces the advanced search criteria and refilters.
+   *
+   * @param {TableFilter[]} filters
+   * @returns {this}
+   *
+   * @example
+   * grid.setFilters([{ field: 'channel', operator: 'equals', value: 'stable' }]);
+   */
+  setFilters(filters) {
+    this.#filters = (Array.isArray(filters) ? filters : []).map((f) => ({
+      field: typeof f?.field === 'string' ? f.field : ANY_FIELD,
+      operator: /** @type {FilterOperator} */ (
+        OPERATORS.includes(f?.operator) ? f.operator : 'contains'
+      ),
+      value: typeof f?.value === 'string' ? f.value : '',
+    }));
+
+    if (this.#built) this.#renderFilters();
+    this.#page = 1;
+    this.#refilter();
+    this.#applyView();
+    return this;
+  }
+
+  /**
+   * Adds one criterion. Criteria combine with AND.
+   *
+   * @param {TableFilter} filter
+   * @returns {this}
+   */
+  addFilter(filter) {
+    return this.setFilters([...this.#filters, filter]);
+  }
+
+  /**
+   * @param {number} index position in `filters`
+   * @returns {this}
+   */
+  removeFilter(index) {
+    const next = this.#filters.filter((_, i) => i !== index);
+    return this.setFilters(next);
+  }
+
+  /** @returns {this} */
+  clearFilters() {
+    return this.setFilters([]);
+  }
+
   /* ------------------------------------------------------------ lifecycle */
 
   onConnect() {
@@ -343,7 +742,18 @@ export class TableGrid extends UI4UElement {
       this.#applyDecorations();
     } else if (name === 'label') {
       this.#applyLabel();
-    } else if (name === 'searchable' || name === 'per-page') {
+    } else if (name === 'search-placeholder') {
+      if (this.#searchInput) this.#searchInput.placeholder = this.searchPlaceholder;
+    } else if (
+      name === 'searchable' ||
+      name === 'per-page' ||
+      name === 'advanced-search' ||
+      name === 'selectable' ||
+      name === 'copyable'
+    ) {
+      // These change which chrome exists, or how many columns the table has.
+      // `selectable` in particular adds and removes a whole column, so the
+      // column map has to be measured again.
       this.#teardown();
       this.#build();
     } else if (name === 'search') {
@@ -353,12 +763,40 @@ export class TableGrid extends UI4UElement {
       if (this.#searchInput && this.#searchInput.value !== this.query) {
         this.#searchInput.value = this.query;
       }
+    } else if (name === 'filters') {
+      this.setFilters(this.#parseFilters(newValue));
+    } else if (name === 'multi' || name === 'select-all') {
+      // Neither adds DOM, but `multi` changes what a click means, so anything
+      // already selected may no longer be valid.
+      if (!this.multi) {
+        const [first] = this.selectedRows;
+        this.#selected.clear();
+        if (first) this.#selected.add(first);
+      }
+      this.#syncSelection();
     } else if (name === 'navigate') {
       // Grid roles and the roving tab stop are baked in at build time, so
       // switching mode has to rebuild. The author's <table> is never moved,
       // so this is safe to repeat.
       this.#teardown();
       this.#build();
+    }
+  }
+
+  /**
+   * Reads the `filters` attribute, which carries a JSON array.
+   *
+   * @param {string|null} raw
+   * @returns {TableFilter[]}
+   */
+  #parseFilters(raw) {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      // A malformed attribute should not take the whole table down.
+      return [];
     }
   }
 
@@ -390,11 +828,17 @@ export class TableGrid extends UI4UElement {
     // Captured once, from the untouched markup. Sorting, searching and paging
     // all move rows afterwards, so this is the only snapshot of author order.
     this.#authored = [...body.rows];
+    this.#filters = this.#parseFilters(this.getAttribute('filters'));
 
     this.#applyLabel();
     this.#applyDecorations();
 
-    for (const cell of [...headRow.cells]) {
+    // The selection column is inserted before the header cells are read, so it
+    // lands at index 0 and everything after it shifts by one — which
+    // `#columnOf` accounts for.
+    this.#buildSelection();
+
+    for (const cell of this.#dataCells()) {
       const key = cell.getAttribute('data-sort');
       if (!key) {
         cell.setAttribute('role', 'columnheader');
@@ -414,6 +858,8 @@ export class TableGrid extends UI4UElement {
     );
 
     this.#buildSearch();
+    this.#buildCopy();
+    this.#buildFilters();
     this.#buildPager();
 
     // Rows must be collected before navigation, which walks them to apply the
@@ -447,11 +893,34 @@ export class TableGrid extends UI4UElement {
       for (const row of this.#table.querySelectorAll('[role="row"]')) row.removeAttribute('role');
     }
 
-    this.#searchInput?.remove();
+    /*
+     * The selection column is DOM this component added, so it has to come off
+     * with everything else. Leaving it behind would stack another column on
+     * every rebuild — and shift every column index with it.
+     */
+    for (const cell of this.#selectionCells) cell.remove();
+    this.#selectionCells = [];
+
+    /*
+     * The toolbar wrapper has to go too, not just the input inside it. Removing
+     * only the input leaves an empty `.ui4u-tablegrid__toolbar` behind, and every
+     * rebuild would stack another one — silently pushing the table further down
+     * the page each time `navigate` (or any rebuild trigger) is toggled.
+     */
+    this.#searchToolbar?.remove();
+    this.#copyButton?.remove();
+    this.#filterBar?.remove();
     this.#pager?.remove();
+    this.#searchToolbar = null;
     this.#searchInput = null;
+    this.#copyButton = null;
+    this.#filterBar = null;
     this.#pager = null;
+    this.#selectAllBox = null;
     this.#page = 1;
+    // The user's selection belongs to their data, not to one rendering of it,
+    // so it deliberately survives a rebuild — but not a disconnect.
+    this.#anchor = null;
     this.#table = null;
     this.#headRow = null;
     this.#body = null;
@@ -463,6 +932,133 @@ export class TableGrid extends UI4UElement {
 
   /* --------------------------------------------------------------- chrome */
 
+  /**
+   * Inserts the leading checkbox column and wires row selection.
+   *
+   * A real `<input type="checkbox">` per row is used rather than a styled row,
+   * because it is the only version that a screen reader announces as selected
+   * and that keyboard and touch both reach without extra handlers.
+   */
+  #buildSelection() {
+    if (!this.selectable || !this.#table || !this.#body) return;
+
+    const doc = this.ownerDocument;
+    const head = /** @type {HTMLTableSectionElement|null} */ (this.#table.tHead);
+    const headRows = head ? [...head.rows] : [];
+
+    /*
+     * The header checkbox spans every header row so it lines up with the group
+     * headers instead of squeezing into the column row on its own.
+     */
+    const master = /** @type {HTMLInputElement} */ (doc.createElement('input'));
+    master.type = 'checkbox';
+    master.className = 'ui4u-tablegrid__check';
+    master.setAttribute('aria-label', this.selectAllLabel);
+
+    const headCell = /** @type {HTMLTableCellElement} */ (doc.createElement('th'));
+    headCell.scope = 'col';
+    headCell.rowSpan = Math.max(1, headRows.length);
+    headCell.className = 'ui4u-tablegrid__select-head';
+    headCell.appendChild(master);
+
+    const anchorRow = headRows[0] ?? this.#headRow;
+    anchorRow.insertBefore(headCell, anchorRow.firstChild);
+    this.#selectionCells.push(headCell);
+
+    for (const row of this.#authored) {
+      const box = /** @type {HTMLInputElement} */ (doc.createElement('input'));
+      box.type = 'checkbox';
+      box.className = 'ui4u-tablegrid__check';
+      box.setAttribute('aria-label', `Select row ${this.#rowLabel(row, 0)}`);
+
+      const cell = /** @type {HTMLTableCellElement} */ (doc.createElement('td'));
+      cell.className = 'ui4u-tablegrid__select-cell';
+      cell.appendChild(box);
+      row.insertBefore(cell, row.firstChild);
+      this.#selectionCells.push(cell);
+    }
+
+    this.#selectAllBox = master;
+
+    this.#disposers.push(
+      on(master, 'change', () => {
+        this.selectAll(master.checked);
+        // The row checkboxes are driven by #syncSelection, but the master has
+        // to agree with itself for the indeterminate state.
+        master.indeterminate = false;
+      }),
+      on(/** @type {HTMLElement} */ (this.#body), 'change', (event) => {
+        const box = /** @type {HTMLInputElement|null} */ (event.target);
+        if (!box?.matches('.ui4u-tablegrid__check')) return;
+        const row = /** @type {HTMLTableRowElement|null} */ (box.closest('tr'));
+        if (!row) return;
+
+        if (box.checked) this.selectRow(row, { additive: this.multi });
+        else {
+          this.#selected.delete(row);
+          this.#anchor = row;
+          this.#syncSelection(true);
+        }
+      }),
+      on(/** @type {HTMLElement} */ (this.#body), 'click', (event) => {
+        const target = /** @type {HTMLElement} */ (event.target);
+        // The checkbox has its own change handler; clicking it must not also
+        // count as a row click or the row would toggle twice.
+        if (target.closest('.ui4u-tablegrid__select-cell')) return;
+
+        const row = /** @type {HTMLTableRowElement|null} */ (target.closest('tbody tr'));
+        if (!row || !this.#authored.includes(row)) return;
+
+        const { shiftKey, ctrlKey, metaKey } = /** @type {MouseEvent} */ (event);
+
+        // Shift extends the range from the anchor. It has to be handled
+        // before the toggle, or the anchor would move onto the row being
+        // shifted to and the "range" would collapse to a single row.
+        if (this.multi && shiftKey) {
+          this.selectRow(row, { range: true });
+          return;
+        }
+
+        this.toggleRow(row, this.multi && (ctrlKey || metaKey));
+      })
+    );
+
+    this.#syncSelection();
+  }
+
+  /** Pushes the selection state onto the checkboxes and the header box. */
+  #syncSelection(emit = false) {
+    for (const cell of this.#selectionCells) {
+      const box = /** @type {HTMLInputElement|null} */ (cell.firstElementChild);
+      const row = /** @type {HTMLTableRowElement|null} */ (cell.closest('tr'));
+      if (!box || !row) continue;
+      const checked = this.#selected.has(row);
+      if (box.checked !== checked) box.checked = checked;
+      row.setAttribute('aria-selected', String(checked));
+    }
+
+    const master = this.#selectAllBox;
+    if (this.#copyButton) {
+      this.#copyButton.disabled = this.#selected.size === 0;
+    }
+    if (!master) return;
+    const matched = this.#matched.length;
+    const chosen = this.#matched.filter((row) => this.#selected.has(row)).length;
+    master.checked = matched > 0 && chosen === matched;
+    // "Some but not all" is the one state a checkbox cannot express alone.
+    master.indeterminate = chosen > 0 && chosen < matched;
+    if (!this.selectAllHeader) master.closest('th')?.setAttribute('hidden', '');
+
+    if (emit) {
+      this.emit('ui4u:select', {
+        rows: this.selectedRows,
+        data: this.selectedData,
+        count: this.#selected.size,
+      });
+    }
+  }
+
+  /** Builds the quick filter field, when `searchable` is set. */
   #buildSearch() {
     if (!this.searchable || !this.#table) return;
 
@@ -470,7 +1066,7 @@ export class TableGrid extends UI4UElement {
     const input = /** @type {HTMLInputElement} */ (doc.createElement('input'));
     input.type = 'search';
     input.className = 'ui4u-tablegrid__search-input';
-    input.placeholder = 'Filter rows';
+    input.placeholder = this.searchPlaceholder;
     input.value = this.query;
     input.setAttribute('aria-label', this.label ? `Filter ${this.label}` : 'Filter rows');
 
@@ -481,7 +1077,151 @@ export class TableGrid extends UI4UElement {
 
     const toolbar = el('div', { class: 'ui4u-tablegrid__toolbar' }, [input]);
     this.#searchInput = input;
+    this.#searchToolbar = toolbar;
     this.insertBefore(toolbar, this.#table);
+  }
+
+  /**
+   * Builds the "Copy" button. It sits with the other chrome rather than inside
+   * the toolbar, because it is meaningful on its own — and stays useful when
+   * `searchable` is off.
+   */
+  #buildCopy() {
+    if (!this.copyable || !this.#table) return;
+
+    /** @type {HTMLButtonElement} */
+    const button = /** @type {HTMLButtonElement} */ (this.ownerDocument.createElement('button'));
+    button.type = 'button';
+    button.className = 'ui4u-tablegrid__copy';
+    button.textContent = this.copyLabel;
+    button.disabled = true;
+
+    this.#disposers.push(
+      on(button, 'click', () => {
+        // `copySelected()` emits `ui4u:copy` itself, with the real payload.
+        // The button only reflects the outcome back at the user.
+        void this.copySelected().then((copied) => {
+          button.textContent = copied ? 'Copied' : 'Nothing to copy';
+          this.ownerDocument.defaultView?.setTimeout(() => {
+            button.textContent = this.copyLabel;
+          }, 1500);
+        });
+      })
+    );
+
+    this.#copyButton = button;
+    this.insertBefore(button, this.#table);
+  }
+
+  /** Builds the field/operator/value filter builder, when advanced search is on. */
+  #buildFilters() {
+    if (!this.advancedSearch || !this.#table) return;
+
+    /** @type {HTMLElement} */
+    const bar = el('div', { class: 'ui4u-tablegrid__filters' });
+
+    const add = /** @type {HTMLButtonElement} */ (this.ownerDocument.createElement('button'));
+    add.type = 'button';
+    add.className = 'ui4u-tablegrid__filter-add';
+    add.textContent = 'Add filter';
+    this.#disposers.push(
+      on(add, 'click', () => {
+        this.addFilter({ field: ANY_FIELD, operator: 'contains', value: '' });
+      })
+    );
+
+    bar.appendChild(add);
+    this.#filterBar = bar;
+    this.insertBefore(bar, this.#table);
+    this.#renderFilters();
+  }
+
+  /**
+   * Redraws the filter rows. Rebuilding from `#filters` rather than mutating
+   * keeps the DOM a pure function of the state.
+   */
+  #renderFilters() {
+    const bar = this.#filterBar;
+    if (!bar) return;
+
+    const add = bar.querySelector('.ui4u-tablegrid__filter-add');
+    for (const node of [...bar.children]) {
+      if (node !== add) node.remove();
+    }
+
+    const doc = this.ownerDocument;
+    this.#filters.forEach((filter, index) => {
+      /** @type {HTMLElement} */
+      const row = el('div', { class: 'ui4u-tablegrid__filter' });
+
+      /** @type {HTMLSelectElement} */
+      const field = /** @type {HTMLSelectElement} */ (doc.createElement('select'));
+      field.className = 'ui4u-tablegrid__filter-field';
+      field.setAttribute('aria-label', `Filter ${index + 1} field`);
+      append(field, [this.#option(ANY_FIELD, 'Any column')]);
+      for (const def of this.#columnDefs()) {
+        if (!def.key) continue;
+        append(field, [this.#option(def.key, def.label)]);
+      }
+      field.value = filter.field;
+
+      /** @type {HTMLSelectElement} */
+      const operator = /** @type {HTMLSelectElement} */ (doc.createElement('select'));
+      operator.className = 'ui4u-tablegrid__filter-op';
+      operator.setAttribute('aria-label', `Filter ${index + 1} operator`);
+      for (const op of OPERATORS) append(operator, [this.#option(op, op)]);
+      operator.value = filter.operator;
+
+      /** @type {HTMLInputElement} */
+      const value = /** @type {HTMLInputElement} */ (doc.createElement('input'));
+      value.type = 'text';
+      value.className = 'ui4u-tablegrid__filter-value';
+      value.value = filter.value;
+      value.placeholder = 'Value';
+      value.setAttribute('aria-label', `Filter ${index + 1} value`);
+
+      /** @type {HTMLButtonElement} */
+      const remove = /** @type {HTMLButtonElement} */ (doc.createElement('button'));
+      remove.type = 'button';
+      remove.className = 'ui4u-tablegrid__filter-remove';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', `Remove filter ${index + 1}`);
+
+      const commit = () => {
+        this.setFilters([
+          ...this.#filters.slice(0, index),
+          {
+            field: field.value,
+            operator: /** @type {FilterOperator} */ (operator.value),
+            value: value.value,
+          },
+          ...this.#filters.slice(index + 1),
+        ]);
+      };
+
+      this.#disposers.push(
+        on(field, 'change', commit),
+        on(operator, 'change', commit),
+        on(value, 'input', commit),
+        on(remove, 'click', () => this.removeFilter(index))
+      );
+
+      append(row, [field, operator, value, remove]);
+      bar.insertBefore(row, add);
+    });
+  }
+
+  /**
+   * @param {string} value
+   * @param {string} text
+   * @returns {HTMLOptionElement}
+   */
+  #option(value, text) {
+    /** @type {HTMLOptionElement} */
+    const option = /** @type {HTMLOptionElement} */ (this.ownerDocument.createElement('option'));
+    option.value = value;
+    option.textContent = text;
+    return option;
   }
 
   #buildPager() {
@@ -547,8 +1287,7 @@ export class TableGrid extends UI4UElement {
 
   /** @returns {Array<string|null>} `data-sort` keys, one per column, in column order */
   #sortableKeys() {
-    if (!this.#headRow) return [];
-    return [...this.#headRow.cells].map((cell) => cell.getAttribute('data-sort'));
+    return this.#dataCells().map((cell) => cell.getAttribute('data-sort'));
   }
 
   /**
@@ -606,13 +1345,177 @@ export class TableGrid extends UI4UElement {
   }
 
   /**
+   * Every column a body row actually has, including ones with no header cell.
+   *
+   * A `rowspan` group header lifts a column out of the column row — `Channel` in
+   * the demo lives entirely in the group row — so `#columnDefs()` misses it. It
+   * is still a visible, searchable column, and the quick filter and "Any column"
+   * both have to reach it.
+   *
+   * @returns {number[]}
+   */
+  #allBodyColumns() {
+    const row = this.#authored[0] ?? this.#body?.rows[0];
+    if (!row) return [];
+
+    // Skip the selection checkbox, which is not data.
+    const count = row.cells.length - (this.selectable ? 1 : 0);
+    return Array.from({ length: count }, (_, i) => i);
+  }
+
+  /**
+   * The text of one column of a row, for matching rather than for export.
+   *
+   * @param {HTMLTableRowElement} row
+   * @param {number} column
+   * @returns {string}
+   */
+  #matchText(row, column) {
+    const cell = row.cells[column];
+    if (!cell) return '';
+    return cell.getAttribute('data-value') ?? (cell.textContent ?? '').trim();
+  }
+
+  /**
    * Maps a position in `#headRow.cells` to the column of a body row.
+   *
+   * Two things shift the answer: a `rowspan` group header, and the checkbox
+   * column this component prepends when `selectable` is on.
    *
    * @param {number} headIndex
    * @returns {number}
    */
   #columnOf(headIndex) {
-    return this.#columnMap[headIndex] ?? headIndex;
+    const base = this.#columnMap[headIndex] ?? headIndex;
+    return this.selectable ? base + 1 : base;
+  }
+
+  /**
+   * The header cells that describe real columns — everything except the
+   * checkbox cell this component may have prepended.
+   *
+   * `#columnOf` adds the selection offset, so anything that walks header cells
+   * has to skip the injected one or every column is shifted twice.
+   *
+   * @returns {HTMLTableCellElement[]}
+   */
+  #dataCells() {
+    if (!this.#headRow) return [];
+    return [...this.#headRow.cells].filter(
+      (cell) => !cell.classList.contains('ui4u-tablegrid__select-head')
+    );
+  }
+
+  /**
+   * The table's columns, as the header row describes them.
+   *
+   * @returns {Array<{ key: string|null, label: string, type: string, column: number }>}
+   */
+  #columnDefs() {
+    return this.#dataCells().map((cell, index) => ({
+      key: cell.getAttribute('data-sort'),
+      label: (cell.textContent ?? '').trim(),
+      type: cell.getAttribute('data-type') ?? 'text',
+      column: this.#columnOf(index),
+    }));
+  }
+
+  /**
+   * A row's text for one column, preferring the real value behind a formatted
+   * cell so "8,421" copies as "8421".
+   *
+   * @param {HTMLTableRowElement} row
+   * @param {number} column
+   * @returns {string}
+   */
+  #cellText(row, column) {
+    const cell = row.cells[column];
+    if (!cell) return '';
+    return cell.getAttribute('data-value') ?? (cell.textContent ?? '').trim();
+  }
+
+  /** @param {HTMLTableRowElement} row @returns {string} a short identifier for a row */
+  #rowLabel(row, column) {
+    return this.#cellText(row, column) || `row ${this.#authored.indexOf(row) + 1}`;
+  }
+
+  /** @param {HTMLTableRowElement} row @returns {Record<string, string>} */
+  #record(row) {
+    /** @type {Record<string, string>} */
+    const record = {};
+    for (const def of this.#columnDefs()) {
+      if (!def.key) continue;
+      record[def.key] = this.#cellText(row, def.column);
+    }
+    return record;
+  }
+
+  /**
+   * Tests one criterion against one row.
+   *
+   * @param {HTMLTableRowElement} row
+   * @param {TableFilter} filter
+   * @returns {boolean}
+   */
+  #matchFilter(row, filter) {
+    // A criterion with no value is a draft row the user has started but not
+    // finished. It must not filter anything out, or "Add filter" would empty
+    // the table the instant it was pressed.
+    if (filter.value === '') return true;
+
+    const defs = this.#columnDefs();
+    const byColumn = new Map(defs.map((d) => [d.column, d]));
+    const targets =
+      filter.field === ANY_FIELD
+        ? // Any column has to reach the ones with no header cell too, so a
+          // column under a `rowspan` group header is still filterable.
+          this.#allBodyColumns().map(
+            (column) =>
+              /** @type {{key?: string|null, label?: string, type: string, column: number}} */ (
+                byColumn.get(column) ?? { column, type: 'text' }
+              )
+          )
+        : defs.filter((d) => d.key === filter.field);
+
+    if (targets.length === 0) return true;
+
+    const needle = filter.value.trim().toLowerCase();
+
+    return targets.some((def) => {
+      const cell = row.cells[def.column];
+      const raw = cell?.getAttribute('data-value') ?? (cell?.textContent ?? '').trim();
+      const hay = raw.toLowerCase();
+      const left = Number.parseFloat(raw);
+      const right = Number.parseFloat(filter.value);
+      // Compare as numbers only when both sides really are numbers; otherwise
+      // "10" would sort against "9abc" or an empty cell as 0.
+      const numeric = def.type === NUMERIC && Number.isFinite(left) && Number.isFinite(right);
+
+      switch (filter.operator) {
+        case 'contains':
+          return hay.includes(needle);
+        case 'not-contains':
+          return !hay.includes(needle);
+        case 'equals':
+          return hay === needle;
+        case 'not-equals':
+          return hay !== needle;
+        case 'starts-with':
+          return hay.startsWith(needle);
+        case 'ends-with':
+          return hay.endsWith(needle);
+        case 'gt':
+          return numeric ? left > right : hay > needle;
+        case 'gte':
+          return numeric ? left >= right : hay >= needle;
+        case 'lt':
+          return numeric ? left < right : hay < needle;
+        case 'lte':
+          return numeric ? left <= right : hay <= needle;
+        default:
+          return hay.includes(needle);
+      }
+    });
   }
 
   /** @param {string} key @returns {number} column index, or `-1` */
@@ -621,8 +1524,9 @@ export class TableGrid extends UI4UElement {
   }
 
   /**
-   * Recomputes which rows survive the search query and re-applies the current
-   * sort to them, so changing the query never leaves the row order stale.
+   * Recomputes which rows survive the query and the advanced criteria, then
+   * re-applies the current sort to them, so changing a filter never leaves the
+   * row order stale.
    *
    * `#authored` is deliberately *not* re-read here: sorting and paging move rows
    * in the DOM, so re-reading would capture a shuffled order and
@@ -630,18 +1534,28 @@ export class TableGrid extends UI4UElement {
    */
   #refilter() {
     const query = this.query.trim().toLowerCase();
-    this.#matched = query
-      ? this.#authored.filter((row) =>
-          [...row.cells].some((cell) =>
-            (cell.getAttribute('data-value') ?? cell.textContent ?? '')
-              .toLowerCase()
-              .includes(query)
-          )
-        )
-      : [...this.#authored];
+    const columns = this.#allBodyColumns();
+    const filters = this.#filters;
+
+    const passes = (row) => {
+      if (query) {
+        // Every column, not just the ones with a header cell: a column under a
+        // `rowspan` group header has no header of its own and would otherwise
+        // be unsearchable.
+        const hit = columns.some((column) =>
+          this.#matchText(row, column).toLowerCase().includes(query)
+        );
+        if (!hit) return false;
+      }
+      // Criteria combine with AND.
+      return filters.every((filter) => this.#matchFilter(row, filter));
+    };
+
+    this.#matched = this.#authored.filter(passes);
 
     const index = this.sort ? this.#sortIndexOf(this.sort) : -1;
     this.#applySort(index, index >= 0 ? this.direction : 'none');
+    this.#syncSelection();
   }
 
   /**
@@ -658,14 +1572,10 @@ export class TableGrid extends UI4UElement {
     const type = key ? (this.#headRow?.cells[index]?.getAttribute('data-type') ?? 'text') : 'text';
 
     const original = new Map(this.#authored.map((row, i) => [row, i]));
-    // A group header with `rowspan` shifts the columns, so the head position is
-    // translated before it is used to read a body cell.
+    // A group header with `rowspan`, or the selection column, shifts the
+    // columns, so the head position is translated before it reads a body cell.
     const column = index >= 0 ? this.#columnOf(index) : -1;
-    const valueAt = (row) => {
-      const cell = column >= 0 ? row.cells[column] : undefined;
-      if (!cell) return '';
-      return cell.getAttribute('data-value') ?? (cell.textContent ?? '').trim();
-    };
+    const valueAt = (row) => (column >= 0 ? this.#cellText(row, column) : '');
 
     // Sorting must not lose the authored order, which `resetSort()` restores,
     // and must operate on the searched subset, not every row.
@@ -692,7 +1602,7 @@ export class TableGrid extends UI4UElement {
      * really one sorted column, so the rest have the attribute removed.
      */
     if (this.#headRow) {
-      [...this.#headRow.cells].forEach((cell, i) => {
+      this.#dataCells().forEach((cell, i) => {
         if (i !== index) {
           cell.removeAttribute('aria-sort');
           return;
@@ -804,7 +1714,7 @@ export class TableGrid extends UI4UElement {
 
     this.#disposers.push(
       on(this, 'keydown', (event) => {
-        const { key, ctrlKey } = /** @type {KeyboardEvent} */ (event);
+        const { key, ctrlKey, metaKey, shiftKey } = /** @type {KeyboardEvent} */ (event);
         const [r, c] = this.#cursor;
         /** @type {[number, number]|null} */
         let next = null;
@@ -816,6 +1726,26 @@ export class TableGrid extends UI4UElement {
         else if (key === 'Home') next = ctrlKey ? [0, 0] : [r, 0];
         else if (key === 'End') {
           next = ctrlKey ? [stepRow(total - 1, -1), width - 1] : [r, width - 1];
+        } else if (this.selectable && (key === ' ' || key === 'Spacebar')) {
+          // Space toggles the row under the cursor, mirroring a file list.
+          // A checkbox cell already handles Space itself, so leave that alone.
+          const cell = cursorRows[r]?.cells[c];
+          if (
+            !cell ||
+            cell.contains(this.#selectAllBox) ||
+            cell.matches('.ui4u-tablegrid__select-cell')
+          ) {
+            return;
+          }
+          const row = cursorRows[r];
+          event.preventDefault();
+          if (shiftKey && this.multi) this.selectRow(row, { range: true });
+          else this.toggleRow(row, this.multi && (ctrlKey || metaKey));
+          return;
+        } else if (this.selectable && (key === 'a' || key === 'A') && (ctrlKey || metaKey)) {
+          event.preventDefault();
+          this.selectAll(true);
+          return;
         } else return;
 
         event.preventDefault();

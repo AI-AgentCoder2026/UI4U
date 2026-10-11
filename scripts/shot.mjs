@@ -46,7 +46,34 @@ for (const [name, viewport] of targets) {
   await page.goto(`${BASE}/demo/${name}.html`, { waitUntil: 'networkidle' });
   // Let the custom elements upgrade and any entrance transition settle.
   await page.waitForTimeout(400);
-  await page.screenshot({ path: fileURLToPath(new URL(`${name}-desktop-dark.png`, OUT)) });
+
+  // The table grid demo shows selection and the filter builder off by
+  // default; turn them on so the screenshot shows the component at its most.
+  if (name === 'tablegrid') {
+    const grid = page.locator('#demo');
+    await page.locator('#opt-select [role="tab"]', { hasText: 'multi' }).click();
+    await page.locator('#opt-search [role="tab"]', { hasText: 'advanced' }).click();
+    await page.locator('#opt-copy [role="tab"]', { hasText: 'on' }).click();
+
+    const boxes = grid.locator('tbody .ui4u-tablegrid__select-cell input');
+    await boxes.nth(1).check();
+    await boxes.nth(3).check();
+
+    await page.locator('.ui4u-tablegrid__filter-add').click();
+    await page.locator('.ui4u-tablegrid__filter-field').selectOption('downloads');
+    await page.locator('.ui4u-tablegrid__filter-op').selectOption('gte');
+    await page.locator('.ui4u-tablegrid__filter-value').fill('4000');
+    await page.waitForTimeout(300);
+  }
+
+  // `window` lives in the browser; this runs under Node, so the eslint browser
+// globals have to be named where they are used.
+await page.evaluate(() => globalThis.scrollTo(0, 0));
+
+  // The table grid has a tall control area above it; shooting the component
+  // itself keeps the docs image about the table rather than the pickers.
+  const target = name === 'tablegrid' ? page.locator('#demo') : page;
+  await target.screenshot({ path: fileURLToPath(new URL(`${name}-desktop-dark.png`, OUT)) });
   await page.close();
   console.log(`captured ${name}`);
 }
