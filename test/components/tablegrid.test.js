@@ -30,9 +30,20 @@ const TABLE = `
   </ui-tablegrid>
 `;
 
-/** @returns {string[]} first-cell text per row, in current order */
+/**
+ * First-cell text of the rows the table is actually showing, in current order.
+ *
+ * Search and paging hide rows with the `hidden` property rather than removing
+ * them from the markup, so a naive `querySelectorAll` would report the authored
+ * set, not the visible one.
+ *
+ * @param {Element} grid
+ * @returns {string[]}
+ */
 function order(grid) {
-  return [...grid.querySelectorAll('tbody tr')].map((row) => row.cells[0]?.textContent ?? '');
+  return [...grid.querySelectorAll('tbody tr')]
+    .filter((row) => !row.hidden)
+    .map((row) => row.cells[0]?.textContent ?? '');
 }
 
 describe('ui-tablegrid registration', () => {
@@ -268,6 +279,318 @@ describe('ui-tablegrid navigation mode', () => {
     const table = grid.querySelector('table');
     assert.equal(table.classList.contains('ui4u-tablegrid__striped'), true);
     assert.equal(table.classList.contains('ui4u-tablegrid__dense'), true);
+  });
+});
+
+describe('ui-tablegrid column groups', () => {
+  afterEach(() => cleanup());
+
+  const GROUPED = `
+    <ui-tablegrid label="Releases">
+      <table>
+        <thead>
+          <tr>
+            <th scope="colgroup" colspan="2">Release</th>
+            <th scope="col" rowspan="2">Channel</th>
+          </tr>
+          <tr>
+            <th scope="col" data-sort="version" data-type="text">Version</th>
+            <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1.1.0</td><td data-value="5120">5,120</td><td>stable</td></tr>
+          <tr><td>1.2.0</td><td data-value="8421">8,421</td><td>beta</td></tr>
+          <tr><td>1.0.0</td><td data-value="3900">3,900</td><td>stable</td></tr>
+        </tbody>
+      </table>
+    </ui-tablegrid>
+  `;
+
+  it('reads columns from the last header row, not the group row', () => {
+    const grid = mount(GROUPED).querySelector('ui-tablegrid');
+
+    // Two real columns, keyed by the second header row.
+    assert.deepEqual(grid.data[0], { version: '1.1.0', downloads: '5120' });
+  });
+
+  it('does not turn a group header into a sort button', () => {
+    const grid = mount(GROUPED).querySelector('ui-tablegrid');
+    const firstRow = grid.querySelector('thead tr');
+
+    assert.equal(firstRow.querySelectorAll('.ui4u-tablegrid__sort').length, 0);
+    assert.equal(firstRow.cells[0].getAttribute('colspan'), '2');
+    assert.equal(firstRow.cells[0].getAttribute('scope'), 'colgroup');
+  });
+
+  it('still sorts on the grouped columns', () => {
+    const grid = mount(GROUPED).querySelector('ui-tablegrid');
+
+    grid.sortBy('downloads', 'desc');
+    assert.deepEqual(order(grid), ['1.2.0', '1.1.0', '1.0.0']);
+  });
+
+  it('puts aria-sort on the grouped column, not the group header', () => {
+    const grid = mount(GROUPED).querySelector('ui-tablegrid');
+    grid.sortBy('version', 'asc');
+
+    const sorted = [...grid.querySelectorAll('th[aria-sort]')];
+    assert.equal(sorted.length, 1);
+    assert.equal(sorted[0].getAttribute('data-sort'), 'version');
+  });
+
+  /*
+   * A `rowspan="2"` group header occupies a column of its own, so every
+   * sortable column after it sits one cell further right in the body than it
+   * does in the column header row. Reading `row.cells[i]` by the header's own
+   * index would sort the wrong data.
+   */
+  const SHIFTED = `
+    <ui-tablegrid label="Releases">
+      <table>
+        <thead>
+          <tr>
+            <th scope="colgroup" colspan="2">Release</th>
+            <th scope="col" rowspan="2">Channel</th>
+            <th scope="colgroup">Payload</th>
+          </tr>
+          <tr>
+            <th scope="col" data-sort="version" data-type="text">Version</th>
+            <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
+            <th scope="col" data-sort="size" data-type="number">Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1.1.0</td><td data-value="5120">5,120</td><td>stable</td><td data-value="900">900</td></tr>
+          <tr><td>1.2.0</td><td data-value="8421">8,421</td><td>beta</td><td data-value="100">100</td></tr>
+          <tr><td>1.0.0</td><td data-value="3900">3,900</td><td>stable</td><td data-value="500">500</td></tr>
+        </tbody>
+      </table>
+    </ui-tablegrid>
+  `;
+
+  it('sorts on the shifted column, not the one before it', () => {
+    const grid = mount(SHIFTED).querySelector('ui-tablegrid');
+
+    grid.sortBy('size', 'asc');
+    assert.deepEqual(order(grid), ['1.2.0', '1.0.0', '1.1.0']);
+
+    grid.sortBy('size', 'desc');
+    assert.deepEqual(order(grid), ['1.1.0', '1.0.0', '1.2.0']);
+  });
+
+  it('maps data onto the shifted columns', () => {
+    const grid = mount(SHIFTED).querySelector('ui-tablegrid');
+
+    const [first] = grid.data;
+    assert.deepEqual(first, { version: '1.1.0', downloads: '5120', size: '900' });
+  });
+
+  it('gives a group header row its own grid roles', () => {
+    const grid = mount(SHIFTED.replace('<ui-tablegrid ', '<ui-tablegrid navigate ')).querySelector(
+      'ui-tablegrid'
+    );
+
+    // Two header rows must both carry a row role…
+    assert.equal(grid.querySelectorAll('thead [role="row"]').length, 2);
+    // …and every row in the table, so none is left unroled.
+    assert.equal(grid.querySelectorAll('[role="row"]').length, 5);
+    // The group row contributes columnheaders too.
+    assert.equal(grid.querySelectorAll('thead [role="columnheader"]').length, 6);
+  });
+});
+
+describe('ui-tablegrid search', () => {
+  let grid;
+
+  beforeEach(() => {
+    grid = mount(TABLE).querySelector('ui-tablegrid');
+  });
+
+  afterEach(() => cleanup());
+
+  it('renders a search field only when searchable is set', () => {
+    assert.equal(grid.querySelector('.ui4u-tablegrid__search-input'), null);
+
+    grid.configure({ searchable: true });
+    const input = grid.querySelector('.ui4u-tablegrid__search-input');
+    assert.ok(input);
+    assert.equal(input.type, 'search');
+    assert.equal(input.getAttribute('aria-label'), 'Filter Releases');
+  });
+
+  it('filters rows by a substring of any cell', () => {
+    grid.search('1.2');
+    assert.deepEqual(order(grid), ['1.2.0']);
+  });
+
+  it('matches against data-value as well as text', () => {
+    // "8,421" is the formatted text; the search should still find "8421".
+    grid.search('8421');
+    assert.deepEqual(order(grid), ['1.2.0']);
+  });
+
+  it('is case-insensitive', () => {
+    grid.search('STABLE');
+    assert.equal(grid.rows.length, 0, 'no such text in this fixture');
+
+    grid.search('1.');
+    assert.equal(grid.rows.length, 3);
+  });
+
+  it('is a plain substring match, not a whole-value match', () => {
+    // "1.0" is a substring of "1.1.0" as well as "1.0.0". Matching anywhere in
+    // the cell is what makes "5120" find "5,120", so it stays that way.
+    grid.search('1.0');
+    assert.deepEqual(order(grid), ['1.1.0', '1.0.0']);
+  });
+
+  it('restores every row when cleared', () => {
+    grid.search('1.2');
+    assert.equal(grid.rows.length, 1);
+
+    grid.clearSearch();
+    assert.equal(grid.rows.length, 3);
+    assert.equal(grid.query, '');
+  });
+
+  it('emits ui4u:search and does not fire when the query is unchanged', () => {
+    /** @type {any[]} */
+    const seen = [];
+    grid.addEventListener('ui4u:search', (e) => seen.push(e.detail));
+
+    grid.search('1.2');
+    grid.search('1.2');
+    grid.search('1.1');
+
+    assert.equal(seen.length, 2);
+    assert.equal(seen[0].query, '1.2');
+    assert.equal(seen[0].rows.length, 1);
+  });
+
+  it('drives from the rendered search field', () => {
+    grid.configure({ searchable: true });
+    const input = grid.querySelector('.ui4u-tablegrid__search-input');
+
+    input.value = '1.0.0';
+    input.dispatchEvent(new window.Event('input', { bubbles: true }));
+
+    assert.equal(grid.query, '1.0.0');
+    assert.deepEqual(order(grid), ['1.0.0']);
+  });
+});
+
+describe('ui-tablegrid pagination', () => {
+  let grid;
+
+  beforeEach(() => {
+    grid = mount(TABLE).querySelector('ui-tablegrid');
+  });
+
+  afterEach(() => cleanup());
+
+  it('renders no pager unless per-page is set', () => {
+    assert.equal(grid.querySelector('.ui4u-tablegrid__pager'), null);
+    assert.equal(grid.pageCount, 1);
+  });
+
+  it('splits rows across pages and hides the rest', () => {
+    grid.configure({ perPage: 2 });
+
+    assert.equal(grid.pageCount, 2);
+    assert.equal(grid.querySelectorAll('tbody tr:not([hidden])').length, 2);
+    assert.deepEqual(
+      grid.pageRows.map((r) => r.cells[0].textContent),
+      ['1.1.0', '1.2.0']
+    );
+
+    grid.nextPage();
+    assert.equal(grid.page, 2);
+    assert.deepEqual(
+      grid.pageRows.map((r) => r.cells[0].textContent),
+      ['1.0.0']
+    );
+  });
+
+  it('clamps the page into range', () => {
+    grid.configure({ perPage: 2 });
+
+    grid.goToPage(99);
+    assert.equal(grid.page, 2);
+
+    grid.prevPage();
+    grid.prevPage();
+    assert.equal(grid.page, 1, 'does not go below the first page');
+  });
+
+  it('disables the pager buttons at the ends', () => {
+    grid.configure({ perPage: 2 });
+    const [prev, next] = grid.querySelectorAll('.ui4u-tablegrid__page-btn');
+
+    assert.equal(prev.hasAttribute('disabled'), true);
+    assert.equal(next.hasAttribute('disabled'), false);
+
+    grid.nextPage();
+    assert.equal(prev.hasAttribute('disabled'), false);
+    assert.equal(next.hasAttribute('disabled'), true);
+  });
+
+  it('drives from the pager buttons', () => {
+    grid.configure({ perPage: 2 });
+    const [prev, next] = grid.querySelectorAll('.ui4u-tablegrid__page-btn');
+
+    next.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(grid.page, 2);
+
+    prev.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(grid.page, 1);
+  });
+
+  it('emits ui4u:page', () => {
+    grid.configure({ perPage: 2 });
+    /** @type {any[]} */
+    const seen = [];
+    grid.addEventListener('ui4u:page', (e) => seen.push(e.detail));
+
+    grid.nextPage();
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].page, 2);
+    assert.equal(seen[0].pageCount, 2);
+  });
+
+  it('search narrows the page count and returns to page one', () => {
+    grid.configure({ perPage: 1 });
+    assert.equal(grid.pageCount, 3);
+
+    grid.goToPage(3);
+    assert.equal(grid.page, 3);
+
+    grid.search('1.2');
+    assert.equal(grid.pageCount, 1);
+    assert.equal(grid.page, 1, 'a new query starts from the top');
+  });
+
+  it('sorting composes with paging', () => {
+    grid.configure({ perPage: 2 });
+    grid.sortBy('downloads', 'desc');
+
+    assert.deepEqual(
+      grid.pageRows.map((r) => r.cells[0].textContent),
+      ['1.2.0', '1.1.0']
+    );
+
+    grid.nextPage();
+    assert.deepEqual(
+      grid.pageRows.map((r) => r.cells[0].textContent),
+      ['1.0.0']
+    );
+  });
+
+  it('reports the row count in the pager status', () => {
+    grid.configure({ perPage: 2 });
+    const status = grid.querySelector('.ui4u-tablegrid__page-status');
+    assert.match(status.textContent, /Page 1 of 2 · 3 rows/);
   });
 });
 

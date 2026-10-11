@@ -130,39 +130,62 @@ re-exported from `dom.js` so nothing breaks.
 Wraps a plain `<table>`; the author keeps writing native markup.
 
 ```html
-<ui-tablegrid label="Releases" navigate>
+<ui-tablegrid label="Releases" searchable per-page="10" navigate>
   <table>
     <thead>
+      <!-- Optional group row; only the LAST row carries the columns. -->
+      <tr>
+        <th scope="colgroup" colspan="2">Release</th>
+        <th scope="col" rowspan="2">Channel</th>
+      </tr>
       <tr>
         <th scope="col" data-sort="version" data-type="text">Version</th>
         <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
-        <th scope="col">Published</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td>1.2.0</td>
         <td data-value="8421">8,421</td>
-        <td>2026-08-14</td>
+        <td>stable</td>
       </tr>
     </tbody>
   </table>
 </ui-tablegrid>
 ```
 
-- **API** — `configure({ navigate, striped, dense, sort, direction })`,
-  `sortBy(key, direction)`, `resetSort()`, and a `data` getter returning one
-  record per row keyed by each sortable column.
+- **API** — `configure({ navigate, striped, dense, searchable, perPage, search,
+sort, direction })`, `sortBy(key, direction)`, `resetSort()`,
+  `search(query)`, `clearSearch()`, `goToPage(page)`, `nextPage()`, `prevPage()`,
+  and getters for `data`, `rows`, `visibleRows`, `pageRows`, `page` and
+  `pageCount`.
+- **Column groups** — the `<thead>` may open with group headers that span
+  columns with `colspan` / `rowspan`. Only the **last** header row describes real
+  columns, so that is the row sort keys, `aria-sort` and the roving cursor read
+  from. A `rowspan` group header shifts the columns after it, which the
+  component measures rather than assuming header indices match body indices.
 - **Sorting** — `data-sort` marks a column sortable; `data-type="number"`
   compares numerically; `data-value` carries the real number behind formatted
   text such as `8,421`. Sorts are stable and `resetSort()` restores the
   authored order.
+- **Search** — `searchable` renders a filter field. Matching is a
+  case-insensitive substring test against `data-value` **or** cell text in any
+  column, so `8421` finds the row rendered as `8,421`.
+- **Paging** — `per-page` splits the rows and renders a pager. The status is a
+  `role="status"` live region and the buttons disable at each end.
+- **Composition** — search, then sort, then page. A query filters first, the
+  sort applies to what survives, and paging slices that; changing the query
+  resets to page one.
 - **A11y** — each sortable header holds a real `<button>` so sorting is
   keyboard reachable, and `aria-sort` is applied to exactly one header at a
-  time. `navigate` is opt-in: it switches the table to `role="grid"` with a
-  roving tab stop across cells, because a plain `<table>` is already
-  navigable and turning every cell into a tab stop would be a downgrade.
-- **Events** — `ui4u:sort` with `detail: { column, direction, rows }`.
+  time. Search and paging **hide** rows rather than deleting them, so the arrow
+  keys skip rows that are not on screen. `navigate` is opt-in: it switches the
+  table to `role="grid"` with a roving tab stop across cells, because a plain
+  `<table>` is already navigable and turning every cell into a tab stop would be
+  a downgrade. Every header row gets its grid roles, group rows included.
+- **Events** — `ui4u:sort` with `detail: { column, direction, rows }`,
+  `ui4u:search` with `detail: { query, rows }`, and `ui4u:page` with
+  `detail: { page, pageCount, rows }`.
 
 ## 7. `ui-sidebar`
 

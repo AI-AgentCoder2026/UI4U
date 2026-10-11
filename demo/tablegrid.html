@@ -6,7 +6,7 @@
     <title>UI4U — Table grid</title>
     <meta
       name="description"
-      content="ui-tablegrid — a browsable data table with sortable columns and keyboard cell navigation."
+      content="ui-tablegrid — a browsable data table with column groups, sortable columns, search, pagination and keyboard cell navigation."
     />
     <link rel="stylesheet" href="/dist/ui4u.css" />
     <link rel="stylesheet" href="/src/styles/reset.css" />
@@ -20,6 +20,19 @@
         overflow: auto;
         border-radius: var(--ui4u-radius-lg);
       }
+      /*
+       * The scroll container is `.table-wrap`, and the component puts its search
+       * toolbar inside that same box. Pinning it keeps the filter reachable
+       * while the body scrolls, and above the sticky header it would otherwise
+       * slide underneath.
+       */
+      .table-wrap .ui4u-tablegrid__toolbar {
+        position: sticky;
+        top: 0;
+        z-index: calc(var(--ui4u-z-sticky) + 2);
+        padding-block: var(--ui4u-space-2);
+        background: var(--ui4u-surface-0);
+      }
     </style>
   </head>
   <body>
@@ -28,8 +41,8 @@
         <div>
           <h1><code>ui-tablegrid</code></h1>
           <p class="lede">
-            A browsable data table. Click a header to sort, or focus one and press
-            <kbd>Enter</kbd>. Turn on <strong>navigate</strong> and the arrow keys move between
+            A browsable data table. Click a header to sort, type in the filter to narrow the rows,
+            or page through them. Turn on <strong>navigate</strong> and the arrow keys move between
             cells, like a spreadsheet.
           </p>
         </div>
@@ -54,6 +67,14 @@
             <ui-tab label="striped"></ui-tab>
           </ui-tabs>
         </div>
+        <div class="control-group">
+          <span class="control-group__label">Page size</span>
+          <ui-tabs id="opt-perpage" variant="underline" label="Page size">
+            <ui-tab label="all"></ui-tab>
+            <ui-tab label="3"></ui-tab>
+            <ui-tab label="4"></ui-tab>
+          </ui-tabs>
+        </div>
       </div>
 
       <div class="controls">
@@ -63,16 +84,26 @@
       </div>
 
       <div class="table-wrap">
-        <ui-tablegrid id="demo" label="Release downloads" navigate>
+        <ui-tablegrid id="demo" label="Release downloads" navigate searchable>
           <table>
-            <caption class="u4u-sr-only">
+            <caption class="ui4u-sr-only">
               Release downloads, sortable
             </caption>
             <thead>
+              <!--
+                An optional group row. `colspan` merges columns under one
+                heading; `rowspan` lifts a single column through both rows.
+                Only the LAST row describes real columns — that is the row the
+                component reads sort keys from.
+              -->
+              <tr>
+                <th scope="colgroup" colspan="2">Release</th>
+                <th scope="col" rowspan="2">Channel</th>
+                <th scope="colgroup" colspan="2">Distribution</th>
+              </tr>
               <tr>
                 <th scope="col" data-sort="version" data-type="text">Version</th>
                 <th scope="col" data-sort="downloads" data-type="number">Downloads</th>
-                <th scope="col" data-sort="channel">Channel</th>
                 <th scope="col" data-sort="size" data-type="number">Size</th>
                 <th scope="col">Published</th>
               </tr>
@@ -130,7 +161,7 @@
       <ui-disclosure summary="Source">
         <p>
           The author writes a plain <code>&lt;table&gt;</code>. The component keeps it and adds
-          sorting, keyboard navigation and sticky headers.
+          column groups, sorting, search, pagination and keyboard navigation.
         </p>
 
         <figure class="demo-code">
@@ -138,20 +169,24 @@
             <span class="demo-code__lang">HTML</span>
             <button class="demo-code__copy" type="button" data-copy>Copy</button>
           </figcaption>
-          <pre><code data-highlight="html">&lt;ui-tablegrid label="Release downloads" navigate&gt;
+          <pre><code data-highlight="html">&lt;ui-tablegrid label="Release downloads" searchable per-page="4" navigate&gt;
   &lt;table&gt;
     &lt;thead&gt;
+      &lt;!-- Optional group row; only the LAST row carries the columns. --&gt;
+      &lt;tr&gt;
+        &lt;th scope="colgroup" colspan="2"&gt;Release&lt;/th&gt;
+        &lt;th scope="col" rowspan="2"&gt;Channel&lt;/th&gt;
+      &lt;/tr&gt;
       &lt;tr&gt;
         &lt;th scope="col" data-sort="version" data-type="text"&gt;Version&lt;/th&gt;
         &lt;th scope="col" data-sort="downloads" data-type="number"&gt;Downloads&lt;/th&gt;
-        &lt;th scope="col"&gt;Published&lt;/th&gt;
       &lt;/tr&gt;
     &lt;/thead&gt;
     &lt;tbody&gt;
       &lt;tr&gt;
         &lt;td&gt;1.2.0&lt;/td&gt;
         &lt;td data-value="8421"&gt;8,421&lt;/td&gt;
-        &lt;td&gt;2026-08-14&lt;/td&gt;
+        &lt;td&gt;stable&lt;/td&gt;
       &lt;/tr&gt;
     &lt;/tbody&gt;
   &lt;/table&gt;
@@ -170,9 +205,22 @@ grid.configure({ navigate: true, striped: true, dense: false });
 grid.sortBy('downloads', 'desc');
 grid.resetSort();
 
+// Search narrows the rows; sort and paging then apply to what survives.
+grid.search('stable');
+grid.clearSearch();
+
+grid.goToPage(2);
+grid.nextPage();
+grid.prevPage();
+
+grid.page;      // 1-based current page
+grid.pageCount; // pages the filtered rows fill
+grid.rows;      // every matching row, in sort order
+grid.pageRows;  // just the slice on screen
+
 // One record per row, keyed by each sortable column's data-sort.
 grid.data;
-// [{ version: '1.3.0', downloads: '9260', channel: 'stable', size: '44680' }, …]
+// [{ version: '1.3.0', downloads: '9260', size: '44680' }, …]
 
 grid.addEventListener('ui4u:sort', (event) =&gt; {
   const { column, direction, rows } = event.detail;
@@ -194,6 +242,19 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
           <li>
             A column marked <code>data-type="number"</code> compares numerically, and a formatted
             cell can carry <code>data-value</code> for the real number.
+          </li>
+          <li>
+            Group headers keep their native <code>scope="colgroup"</code> /
+            <code>scope="col"</code> semantics, so a screen reader announces which group a column
+            belongs to.
+          </li>
+          <li>
+            Search and paging <em>hide</em> rows rather than deleting them, so the arrow keys skip
+            rows that are not on screen instead of landing on an invisible cell.
+          </li>
+          <li>
+            The pager status is a <code>role="status"</code> live region, so a page change is
+            announced without moving focus.
           </li>
           <li>
             <code>navigate</code> is opt-in. A plain <code>&lt;table&gt;</code> is already navigable
@@ -226,6 +287,11 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
         grid.configure({ dense: label === 'dense', striped: label === 'striped' });
       });
 
+      document.getElementById('opt-perpage').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        grid.configure({ perPage: label === 'all' ? null : Number(label) });
+      });
+
       document.getElementById('sort-downloads').addEventListener('click', () => {
         grid.sortBy('downloads', 'desc');
       });
@@ -241,6 +307,16 @@ grid.addEventListener('ui4u:sort', (event) =&gt; {
       grid.addEventListener('ui4u:sort', (event) => {
         const { column, direction, rows } = event.detail;
         log.textContent = `ui4u:sort → ${column ?? 'none'} ${direction} · ${rows.length} rows`;
+      });
+
+      grid.addEventListener('ui4u:search', (event) => {
+        const { query, rows } = event.detail;
+        log.textContent = `ui4u:search → "${query || '(empty)'}" · ${rows.length} rows`;
+      });
+
+      grid.addEventListener('ui4u:page', (event) => {
+        const { page, pageCount, rows } = event.detail;
+        log.textContent = `ui4u:page → ${page} of ${pageCount} · ${rows.length} rows`;
       });
     </script>
   </body>

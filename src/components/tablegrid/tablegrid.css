@@ -10,6 +10,7 @@ ui-tablegrid {
   --ui4u-tablegrid-radius: var(--ui4u-radius-lg);
   --ui4u-tablegrid-cell-padding: var(--ui4u-space-3) var(--ui4u-space-4);
   --ui4u-tablegrid-header-height: 2.75rem;
+  --ui4u-tablegrid-group-header-height: 2rem;
 
   display: block;
   width: 100%;
@@ -142,6 +143,113 @@ ui-tablegrid [role='columnheader']:focus-visible {
 
 ui-tablegrid [role='gridcell'] {
   cursor: default;
+}
+
+/* --- group headers -------------------------------------------------------
+ * A <thead> may open with group headers spanning columns. Only the last row
+ * carries the columns, so the earlier rows are dimmed to read as scaffolding.
+ */
+
+ui-tablegrid thead tr:not(:last-child) th {
+  color: var(--ui4u-text-subtle);
+  font-size: var(--ui4u-font-size-xs);
+  text-align: center;
+  border-inline-start: 0;
+  border-inline-end: 0;
+}
+
+/*
+ * Two sticky header rows would both pin to `top: 0` and the column row would
+ * slide over the group row. Only when a group row actually exists does the
+ * column row offset itself by the group's height; a single-row header keeps
+ * its original `top: 0` so nothing is left hanging in mid-air.
+ */
+ui-tablegrid table:has(thead tr:not(:last-child)) thead tr:not(:last-child) th {
+  z-index: calc(var(--ui4u-z-sticky) + 1);
+}
+
+ui-tablegrid table:has(thead tr:not(:last-child)) thead tr:last-child th {
+  top: var(--ui4u-tablegrid-group-header-height);
+}
+
+/* The seam between the two header rows reads as a divider, not a cell border. */
+ui-tablegrid thead tr:not(:last-child) th {
+  border-bottom-color: var(--ui4u-divider);
+}
+
+/* --- search + pager ------------------------------------------------------ */
+
+ui-tablegrid .ui4u-tablegrid__toolbar {
+  display: flex;
+  margin-bottom: var(--ui4u-space-3);
+}
+
+ui-tablegrid .ui4u-tablegrid__search-input {
+  width: min(100%, 18rem);
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-tablegrid .ui4u-tablegrid__search-input::placeholder {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-tablegrid .ui4u-tablegrid__search-input:focus-visible {
+  outline: none;
+  border-color: var(--ui4u-primary);
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-tablegrid .ui4u-tablegrid__pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui4u-space-3);
+  margin-top: var(--ui4u-space-3);
+}
+
+ui-tablegrid .ui4u-tablegrid__page-btn {
+  padding: var(--ui4u-space-2) var(--ui4u-space-3);
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-sm);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  font: inherit;
+  font-size: var(--ui4u-font-size-sm);
+  cursor: pointer;
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-tablegrid .ui4u-tablegrid__page-btn:hover:not([disabled]) {
+  border-color: var(--ui4u-primary);
+  color: var(--ui4u-primary);
+}
+
+ui-tablegrid .ui4u-tablegrid__page-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+ui-tablegrid .ui4u-tablegrid__page-btn[disabled] {
+  color: var(--ui4u-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+ui-tablegrid .ui4u-tablegrid__page-status {
+  color: var(--ui4u-text-muted);
+  font-family: var(--ui4u-font-mono);
+  font-size: var(--ui4u-font-size-xs);
 }
 
 /* --- caption ------------------------------------------------------------ */

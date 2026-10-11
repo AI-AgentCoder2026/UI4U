@@ -7,7 +7,7 @@ into any stack — or none. Every visual value is a `--ui4u-*` custom property, 
 theming a token override rather than a CSS fork.
 
 ```
-ui-tabs · 26.1 kB minified (~8.3 kB gzip) including tokens and themes
+All ten components · 117.8 kB minified (~37.7 kB gzip) including tokens and themes
 ```
 
 ## Status
@@ -23,9 +23,11 @@ Early, and deliberately incremental. Shipped:
 | `ui-layout`     | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters     |
 | `ui-popup`      | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes             |
 | `ui-input`      | [`demo/input.html`](demo/input.html)           | Native input preserved, label/hint/error wiring, validation surface     |
-| `ui-tablegrid`  | [`demo/grid.html`](demo/grid.html)             | Fluid auto-fit columns driven entirely by CSS                           |
+| `ui-form`       | [`demo/form.html`](demo/form.html)             | Validation, inline errors, `role="alert"` error summary                 |
+| `ui-sidebar`    | [`demo/sidebar.html`](demo/sidebar.html)       | Collapsible regions, off-canvas drawer on narrow screens                |
+| `ui-tablegrid`  | [`demo/tablegrid.html`](demo/tablegrid.html)   | Column groups, sorting, search, pagination, opt-in cell navigation      |
 
-![ui-tabs on desktop and mobile](docs/screenshots/tabs-desktop-dark.png)
+![ui-tablegrid with column groups, search and paging](docs/screenshots/tablegrid-desktop-dark.png)
 
 Every component from the original roadmap has shipped. What to build next, and what the
 audits found, is written up in [`docs/REVIEW.md`](docs/REVIEW.md).
