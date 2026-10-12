@@ -139,7 +139,7 @@ ui-dropdown .ui4u-dropdown__trigger:disabled {
 /* The error treatment is driven by the ARIA state, so it can never disagree
    with what assistive technology announces. */
 ui-dropdown .ui4u-dropdown__trigger[aria-invalid='true'] {
-  border-color: var(--ui4u-danger);
+  border-color: var(--ui4u-dropdown-invalid-border, var(--ui4u-danger));
 }
 
 /* --- hint and error ------------------------------------------------------- */

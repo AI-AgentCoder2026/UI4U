@@ -522,15 +522,30 @@ test.describe('date picker placement and input', () => {
     expect(value).toBe('2026-08-14');
   });
 
-  test('leaves a half-typed date alone', async ({ page }) => {
+  test('keeps unreadable text until commit, then clears it', async ({ page }) => {
     await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
 
     const field = page.locator(`${DATE} .ui4u-input__native`);
     await field.fill('14/0');
-    await expect(field).toHaveValue('14/0');
 
+    // Mid-typing it stays put, or the field would be unusable to type into.
+    await expect(field).toHaveValue('14/0');
+    await expect(field).not.toHaveAttribute('aria-invalid', 'true');
+
+    await field.blur();
+    await expect(field).toHaveValue('');
+  });
+
+  test('rejects text in the wrong order on commit', async ({ page }) => {
+    await page.locator('#opt-format [role="tab"]', { hasText: 'yyyy/MM/dd' }).click();
+
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+    await field.fill('14/08/2026');
+    await field.blur();
+
+    await expect(field).toHaveValue('');
     const value = await page.evaluate(() => document.getElementById('date-demo').value);
-    expect(value).toBe('');
+    expect(value).toBe('', '14/08/2026 is not yyyy/MM/dd');
   });
 
   test('shows and accepts the chosen format', async ({ page }) => {
@@ -544,14 +559,112 @@ test.describe('date picker placement and input', () => {
     const value = await page.evaluate(() => document.getElementById('date-demo').value);
     expect(value).toBe('2026-09-02');
   });
+});
 
-  test('rejects text in the wrong order rather than guessing', async ({ page }) => {
-    await page.locator('#opt-format [role="tab"]', { hasText: 'yyyy/MM/dd' }).click();
+/* --- invalid state and customisation -------------------------------------- */
+
+test.describe('validation error treatment', () => {
+  test('an unreadable date is cleared and flagged on commit', async ({ page }) => {
+    await page.goto('/demo/input.html');
+    await page.locator('#date .ui4u-disclosure__summary').click();
+    await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
 
     const field = page.locator(`${DATE} .ui4u-input__native`);
-    await field.fill('14/08/2026');
 
-    const value = await page.evaluate(() => document.getElementById('date-demo').value);
-    expect(value).toBe('', '14/08/2026 is not yyyy/MM/dd');
+    // Mid-typing it is left alone, or the field would be unusable.
+    await field.fill('14/0');
+    await expect(field).toHaveValue('14/0');
+    await expect(field).not.toHaveAttribute('aria-invalid', 'true');
+
+    await field.blur();
+
+    await expect(field).toHaveValue('');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  test('the border colour is visible and follows the token', async ({ page }) => {
+    await page.goto('/demo/input.html');
+    await page.locator('#date .ui4u-disclosure__summary').click();
+    await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
+
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+    await field.fill('14/0');
+    await field.blur();
+
+    const colour = await field.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(colour).not.toBe('none');
+  });
+
+  test('an app can customise the invalid border per component', async ({ page }) => {
+    await page.goto('/demo/input.html');
+
+    // A real, author-set error rather than one that depends on blur timing.
+    await page.evaluate(() => {
+      document.getElementById('demo').configure({ error: 'That will not do.' });
+    });
+
+    const field = page.locator(`${MAIN} .ui4u-input__native`);
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+
+    // The ring, not the border: a `border` shorthand elsewhere can repaint a
+    // 1px border on a translucent field, and the ring is what stays visible.
+    const before = await field.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(before).not.toBe('none');
+
+    // A per-component override, applied without restating a theme.
+    await field.evaluate((el) =>
+      el.closest('ui-input').style.setProperty('--ui4u-input-invalid-border', 'rgb(1, 2, 3)')
+    );
+
+    // The ring transitions, so read it once it has settled.
+    await page.waitForTimeout(400);
+    const after = await field.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(after).toContain('rgb(1, 2, 3)');
+    expect(after).not.toBe(before);
+  });
+
+  test('a checkbox in error shows a visible ring', async ({ page }) => {
+    await page.goto('/demo/checkbox.html');
+
+    await page.locator('ui-button#toggle-error').click();
+
+    const box = page.locator('ui-checkbox .ui4u-checkbox__native').first();
+    await expect(box).toHaveAttribute('aria-invalid', 'true');
+
+    const width = await box.evaluate((el) => getComputedStyle(el).outlineWidth);
+    expect(Number.parseFloat(width)).toBeGreaterThan(0);
+  });
+
+  test('a radio group in error shows a visible ring', async ({ page }) => {
+    await page.goto('/demo/radio.html');
+
+    // The demo group already has a selection, so it is valid. An error is set
+    // directly rather than left to depend on what is chosen.
+    await page.evaluate(() => {
+      document.getElementById('demo').configure({ error: 'Pick a plan.' });
+    });
+
+    const field = page.locator('#demo .ui4u-radio-group__field');
+    await expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(await field.evaluate((el) => getComputedStyle(el).outlineWidth)).not.toBe('0px');
+  });
+
+  test('a dropdown in error shows a red border', async ({ page }) => {
+    await page.goto('/demo/dropdown.html');
+
+    await page.locator('ui-button#toggle-error').click();
+
+    const trigger = page.locator('ui-dropdown .ui4u-dropdown__trigger').first();
+    await expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(await trigger.evaluate((el) => getComputedStyle(el).borderTopColor)).not.toMatch(
+      /rgb\(0, 0, 0\)/
+    );
+  });
+
+  test('a valid field carries no error styling', async ({ page }) => {
+    await page.goto('/demo/input.html');
+
+    const field = page.locator(`${MAIN} .ui4u-input__native`);
+    await expect(field).not.toHaveAttribute('aria-invalid', 'true');
   });
 });

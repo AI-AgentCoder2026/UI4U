@@ -132,6 +132,11 @@ firstDayOfWeek, range, view })`
   consumer parses one shape regardless of the reader's locale. Parsing is
   strict: `14/08/2026` under `yyyy/MM/dd` is rejected rather than guessed,
   because a wrong guess stores a wrong date silently.
+- **Commit-time rejection** — an unreadable date is tolerated while it is being
+  typed and rejected on commit (blur or Enter), where the field is **cleared and
+  flagged**. Mid-typing rejection would clear the field under the reader and
+  make it impossible to type into; rejecting only on commit means the value is
+  never silently wrong. The message names the format it wanted.
 - **Calendar panel** — portalled to `<body>` and positioned with
   `core/position.js`, because an ancestor with `transform` or `backdrop-filter`
   would otherwise become its containing block. It is made **invisible until it
@@ -148,6 +153,21 @@ firstDayOfWeek, range, view })`
   free-typed date has no way to show itself as invalid.
 - **Events** — `ui4u:input`, `ui4u:change`. An amount event carries `amount`
   alongside `value`; a date event carries `date` as `{ from, to }`.
+- **Invalid styling everywhere** — every field component marks itself
+  `aria-invalid` when it has an error, and every one of them now _shows_ it:
+  `ui-input` and `ui-dropdown` repaint their border, `ui-checkbox` and
+  `ui-radio` draw an outline around the real control (the row has no border of
+  its own, and a coloured border nobody can see is not an error treatment).
+  Hover and focus are scoped away from the invalid state, so an invalid field
+  never looks healthy while you are in it, and `ui-input` adds a ring as well —
+  a 1px border on a translucent field is very hard to see and a `border`
+  shorthand elsewhere can quietly repaint it.
+- **Customisable** — each component reads its own token, defaulting to
+  `--ui4u-danger`:
+  `--ui4u-input-invalid-border`, `--ui4u-checkbox-invalid-border`,
+  `--ui4u-radio-invalid-border`, `--ui4u-dropdown-invalid-border` and
+  `--ui4u-button-group-invalid-border`. Override one to tint just your fields,
+  or override `--ui4u-danger` to change them everywhere.
 
 ## 5. `ui-form`
 

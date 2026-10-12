@@ -996,3 +996,110 @@ describe('ui-input date formats', () => {
     assert.equal(field.querySelector('.ui4u-input__native').value, '14.08.2026');
   });
 });
+
+/* --- invalid state on commit ---------------------------------------------- */
+
+describe('ui-input date commit', () => {
+  afterEach(() => cleanup());
+
+  const type = (field, text) => {
+    const native = field.querySelector('.ui4u-input__native');
+    native.value = text;
+    native.dispatchEvent(new window.Event('input', { bubbles: true }));
+    return native;
+  };
+
+  const commit = (field) => {
+    field
+      .querySelector('.ui4u-input__native')
+      .dispatchEvent(new window.Event('change', { bubbles: true }));
+  };
+
+  const ddmm = () =>
+    mount('<ui-input type="date" format="dd/MM/yyyy"></ui-input>').querySelector('ui-input');
+
+  it('leaves an unreadable date alone while typing', () => {
+    const field = ddmm();
+    const native = type(field, '14/0');
+
+    assert.equal(native.value, '14/0', 'not cleared mid-word');
+    assert.equal(field.error, '', 'and not flagged yet');
+  });
+
+  it('clears and flags an unreadable date on commit', () => {
+    const field = ddmm();
+    const native = type(field, '14/0');
+
+    commit(field);
+
+    assert.equal(native.value, '', 'cleared');
+    assert.equal(field.value, '');
+    assert.equal(native.getAttribute('aria-invalid'), 'true', 'so the border goes red');
+    assert.match(field.error, /dd\/MM\/yyyy/);
+  });
+
+  it('names the format it wanted', () => {
+    const field = ddmm();
+    type(field, 'nonsense');
+    commit(field);
+    assert.equal(field.error, 'Enter a date as dd/MM/yyyy.');
+  });
+
+  it('clears the error once a valid date is typed', () => {
+    const field = ddmm();
+    type(field, 'nonsense');
+    commit(field);
+    assert.equal(field.error, '' === field.error ? '' : field.error); // sanity: set
+    assert.ok(field.error.length > 0);
+
+    type(field, '14/08/2026');
+    assert.equal(field.error, '', 'the flag clears when the reader fixes it');
+    assert.equal(field.value, '2026-08-14');
+  });
+
+  it('clears the error when the field is emptied', () => {
+    const field = ddmm();
+    type(field, 'nonsense');
+    commit(field);
+
+    type(field, '');
+    assert.equal(field.error, '');
+  });
+
+  it('rejects a date outside its bounds on commit', () => {
+    const field = mount(
+      '<ui-input type="date" format="dd/MM/yyyy" min="2026-01-01" max="2026-12-31"></ui-input>'
+    ).querySelector('ui-input');
+
+    const native = type(field, '14/08/2025');
+    assert.equal(native.value, '14/08/2025', 'tolerated while typing');
+
+    commit(field);
+    assert.equal(native.value, '');
+    assert.equal(field.value, '');
+  });
+
+  it('rejects a range whose second half will not read', () => {
+    const field = mount(
+      '<ui-input type="date" range format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    const native = type(field, '10/08/2026 → oops');
+    commit(field);
+
+    assert.equal(native.value, '');
+    assert.equal(field.value, '');
+  });
+
+  it('keeps a valid range on commit', () => {
+    const field = mount(
+      '<ui-input type="date" range format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    type(field, '10/08/2026 → 14/08/2026');
+    commit(field);
+
+    assert.equal(field.value, '2026-08-10/2026-08-14');
+    assert.equal(field.error, '');
+  });
+});

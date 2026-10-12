@@ -171,7 +171,7 @@ ui-button-group .ui4u-button-group__error {
 
 /* An invalid group is visible from the control itself, not only from its text. */
 ui-button-group[aria-invalid='true'] .ui4u-button-group__options {
-  border-color: var(--ui4u-danger);
+  border-color: var(--ui4u-button-group-invalid-border, var(--ui4u-danger));
 }
 
 /* A disabled group gives back its pressed-segment contrast. */

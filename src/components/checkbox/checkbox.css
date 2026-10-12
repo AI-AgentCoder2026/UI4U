@@ -135,3 +135,18 @@ ui-checkbox .ui4u-checkbox__error[hidden] {
     transition: none;
   }
 }
+
+* Error treatment, driven by the ARIA state so it can never disagree with what
+ * assistive technology announces.
+ *
+ * It is an outline around the real checkbox rather than a border: the row has
+ * no border of its own, and a coloured border that is never seen is not an
+ * error treatment at all.
+ *
+ * The colour is a variable, so an app can tint its fields without restating a
+ * theme. Overriding `--ui4u-danger` still changes it everywhere.
+ */
+ui-checkbox .ui4u-checkbox__native[aria-invalid='true'] {
+  outline: 2px solid var(--ui4u-checkbox-invalid-border, var(--ui4u-danger));
+  outline-offset: 2px;
+}

@@ -726,7 +726,9 @@ export class Input extends UI4UElement {
           if (key === 'Enter') {
             /** @type {KeyboardEvent} */ (event).preventDefault();
             this.#closeCalendar();
-            this.#emitValue('ui4u:change');
+            // Routed through the guarded path so Enter commits a typed date and
+            // rejects an unreadable one, exactly as blur does.
+            this.#onNativeInput('ui4u:change');
             return;
           }
           if (key === 'Escape') {
@@ -822,7 +824,8 @@ export class Input extends UI4UElement {
     if (!this.runBinding(BINDING_NAME[type], { value: this.value, name: this.name })) return;
 
     if (this.#isAmount) this.#reformatAmount();
-    if (this.#isDate) this.#commitTypedDate();
+    // `input` never rejects: the reader is mid-word. Commit does.
+    if (this.#isDate) this.#commitTypedDate({ reject: type === 'ui4u:change' });
 
     this.#emitValue(type);
   }
@@ -830,48 +833,85 @@ export class Input extends UI4UElement {
   /**
    * Reads a hand-typed date and commits it to the ISO value.
    *
-   * The text is left exactly as typed while it is incomplete or does not match
-   * the format — reformatting mid-keystroke would move the caret out from under
-   * the reader. Only a date that parses cleanly is written back, and then it is
-   * shown in the canonical order so the field settles.
+   * Called on `input`, so it must not be eager about rejecting: text is left
+   * exactly as typed while it is incomplete or does not match the format,
+   * because reformatting mid-keystroke would move the caret out from under the
+   * reader.
+   *
+   * @param {{ reject?: boolean }} [options] `reject: true` on commit — blur or
+   *   Enter — where an unreadable date is cleared and flagged rather than left
+   *   sitting there looking like a value.
+   * @returns {boolean} whether the text parsed
    */
-  #commitTypedDate() {
+  #commitTypedDate({ reject = false } = {}) {
     const native = this.#native;
-    if (!native) return;
+    if (!native) return false;
 
     const format = this.format;
     const range = this.getBoolean('range', false);
     const text = (native.value ?? '').trim();
+
     if (text === '') {
       this.#setValueSilently('');
-      return;
+      this.clearValidity();
+      return true;
     }
+
+    /** @param {Date|null} date @returns {boolean} */
+    const acceptable = (date) => date !== null && isWithinBounds(date, this.#dateBounds());
 
     if (range) {
       const [fromText = '', toText = ''] = text.split(/→|\s+to\s+/i);
       const from = parseDate(fromText, format);
-      if (!from) {
-        this.#setValueSilently('');
-        return;
-      }
-      const to = toText.trim() ? parseDate(toText, format) : null;
+      if (!acceptable(from)) return this.#rejectTypedDate(reject, format);
 
+      const to = toText.trim() ? parseDate(toText, format) : null;
+      if (toText.trim() && !acceptable(to)) return this.#rejectTypedDate(reject, format);
+
+      this.clearValidity();
       this.value = `${toISO(from)}${to ? `/${toISO(to)}` : ''}`;
       this.#syncValue();
-      return;
+      return true;
     }
 
     const parsed = parseDate(text, format);
-    if (!parsed || !isWithinBounds(parsed, this.#dateBounds())) {
-      // Cleared rather than kept. Leaving the previous date committed while the
-      // field reads as something else would let a submit carry it silently — but
-      // written silently too, so the reader's text survives.
-      this.#setValueSilently('');
-      return;
-    }
+    if (!acceptable(parsed)) return this.#rejectTypedDate(reject, format);
 
+    this.clearValidity();
     this.value = toISO(parsed);
     this.#syncValue();
+    return true;
+  }
+
+  /**
+   * What to do with text that is not a readable date.
+   *
+   * Mid-typing it is left alone — the reader is on their way to something valid
+   * and clearing the field under them would make it unusable. On commit it is
+   * cleared *and* flagged, because a date that cannot be read is not a value
+   * and should not sit there looking like one.
+   *
+   * @param {boolean} reject
+   * @param {string} format
+   * @returns {false} always, so callers can `return this.#rejectTypedDate(...)`
+   */
+  #rejectTypedDate(reject, format) {
+    if (!reject) return false;
+
+    // The native control, not just the attribute: the attribute is already
+    // empty, so writing to it changes nothing and the rejected text would sit
+    // there looking like a value.
+    if (this.#native) this.#native.value = '';
+    this.#setValueSilently('');
+    this.value = '';
+
+    if (!this.error) {
+      this.error = `Enter a date as ${format}.`;
+      // Set after the assignment: the setter marks an error as author-supplied,
+      // and this one came from us.
+      this.#selfReported = true;
+    }
+    return false;
   }
 
   /** @returns {{ min: string, max: string }} */

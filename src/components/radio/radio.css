@@ -163,3 +163,26 @@ ui-radio-group .ui4u-radio-group__error[hidden] {
     transition: none;
   }
 }
+
+/*
+ * Error treatment, driven by the ARIA state so it can never disagree with what
+ * assistive technology announces.
+ *
+ * An outline around the real control rather than a border: the radio row has no
+ * border of its own, and a coloured border nobody can see is not an error
+ * treatment at all. The colour is a variable, so an app can tint its fields
+ * without restating a theme; overriding `--ui4u-danger` still changes it
+ * everywhere.
+ */
+ui-radio .ui4u-radio__native[aria-invalid='true'],
+ui-radio-group .ui4u-radio__native[aria-invalid='true'] {
+  outline: 2px solid var(--ui4u-radio-invalid-border, var(--ui4u-danger));
+  outline-offset: 2px;
+}
+
+/* A group reports on its fieldset, so the whole set can be ringed at once. */
+ui-radio-group .ui4u-radio-group__field[aria-invalid='true'] {
+  outline: 2px solid var(--ui4u-radio-invalid-border, var(--ui4u-danger));
+  outline-offset: 2px;
+  border-radius: var(--ui4u-radius-sm);
+}
