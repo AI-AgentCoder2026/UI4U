@@ -114,19 +114,34 @@ firstDayOfWeek, range, view })`
   `checkValidity()` rather than silently clamping what was typed.
 - **`type="date"`** — a Gregorian picker with three levels (day, month, year)
   that drill up from the title and back down from the grid, plus an optional
-  `range` holding one start and one end. The attribute keeps the ISO
-  `YYYY-MM-DD` (or `from/to`) value while the field shows the locale's format,
-  so a consumer never stores a display string. `min` / `max` disable days
-  outright; a range completed by clicking backwards swaps its ends rather than
-  producing a negative range. Gregorian only — a non-Gregorian system needs its
-  own conversion layer, since its months do not line up with solar ones.
+  `range` holding one start and one end. `min` / `max` disable days outright; a
+  range completed by clicking backwards swaps its ends rather than producing a
+  negative range. Gregorian only — a non-Gregorian system needs its own
+  conversion layer, since its months do not line up with solar ones.
+- **Typed as well as picked** — the field is writable. Text is parsed against the
+  chosen format and the value commits once it is unambiguous; text that does not
+  parse is left exactly as typed, because reformatting mid-keystroke would move
+  the caret out from under the reader. Text that does not parse also _clears_
+  the committed value, written back without echoing into the control — keeping
+  the old date would let a submit carry it silently while the field reads as
+  something else.
+- **Format-driven, always ISO underneath** — `format` picks one of
+  `dd/MM/yyyy`, `MM/dd/yyyy`, `yyyy/MM/dd`, `dd-MM-yyyy`, `dd.MM.yyyy` or
+  `yyyy-MM-dd`. It decides how the date is shown, how typed text is read and
+  what the placeholder says. The stored value stays ISO either way, so a
+  consumer parses one shape regardless of the reader's locale. Parsing is
+  strict: `14/08/2026` under `yyyy/MM/dd` is rejected rather than guessed,
+  because a wrong guess stores a wrong date silently.
 - **Calendar panel** — portalled to `<body>` and positioned with
   `core/position.js`, because an ancestor with `transform` or `backdrop-filter`
-  would otherwise become its containing block. One roving tab stop across the
-  grid, arrow keys to move, `PageUp` / `PageDown` by month and year, `Home` /
-  `End` within the week, `Escape` to close, and a document listener for a click
-  elsewhere — which focus events cannot cover once the panel is outside the
-  host.
+  would otherwise become its containing block. It is made **invisible until it
+  has been placed**: a `position: fixed` element with no `left` / `top` renders
+  at the origin, so appending it visible makes the panel flash in the top-left
+  corner — and if the measurement ever bails out early, that flash is all the
+  user ever sees. One roving tab stop across the grid, arrow keys to move,
+  `PageUp` / `PageDown` by month and year, `Home` / `End` within the week,
+  `Escape` to close, and a document listener for a click elsewhere — which focus
+  events cannot cover once the panel is outside the host.
 - **A11y** — `<label for>`, `aria-describedby` chaining hint and error,
   `aria-invalid` when erroring. Label is visually hidden when `srOnly` is set.
   A date field is read-only, since the panel is the only way in and a

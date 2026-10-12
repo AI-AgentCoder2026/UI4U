@@ -171,6 +171,16 @@
               <ui-tab label="Sun"></ui-tab>
             </ui-tabs>
           </div>
+          <div class="control-group">
+            <span class="control-group__label">Format</span>
+            <ui-tabs id="opt-format" variant="underline" label="Format">
+              <ui-tab label="yyyy-MM-dd"></ui-tab>
+              <ui-tab label="dd/MM/yyyy"></ui-tab>
+              <ui-tab label="MM/dd/yyyy"></ui-tab>
+              <ui-tab label="yyyy/MM/dd"></ui-tab>
+              <ui-tab label="dd.MM.yyyy"></ui-tab>
+            </ui-tabs>
+          </div>
         </div>
 
         <div class="controls">
@@ -329,6 +339,12 @@ ui-input {
 
       document.getElementById('opt-week').addEventListener('ui4u:change', (event) => {
         date.configure({ firstDayOfWeek: event.detail.label === 'Mon' ? 1 : 0 });
+      });
+
+      // The format drives both what the field shows and what it accepts when
+      // typed, so the tab label is the value.
+      document.getElementById('opt-format').addEventListener('ui4u:change', (event) => {
+        date.configure({ format: event.detail.label });
       });
 
       date.addEventListener('ui4u:change', (event) => {

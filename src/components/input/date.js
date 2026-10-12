@@ -255,6 +255,140 @@ export function isWithinBounds(date, bounds = {}) {
 }
 
 /**
+ * Display and input formats.
+ *
+ * The stored value is always ISO `YYYY-MM-DD`; a format only decides how the
+ * date is *shown* and how typed text is *read*. Keeping those apart is what lets
+ * a consumer parse one shape regardless of the reader's locale.
+ *
+ * @type {readonly string[]}
+ */
+export const DATE_FORMATS = /** @type {const} */ ([
+  'dd/MM/yyyy',
+  'MM/dd/yyyy',
+  'yyyy/MM/dd',
+  'dd-MM-yyyy',
+  'dd.MM.yyyy',
+  'yyyy-MM-dd',
+]);
+
+/** Tokens a format may contain, longest first so `yyyy` never eats a `y`. */
+const TOKENS = ['yyyy', 'MM', 'dd'];
+
+/**
+ * The format to use, falling back to ISO rather than echoing nonsense.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function normalizeFormat(value) {
+  const raw = String(value ?? '').trim();
+  return DATE_FORMATS.includes(raw) ? raw : 'yyyy-MM-dd';
+}
+
+/**
+ * Renders a date in a given format.
+ *
+ * @param {Date|null|undefined} date
+ * @param {string} [format]
+ * @returns {string} `''` for no date
+ *
+ * @example
+ * formatDate(new Date(2026, 7, 14), 'dd/MM/yyyy'); // '14/08/2026'
+ * formatDate(new Date(2026, 7, 14), 'yyyy/MM/dd'); // '2026/08/14'
+ */
+export function formatDate(date, format = 'yyyy-MM-dd') {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+
+  const parts = {
+    yyyy: String(date.getFullYear()).padStart(4, '0'),
+    MM: String(date.getMonth() + 1).padStart(2, '0'),
+    dd: String(date.getDate()).padStart(2, '0'),
+  };
+
+  const pattern = normalizeFormat(format);
+  let out = '';
+  let i = 0;
+
+  while (i < pattern.length) {
+    const token = TOKENS.find((t) => pattern.startsWith(t, i));
+    if (token) {
+      out += parts[token];
+      i += token.length;
+    } else {
+      out += pattern[i];
+      i += 1;
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Reads typed text in a given format.
+ *
+ * Strict on purpose. `01/02/2026` is ambiguous until the format says which end
+ * is the day, and guessing would silently store the wrong date — so text that
+ * does not match is rejected rather than coerced.
+ *
+ * @param {string} text
+ * @param {string} [format]
+ * @returns {Date|null} `null` when the text does not match
+ *
+ * @example
+ * parseDate('14/08/2026', 'dd/MM/yyyy'); // 14 August 2026
+ * parseDate('2026/08/14', 'yyyy/MM/dd'); // 14 August 2026
+ * parseDate('14/08/2026', 'yyyy/MM/dd'); // null — does not match
+ */
+export function parseDate(text, format = 'yyyy-MM-dd') {
+  const raw = String(text ?? '').trim();
+  if (raw === '') return null;
+
+  /** @type {Array<{ literal: string } | { token: string }>} */
+  const shape = [];
+  const pattern = normalizeFormat(format);
+  let i = 0;
+
+  while (i < pattern.length) {
+    const token = TOKENS.find((t) => pattern.startsWith(t, i));
+    if (token) {
+      shape.push({ token });
+      i += token.length;
+    } else {
+      shape.push({ literal: pattern[i] });
+      i += 1;
+    }
+  }
+
+  /** @type {Record<string, number>} */
+  const found = {};
+  let cursor = 0;
+
+  for (const part of shape) {
+    if ('literal' in part) {
+      if (raw[cursor] !== part.literal) return null;
+      cursor += 1;
+      continue;
+    }
+    const width = part.token === 'yyyy' ? 4 : 2;
+    const chunk = raw.slice(cursor, cursor + width);
+    if (!/^\d+$/.test(chunk) || chunk.length !== width) return null;
+    found[part.token] = Number(chunk);
+    cursor += width;
+  }
+
+  // Trailing characters mean this is not that date — `14/08/2026 and more`.
+  if (cursor !== raw.length) return null;
+
+  const year = found.yyyy ?? 0;
+  const month = found.MM ?? 0;
+  const day = found.dd ?? 0;
+  if (!year || !month || !day) return null;
+
+  return fromISO(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+}
+
+/**
  * The weekday headers for a month grid, starting at `firstDayOfWeek`.
  *
  * @param {string [locale] BCP-47 tag. Default `'en-GB'` for ISO short names.

@@ -86,10 +86,12 @@ export class CalendarPanel {
     const prev = /** @type {HTMLButtonElement} */ (el('button', { type: 'button' }));
     prev.className = 'ui4u-calendar__nav';
     prev.setAttribute('aria-label', 'Previous');
+    prev.dataset.direction = 'prev';
     const title = el('div', { class: 'ui4u-calendar__title', role: 'button', tabindex: '0' });
     const next = /** @type {HTMLButtonElement} */ (el('button', { type: 'button' }));
     next.className = 'ui4u-calendar__nav';
     next.setAttribute('aria-label', 'Next');
+    next.dataset.direction = 'next';
     appendAll(header, [prev, title, next]);
 
     /** @type {HTMLElement} */
@@ -161,13 +163,27 @@ export class CalendarPanel {
   /**
    * Mounts on `<body>` and places itself under `anchor`.
    *
+   * The panel is made invisible for the one frame between being attached and
+   * being positioned. A `position: fixed` element with no `left`/`top` renders
+   * at the origin, so appending it visible makes it flash in the top-left
+   * corner before `position()` has measured it — and if that measurement bails
+   * out early (no layout, a zero-size anchor) the flash is all the user ever
+   * sees.
+   *
    * @param {HTMLElement} anchor
    * @param {(anchor: HTMLElement, surface: HTMLElement) => void} place
    */
   open(anchor, place) {
     const root = this.element;
+
+    root.style.visibility = 'hidden';
     if (!root.isConnected) root.ownerDocument.body.appendChild(root);
+
     place(anchor, root);
+
+    // Revealed only once it has a position, whatever `place` decided.
+    root.style.visibility = '';
+
     this.#focusStop();
   }
 

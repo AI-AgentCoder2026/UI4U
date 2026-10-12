@@ -241,13 +241,35 @@ ui-input[data-mode='date'] .ui4u-input__native[readonly] {
 }
 
 /* Chevron drawn with rotated borders, so there is no icon dependency. */
+/*
+ * Chevron drawn with two adjacent borders, so it inherits the current colour.
+ *
+ * It has to be exactly two: `border-inline` plus `border-block` sets all four,
+ * which draws a tiny filled square rather than an arrow.
+ */
 .ui4u-calendar__nav::before {
   content: '';
-  display: inline-block;
-  width: 0.4rem;
-  height: 0.4rem;
-  border-inline: 1.5px solid currentColor;
-  border-block: 1.5px solid currentColor;
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-block-start: 2px solid currentColor;
+  border-inline-end: 2px solid currentColor;
+  transform-origin: center;
+  transition: transform var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+.ui4u-calendar__nav[data-direction='prev']::before {
+  transform: rotate(-135deg);
+}
+
+.ui4u-calendar__nav[data-direction='next']::before {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui4u-calendar__nav::before {
+    transition: none;
+  }
 }
 
 .ui4u-calendar__nav:hover {

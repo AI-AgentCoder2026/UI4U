@@ -13,6 +13,8 @@ import { expect, test } from '@playwright/test';
  */
 
 const MAIN = '#demo';
+/** Shared by every date test, so the second block can reach it too. */
+const DATE = '#date-demo';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/input.html');
@@ -247,17 +249,17 @@ test.describe('ui-input type="amount"', () => {
 /* --- date mode ------------------------------------------------------------ */
 
 test.describe('ui-input type="date"', () => {
-  const DATE = '#date-demo';
-
   test.beforeEach(async ({ page }) => {
     await page.locator('#date .ui4u-disclosure__summary').click();
     await page.waitForSelector(`${DATE} .ui4u-input__native`);
   });
 
-  test('shows the local format but keeps the ISO value', async ({ page }) => {
+  test('shows the chosen format but keeps the ISO value', async ({ page }) => {
     const input = page.locator(`${DATE} .ui4u-input__native`);
-    await expect(input).not.toHaveValue('2026-08-14');
 
+    await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
+
+    await expect(input).toHaveValue('14/08/2026');
     const value = await page.evaluate(() => document.getElementById('date-demo').value);
     expect(value).toBe('2026-08-14');
   });
@@ -424,5 +426,132 @@ test.describe('ui-input type="date"', () => {
     await page.locator('.ui4u-calendar__day[data-date="2026-08-20"]').click();
 
     expect(errors).toEqual([]);
+  });
+});
+
+/* --- picker placement, typing and formats -------------------------------- */
+
+test.describe('date picker placement and input', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/demo/input.html');
+    await page.locator('#date .ui4u-disclosure__summary').click();
+    await page.waitForSelector(`${DATE} .ui4u-input__native`);
+  });
+
+  test('opens next to the field, never in the corner', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await expect(page.locator('body > .ui4u-calendar')).toBeVisible();
+
+    const placed = await page.evaluate(() => {
+      const panel = document.querySelector('.ui4u-calendar');
+      const field = document.querySelector('#date-demo .ui4u-input__native');
+      const p = panel.getBoundingClientRect();
+      const f = field.getBoundingClientRect();
+      return {
+        // Overlaps the field horizontally, and sits either directly under it or
+        // directly above it — never parked at the origin.
+        aligned: p.right > f.left && p.left < f.right,
+        adjacent: p.top >= f.bottom - 2 || p.bottom <= f.top + 2,
+        inViewport: p.top >= 0 && p.bottom <= window.innerHeight + 1,
+      };
+    });
+
+    expect(placed.aligned).toBe(true);
+    expect(placed.adjacent).toBe(true);
+    expect(placed.inViewport).toBe(true);
+  });
+
+  test('repositions when the page scrolls', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+    await expect(page.locator('body > .ui4u-calendar')).toBeVisible();
+
+    await page.evaluate(() => window.scrollBy(0, 300));
+    await page.waitForTimeout(150);
+
+    const stillOnField = await page.evaluate(() => {
+      const panel = document.querySelector('.ui4u-calendar');
+      const field = document.querySelector('#date-demo .ui4u-input__native');
+      const p = panel.getBoundingClientRect();
+      const f = field.getBoundingClientRect();
+      return p.top >= f.bottom - 2 || p.bottom <= f.top + 2;
+    });
+
+    expect(stillOnField).toBe(true);
+  });
+
+  test('draws the prev/next chevrons as arrows, not squares', async ({ page }) => {
+    await page.locator(`${DATE} .ui4u-input__native`).click();
+
+    const nav = await page.evaluate(() => {
+      const read = (direction) => {
+        const el = document.querySelector(`.ui4u-calendar__nav[data-direction="${direction}"]`);
+        const cs = getComputedStyle(el, '::before');
+        return {
+          borders: [
+            cs.borderTopWidth,
+            cs.borderRightWidth,
+            cs.borderBottomWidth,
+            cs.borderLeftWidth,
+          ],
+          rotated: cs.transform !== 'none',
+        };
+      };
+      return { prev: read('prev'), next: read('next') };
+    });
+
+    for (const side of [nav.prev, nav.next]) {
+      // Exactly two adjacent borders. Four would draw a tiny filled square.
+      expect(side.borders.filter((b) => b !== '0px')).toHaveLength(2);
+      expect(side.rotated).toBe(true);
+    }
+  });
+
+  test('accepts a hand-typed date', async ({ page }) => {
+    // The field reads and writes in the chosen format, so switch to the one the
+    // typed text below is actually in.
+    await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
+
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+    await expect(field).not.toHaveAttribute('readonly', '');
+
+    await field.fill('14/08/2026');
+    await expect(field).toHaveValue('14/08/2026');
+
+    // The committed value is ISO, whatever the reader typed.
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-08-14');
+  });
+
+  test('leaves a half-typed date alone', async ({ page }) => {
+    await page.locator('#opt-format [role="tab"]', { hasText: 'dd/MM/yyyy' }).click();
+
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+    await field.fill('14/0');
+    await expect(field).toHaveValue('14/0');
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('');
+  });
+
+  test('shows and accepts the chosen format', async ({ page }) => {
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+
+    await page.locator('#opt-format [role="tab"]', { hasText: 'yyyy/MM/dd' }).click();
+    await expect(field).toHaveValue('2026/08/14');
+    await expect(field).toHaveAttribute('placeholder', 'yyyy/MM/dd');
+
+    await field.fill('2026/09/02');
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('2026-09-02');
+  });
+
+  test('rejects text in the wrong order rather than guessing', async ({ page }) => {
+    await page.locator('#opt-format [role="tab"]', { hasText: 'yyyy/MM/dd' }).click();
+
+    const field = page.locator(`${DATE} .ui4u-input__native`);
+    await field.fill('14/08/2026');
+
+    const value = await page.evaluate(() => document.getElementById('date-demo').value);
+    expect(value).toBe('', '14/08/2026 is not yyyy/MM/dd');
   });
 });

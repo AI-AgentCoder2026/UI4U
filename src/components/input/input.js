@@ -3,7 +3,15 @@ import { el, on, setText, uid } from '../../core/dom.js';
 import { position } from '../../core/position.js';
 import { CalendarPanel } from './calendar.js';
 import { formatAmount, parseAmount } from './amount.js';
-import { fromISO, toISO } from './date.js';
+import {
+  DATE_FORMATS,
+  fromISO,
+  formatDate,
+  isWithinBounds,
+  normalizeFormat,
+  parseDate,
+  toISO,
+} from './date.js';
 
 /**
  * @typedef {'sm' | 'md' | 'lg'} InputSize
@@ -103,6 +111,7 @@ export class Input extends UI4UElement {
       'max',
       'locale',
       'first-day',
+      'format',
       'range',
       'view',
     ];
@@ -116,6 +125,13 @@ export class Input extends UI4UElement {
   #hint = null;
   /** @type {HTMLElement|null} */
   #error = null;
+  /**
+   * True while this component is writing `value` itself, so the attribute
+   * callback does not echo the write back into the control. Without it,
+   * clearing the value would wipe the text the reader is still typing.
+   * @type {boolean}
+   */
+  #writing = false;
   /** @type {CalendarPanel|null} */
   #calendar = null;
   /** @type {Array<() => void>} */
@@ -210,6 +226,28 @@ export class Input extends UI4UElement {
   /** @returns {string} BCP-47 tag used by the date panel. */
   get locale() {
     return this.getString('locale', 'en-GB');
+  }
+
+  /**
+   * How a `date` field is displayed and how typed text is read.
+   *
+   * The stored value stays ISO either way, so this only affects presentation and
+   * input — not what a consumer has to parse.
+   *
+   * @returns {string} one of `DATE_FORMATS`
+   */
+  get format() {
+    return normalizeFormat(this.getString('format', 'yyyy-MM-dd'));
+  }
+
+  set format(next) {
+    if (next === null || next === undefined) this.removeAttribute('format');
+    else this.setAttribute('format', String(next));
+  }
+
+  /** @returns {readonly string[]} every supported format, for a picker. */
+  get formats() {
+    return DATE_FORMATS;
   }
 
   /** @returns {string} */
@@ -346,6 +384,7 @@ export class Input extends UI4UElement {
       max,
       locale,
       firstDayOfWeek,
+      format,
       range,
       view,
       bindings,
@@ -367,6 +406,7 @@ export class Input extends UI4UElement {
     if (min !== undefined) this.#setTextAttribute('min', min);
     if (max !== undefined) this.#setTextAttribute('max', max);
     if (locale !== undefined) this.setAttribute('locale', locale);
+    if (format !== undefined) this.format = format;
     if (firstDayOfWeek !== undefined) this.setAttribute('first-day', firstDayOfWeek);
     if (range !== undefined) this.setAttribute('range', String(Boolean(range)));
     if (view !== undefined) this.setAttribute('view', view);
@@ -595,10 +635,40 @@ export class Input extends UI4UElement {
       return;
     }
 
+    if (name === 'format') {
+      // Both the placeholder and the shown value are written in the format, so
+      // neither can be left showing the old one.
+      if (this.#native) this.#native.placeholder = this.#placeholderFor();
+      this.#syncValue();
+      return;
+    }
+
     // `value` is the one option that must not be re-applied on every unrelated
     // change — it would overwrite what the user is currently typing.
-    if (name === 'value') this.#syncValue();
-    else this.#sync();
+    if (name === 'value') {
+      // A write this component made is not a user edit; echoing it back would
+      // clobber the text being typed.
+      if (!this.#writing) this.#syncValue();
+      return;
+    }
+
+    this.#sync();
+  }
+
+  /**
+   * Writes the `value` attribute without echoing it into the control.
+   *
+   * @param {string|null|undefined} next
+   * @returns {void}
+   */
+  #setValueSilently(next) {
+    this.#writing = true;
+    try {
+      if (next === null || next === undefined || next === '') this.removeAttribute('value');
+      else this.setAttribute('value', String(next));
+    } finally {
+      this.#writing = false;
+    }
   }
 
   /* --------------------------------------------------------------- build */
@@ -637,18 +707,33 @@ export class Input extends UI4UElement {
     this.track(on(native, 'change', () => this.#onNativeInput('ui4u:change')));
 
     if (this.#isDate) {
-      // The panel is the only way in. Leaving the field free-hand would let a
-      // half-typed date sit there with no way to show it as invalid.
-      native.readOnly = true;
-      native.classList.add('ui4u-input__native--pickable');
+      /*
+       * Typed entry stays open. A read-only field is a dead end for anyone who
+       * already knows the date, and a date is exactly the thing people are
+       * willing to type — so the text is parsed against the chosen format and
+       * the value only commits once it is unambiguous.
+       */
       native.setAttribute('aria-haspopup', 'dialog');
       native.setAttribute('aria-expanded', 'false');
+      native.placeholder = this.#placeholderFor();
+
       this.track(on(native, 'click', () => this.#openCalendar()));
       this.track(on(native, 'focus', () => this.#openCalendar()));
       this.track(
         on(native, 'keydown', (event) => {
           const key = /** @type {KeyboardEvent} */ (event).key;
-          if (key === 'Enter' || key === ' ' || key === 'ArrowDown') {
+          // Typing must not be hijacked into opening the panel.
+          if (key === 'Enter') {
+            /** @type {KeyboardEvent} */ (event).preventDefault();
+            this.#closeCalendar();
+            this.#emitValue('ui4u:change');
+            return;
+          }
+          if (key === 'Escape') {
+            this.#closeCalendar();
+            return;
+          }
+          if (key === 'ArrowDown' && !this.#calendar?.isOpen) {
             /** @type {KeyboardEvent} */ (event).preventDefault();
             this.#openCalendar();
           }
@@ -737,7 +822,61 @@ export class Input extends UI4UElement {
     if (!this.runBinding(BINDING_NAME[type], { value: this.value, name: this.name })) return;
 
     if (this.#isAmount) this.#reformatAmount();
+    if (this.#isDate) this.#commitTypedDate();
+
     this.#emitValue(type);
+  }
+
+  /**
+   * Reads a hand-typed date and commits it to the ISO value.
+   *
+   * The text is left exactly as typed while it is incomplete or does not match
+   * the format — reformatting mid-keystroke would move the caret out from under
+   * the reader. Only a date that parses cleanly is written back, and then it is
+   * shown in the canonical order so the field settles.
+   */
+  #commitTypedDate() {
+    const native = this.#native;
+    if (!native) return;
+
+    const format = this.format;
+    const range = this.getBoolean('range', false);
+    const text = (native.value ?? '').trim();
+    if (text === '') {
+      this.#setValueSilently('');
+      return;
+    }
+
+    if (range) {
+      const [fromText = '', toText = ''] = text.split(/→|\s+to\s+/i);
+      const from = parseDate(fromText, format);
+      if (!from) {
+        this.#setValueSilently('');
+        return;
+      }
+      const to = toText.trim() ? parseDate(toText, format) : null;
+
+      this.value = `${toISO(from)}${to ? `/${toISO(to)}` : ''}`;
+      this.#syncValue();
+      return;
+    }
+
+    const parsed = parseDate(text, format);
+    if (!parsed || !isWithinBounds(parsed, this.#dateBounds())) {
+      // Cleared rather than kept. Leaving the previous date committed while the
+      // field reads as something else would let a submit carry it silently — but
+      // written silently too, so the reader's text survives.
+      this.#setValueSilently('');
+      return;
+    }
+
+    this.value = toISO(parsed);
+    this.#syncValue();
+  }
+
+  /** @returns {{ min: string, max: string }} */
+  #dateBounds() {
+    return { min: this.getString('min', ''), max: this.getString('max', '') };
   }
 
   /* ----------------------------------------------------------- date mode */
@@ -869,9 +1008,7 @@ export class Input extends UI4UElement {
 
     native.required = this.required;
     native.disabled = this.disabled;
-    // A date field is read-only so the panel is the only way in; overwriting
-    // that here would otherwise re-open the door to half-typed dates.
-    native.readOnly = this.#isDate ? true : this.readonly;
+    native.readOnly = this.readonly;
     native.placeholder = this.#placeholderFor();
     native.name = this.name;
     native.autocomplete = this.autocomplete;
@@ -898,11 +1035,10 @@ export class Input extends UI4UElement {
     if (this.placeholder !== '') return this.placeholder;
     if (!this.#isDate) return '';
 
-    const locale = this.locale;
-    const sample = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
-      fromISO('2026-08-14') ?? new Date(2026, 7, 14)
-    );
-    return this.getBoolean('range', false) ? `${sample} → ${sample}` : sample;
+    // The format *is* the hint: `dd/MM/yyyy` tells the reader what to type,
+    // which a prose placeholder never managed.
+    const hint = this.format;
+    return this.getBoolean('range', false) ? `${hint} → ${hint}` : hint;
   }
 
   /** Applies the `value` attribute to the control, and only then. */
@@ -927,18 +1063,16 @@ export class Input extends UI4UElement {
   #dateText(raw) {
     if (!raw) return '';
 
-    const format = (iso) => {
-      const date = fromISO(iso);
-      if (!date) return '';
-      return new Intl.DateTimeFormat(this.locale, { dateStyle: 'medium' }).format(date);
-    };
+    const format = this.format;
 
     if (raw.includes('/')) {
       const [from = '', to = ''] = raw.split('/');
-      return [format(from), format(to)].filter(Boolean).join(' → ');
+      return [formatDate(fromISO(from), format), formatDate(fromISO(to), format)]
+        .filter(Boolean)
+        .join(' → ');
     }
 
-    return format(raw);
+    return formatDate(fromISO(raw), format);
   }
 
   /**

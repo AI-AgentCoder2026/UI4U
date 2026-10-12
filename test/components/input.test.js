@@ -641,7 +641,6 @@ describe('ui-input type="date"', () => {
 
     assert.equal(field.value, '2026-08-14', 'the value stays machine-readable');
     assert.match(nativeOf(field).value, /2026/);
-    assert.equal(nativeOf(field).readOnly, true, 'the panel is the only way in');
   });
 
   it('marks the control as opening a dialog', () => {
@@ -854,5 +853,146 @@ describe('ui-input type="date"', () => {
 
     field.openPicker();
     assert.equal(panel(), null);
+  });
+});
+
+/* --- date formats and typed entry ---------------------------------------- */
+
+describe('ui-input date formats', () => {
+  afterEach(() => cleanup());
+
+  const typed = (field, text) => {
+    const native = field.querySelector('.ui4u-input__native');
+    native.value = text;
+    native.dispatchEvent(new window.Event('input', { bubbles: true }));
+    return native;
+  };
+
+  it('defaults to the ISO format', () => {
+    const field = mount('<ui-input type="date" value="2026-08-14"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    assert.equal(field.format, 'yyyy-MM-dd');
+    assert.equal(field.querySelector('.ui4u-input__native').value, '2026-08-14');
+  });
+
+  it('shows the value in the chosen format', () => {
+    const field = mount(
+      '<ui-input type="date" value="2026-08-14" format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.querySelector('.ui4u-input__native').value, '14/08/2026');
+    assert.equal(field.value, '2026-08-14', 'the stored value stays ISO');
+  });
+
+  it('supports a leading-year format too', () => {
+    const field = mount(
+      '<ui-input type="date" value="2026-08-14" format="yyyy/MM/dd"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.querySelector('.ui4u-input__native').value, '2026/08/14');
+  });
+
+  it('falls back to ISO for an unknown format', () => {
+    const field = mount('<ui-input type="date" format="nonsense"></ui-input>').querySelector(
+      'ui-input'
+    );
+    assert.equal(field.format, 'yyyy-MM-dd');
+  });
+
+  it('uses the format as the placeholder, so it says what to type', () => {
+    const field = mount('<ui-input type="date" format="dd/MM/yyyy"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    assert.equal(field.querySelector('.ui4u-input__native').placeholder, 'dd/MM/yyyy');
+  });
+
+  it('re-renders the shown value when the format changes', () => {
+    const field = mount(
+      '<ui-input type="date" value="2026-08-14" format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    field.format = 'yyyy/MM/dd';
+
+    assert.equal(field.querySelector('.ui4u-input__native').value, '2026/08/14');
+  });
+
+  /* --- manual entry ------------------------------------------------------ */
+
+  it('is writable, not read-only', () => {
+    const field = mount('<ui-input type="date"></ui-input>').querySelector('ui-input');
+    assert.equal(field.querySelector('.ui4u-input__native').readOnly, false);
+  });
+
+  it('accepts a hand-typed date in the chosen format', () => {
+    const field = mount('<ui-input type="date" format="dd/MM/yyyy"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    typed(field, '14/08/2026');
+
+    assert.equal(field.value, '2026-08-14');
+    assert.equal(field.querySelector('.ui4u-input__native').value, '14/08/2026');
+  });
+
+  it('leaves the text alone while it does not parse', () => {
+    const field = mount('<ui-input type="date" format="dd/MM/yyyy"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    const native = typed(field, '14/0');
+
+    assert.equal(field.value, '', 'nothing committed');
+    assert.equal(native.value, '14/0', 'and the text is not rewritten mid-word');
+  });
+
+  it('rejects text in the wrong order rather than guessing', () => {
+    const field = mount('<ui-input type="date" format="yyyy/MM/dd"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    typed(field, '14/08/2026');
+
+    assert.equal(field.value, '', '14/08/2026 is not yyyy/MM/dd');
+  });
+
+  it('refuses a typed date outside its bounds', () => {
+    const field = mount(
+      '<ui-input type="date" format="dd/MM/yyyy" min="2026-01-01" max="2026-12-31"></ui-input>'
+    ).querySelector('ui-input');
+
+    typed(field, '14/08/2025');
+
+    assert.equal(field.value, '');
+  });
+
+  it('reads a hand-typed range', () => {
+    const field = mount(
+      '<ui-input type="date" range format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    typed(field, '10/08/2026 → 14/08/2026');
+
+    assert.equal(field.value, '2026-08-10/2026-08-14');
+  });
+
+  it('stores an ISO range whatever the display format', () => {
+    const field = mount(
+      '<ui-input type="date" range value="2026-08-10/2026-08-14" format="dd/MM/yyyy"></ui-input>'
+    ).querySelector('ui-input');
+
+    assert.equal(field.querySelector('.ui4u-input__native').value, '10/08/2026 → 14/08/2026');
+  });
+
+  it('applies the format through configure', () => {
+    const field = mount('<ui-input type="date" value="2026-08-14"></ui-input>').querySelector(
+      'ui-input'
+    );
+
+    field.configure({ format: 'dd.MM.yyyy' });
+
+    assert.equal(field.querySelector('.ui4u-input__native').value, '14.08.2026');
   });
 });
