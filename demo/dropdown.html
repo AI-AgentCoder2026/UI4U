@@ -8,6 +8,19 @@
       name="description"
       content="ui-dropdown — a custom listbox with a real button trigger, a portalled panel and full keyboard and screen reader support."
     />
+    <!--
+      Restores the theme chosen on any other demo page. Inline and blocking on
+      purpose: a deferred or module script would run after the stylesheet, and
+      the page would flash dark before settling on light.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('ui4u-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (error) {
+        /* storage unavailable — the default in the markup stands */
+      }
+    </script>
     <link rel="stylesheet" href="/dist/ui4u.css" />
     <link rel="stylesheet" href="/src/styles/reset.css" />
     <link rel="stylesheet" href="/demo/demo.css" />

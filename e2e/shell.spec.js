@@ -173,3 +173,50 @@ test('the home link works from every demo', async ({ page }) => {
   await expect(page).toHaveURL(/index\.html$/);
   await expect(page.locator('#catalogue tbody tr')).toHaveCount(15);
 });
+
+/* --- theme persistence ---------------------------------------------------- */
+
+test('the chosen theme survives moving to another demo', async ({ page }) => {
+  await page.goto('/demo/tabs.html');
+
+  // Start from dark, which every page's markup declares.
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  await page.locator('ui-button[data-theme-toggle]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+  await page.locator(`${NAV} ui-button`, { hasText: 'ui-disclosure' }).click();
+  await expect(page).toHaveURL(/disclosure\.html$/);
+
+  // The old behaviour reset to the markup default on every navigation.
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+test('the theme survives a full reload, with no flash of the default', async ({ page }) => {
+  await page.goto('/demo/input.html');
+  await page.locator('ui-button[data-theme-toggle]').click();
+  await page.locator('ui-button[data-theme-toggle]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'contrast');
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'contrast');
+});
+
+test('the theme is applied before the page paints', async ({ page }) => {
+  await page.goto('/demo/form.html');
+  await page.evaluate(() => localStorage.setItem('ui4u-theme', 'light'));
+
+  // Sampled as early as the document allows: a script that ran after the
+  // stylesheet would still read dark here and then flip.
+  await page.goto('/demo/form.html');
+  const atParse = await page.evaluate(() => document.documentElement.dataset.theme ?? null);
+  expect(atParse).toBe('light');
+});
+
+test('a page with no stored theme keeps its markup default', async ({ page }) => {
+  await page.goto('/demo/sidebar.html');
+  await page.evaluate(() => localStorage.clear());
+
+  await page.goto('/demo/sidebar.html');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});

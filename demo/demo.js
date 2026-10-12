@@ -97,7 +97,21 @@ function wireCopyButtons(root = document) {
   }
 }
 
-/** Cycles `data-theme` through the built-in themes. */
+/**
+ * Where the chosen theme is remembered.
+ *
+ * The theme lives on `<html data-theme>`, which is per-document — without
+ * storage, every demo page starts again from the default its markup declares
+ * and a reader who picked light is thrown back into dark on the next click.
+ */
+const THEME_KEY = 'ui4u-theme';
+
+/**
+ * Cycles `data-theme` through the built-in themes and remembers the choice.
+ *
+ * @param {HTMLElement|null} [button]
+ * @returns {void}
+ */
 function wireThemeToggle(button = document.querySelector('[data-theme-toggle]')) {
   if (!button) return;
   const order = ['dark', 'light', 'contrast'];
@@ -106,6 +120,14 @@ function wireThemeToggle(button = document.querySelector('[data-theme-toggle]'))
     const root = document.documentElement;
     const current = order.indexOf(root.dataset.theme ?? 'dark');
     root.dataset.theme = order[(current + 1) % order.length];
+
+    // Storage can throw — a sandboxed iframe or private mode — and a theme that
+    // will not persist is still worth having for this page.
+    try {
+      localStorage.setItem(THEME_KEY, root.dataset.theme);
+    } catch {
+      /* not available; the choice lasts for this document only */
+    }
   });
 }
 
