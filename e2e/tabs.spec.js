@@ -75,12 +75,16 @@ test('moves between tabs with the arrow keys', async ({ page }) => {
 });
 
 test('applies design tokens from the linked stylesheet', async ({ page }) => {
-  const radius = await page
-    .locator(`${MAIN} .ui4u-tabs__list`)
-    .evaluate((node) => getComputedStyle(node).borderTopLeftRadius);
+  const radii = await page.locator(`${MAIN} .ui4u-tabs__list`).evaluate((node) => ({
+    rendered: getComputedStyle(node).borderTopLeftRadius,
+    root: getComputedStyle(document.documentElement).getPropertyValue('--ui4u-radius-lg').trim(),
+  }));
 
-  // --ui4u-radius-lg resolves to 16px in the default theme.
-  expect(radius).toBe('16px');
+  // Compared against the token rather than a literal px, so the assertion tests
+  // the contract — the component reads `--ui4u-radius-lg` — and survives the
+  // palette being restyled.
+  expect(radii.rendered).toBe(radii.root);
+  expect(radii.root).not.toBe('');
 });
 
 test('the theme switcher updates data-theme', async ({ page }) => {

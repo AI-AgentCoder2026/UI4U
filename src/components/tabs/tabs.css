@@ -26,10 +26,9 @@ ui-tabs .ui4u-tabs__list {
   margin-bottom: var(--ui4u-space-4);
   border: 1px solid var(--ui4u-border);
   border-radius: var(--ui4u-radius-lg);
-  background: var(--ui4u-surface-glass);
+  /* Flat: a tab bar is a control strip, not something floating over the page. */
+  background: var(--ui4u-surface-2);
   box-shadow: var(--ui4u-shadow-sm), var(--ui4u-shadow-inset);
-  -webkit-backdrop-filter: var(--ui4u-glass-blur);
-  backdrop-filter: var(--ui4u-glass-blur);
 
   /* Narrow screens: keep every tab reachable without wrapping. */
   max-width: 100%;

@@ -83,6 +83,9 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 
 - Tokens live in `src/styles/tokens.css` as CSS custom properties; components reference tokens, never literals
 - A theme is a token override (`[data-theme="dark"]`), never a fork of component CSS
+- **Surface tiering** — a _data_ surface (something you read into: `ui-tablegrid`, `ui-disclosure`, `ui-input`) reads `--ui4u-surface`/`--ui4u-surface-2` and stays flat and opaque, so its contrast ratio does not shift with what scrolls underneath. A _float_ (something genuinely above the page: `ui-popup`, `ui-tooltip`, `ui-dropdown`'s panel, secondary `ui-button`) reads `--ui4u-surface-glass*`. Glass on everything is the reason a design system reads as a template; keep the translucent tier scarce or it stops meaning anything
+- **The palette is chromatic, not neutral.** The ground is indigo-slate at every step so the glass tier has a hue to refract. Two accents carry meaning: **ice** (`--ui4u-primary`) is structural, **amber** (`--ui4u-warning`) is signal. Everything else is status, a separate axis from brand, and stays quiet until something is actually wrong
+- **Type has two voices.** Prose is the system sans. Captions, eyebrows, legends, column heads and figures a reader compares against each other use `--ui4u-font-label`, which is the mono stack. Never mono for button text, tab labels or nav items — a sentence in mono is a costume, not a choice
 - Visual language: modern/futuristic — glass surfaces, restrained glow, generous spacing — expressed through tokens
 - Motion stays under 200ms and honors `prefers-reduced-motion`
 

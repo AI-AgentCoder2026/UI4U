@@ -6,88 +6,116 @@
  *
  * Apply with `data-theme` on <html> (or any ancestor):
  *   <html data-theme="dark">
+ *
+ * Three themes, one structure. `dark` and the OS-preference block are the same
+ * values written twice on purpose: a consumer who never sets `data-theme` still
+ * gets a deliberate ground, and the duplication is what buys that.
  */
 
 /* Explicit light theme, so it can win over the media query below. */
 [data-theme='light'] {
   color-scheme: light;
 
-  --ui4u-bg: #eef2f8;
+  --ui4u-bg: #e7ecf5;
+  --ui4u-bg-pattern:
+    radial-gradient(1100px 520px at 8% -12%, rgba(23, 104, 143, 0.09), transparent 60%),
+    radial-gradient(760px 420px at 96% 8%, rgba(169, 103, 8, 0.05), transparent 62%);
   --ui4u-surface: #ffffff;
-  --ui4u-surface-2: #f4f7fb;
-  --ui4u-surface-3: #e9eff7;
-  --ui4u-surface-sunken: #e6ecf5;
-  --ui4u-surface-glass: rgba(255, 255, 255, 0.72);
-  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.88);
+  --ui4u-surface-2: #f1f5fc;
+  --ui4u-surface-3: #e3e9f4;
+  --ui4u-surface-sunken: #dce3f0;
+  --ui4u-surface-glass: rgba(255, 255, 255, 0.74);
+  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.9);
 
-  --ui4u-text: #0b1220;
-  --ui4u-text-muted: #55637a;
-  --ui4u-text-subtle: #8595ad;
-  --ui4u-text-inverse: #f6f9ff;
+  --ui4u-text: #0a0f1e;
+  --ui4u-text-muted: #48536e;
+  --ui4u-text-subtle: #6e7a96;
+  --ui4u-text-inverse: #f7faff;
+  --ui4u-text-link: #17688f;
 
-  --ui4u-border: rgba(15, 32, 60, 0.1);
-  --ui4u-border-strong: rgba(15, 32, 60, 0.2);
-  --ui4u-divider: rgba(15, 32, 60, 0.08);
+  --ui4u-border: rgba(16, 28, 56, 0.12);
+  --ui4u-border-strong: rgba(16, 28, 56, 0.26);
+  --ui4u-divider: rgba(16, 28, 56, 0.09);
 
-  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+
+  --ui4u-aurora:
+    radial-gradient(420px 180px at 12% 0%, rgba(23, 104, 143, 0.16), transparent 70%),
+    radial-gradient(320px 160px at 88% 10%, rgba(169, 103, 8, 0.1), transparent 72%);
 }
 
-/* Futuristic dark theme — deep space surfaces, restrained cyan/violet glow. */
+/**
+ * Dark theme — the hero.
+ *
+ * Indigo-slate, not black. Every surface is the same blue cast a few steps
+ * lighter than the ground, which is what lets the translucent tier read as
+ * glass: the blur has a hue to pick up.
+ *
+ * Ice and amber are the only two accents that carry meaning here. Amber is the
+ * signal colour and is deliberately kept out of `--ui4u-primary`, so "needs
+ * attention" never looks like "selected".
+ */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --ui4u-primary: #38bdf8;
-  --ui4u-primary-hover: #7dd3fc;
-  --ui4u-primary-active: #0ea5e9;
-  --ui4u-primary-soft: rgba(56, 189, 248, 0.16);
-  --ui4u-primary-contrast: #04121f;
+  --ui4u-primary: #7fc4e8;
+  --ui4u-primary-hover: #a5d8f2;
+  --ui4u-primary-active: #5faad4;
+  --ui4u-primary-soft: rgba(127, 196, 232, 0.14);
+  --ui4u-primary-contrast: #04121c;
 
-  --ui4u-accent: #a78bfa;
-  --ui4u-accent-hover: #c4b5fd;
-  --ui4u-accent-soft: rgba(167, 139, 250, 0.18);
-  --ui4u-accent-contrast: #120a2b;
+  --ui4u-accent: #9b8cf5;
+  --ui4u-accent-hover: #b8acf9;
+  --ui4u-accent-soft: rgba(155, 140, 245, 0.16);
+  --ui4u-accent-contrast: #100c28;
 
-  --ui4u-bg: #05070f;
+  --ui4u-bg: #080b16;
   --ui4u-bg-pattern:
-    radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
-    radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
-  --ui4u-surface: rgba(17, 24, 39, 0.72);
-  --ui4u-surface-2: rgba(28, 37, 55, 0.66);
-  --ui4u-surface-3: rgba(38, 50, 72, 0.6);
-  --ui4u-surface-sunken: rgba(4, 7, 15, 0.6);
-  --ui4u-surface-glass: rgba(15, 23, 42, 0.62);
-  --ui4u-surface-glass-strong: rgba(15, 23, 42, 0.82);
-  --ui4u-overlay: rgba(2, 5, 12, 0.68);
+    radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.09), transparent 62%),
+    radial-gradient(720px 400px at 94% 6%, rgba(245, 165, 36, 0.055), transparent 64%);
+  --ui4u-surface: #0e1322;
+  --ui4u-surface-2: #141a2c;
+  --ui4u-surface-3: #1b2340;
+  --ui4u-surface-sunken: #06080f;
+  --ui4u-surface-glass: rgba(24, 32, 58, 0.62);
+  --ui4u-surface-glass-strong: rgba(22, 30, 54, 0.86);
+  --ui4u-overlay: rgba(4, 6, 14, 0.72);
 
-  --ui4u-text: #e8eefc;
-  --ui4u-text-muted: #93a3bd;
-  --ui4u-text-subtle: #64748b;
-  --ui4u-text-inverse: #04101f;
-  --ui4u-text-link: #7dd3fc;
+  --ui4u-text: #e6ebf8;
+  --ui4u-text-muted: #98a4c2;
+  --ui4u-text-subtle: #6e7c9e;
+  --ui4u-text-inverse: #06080f;
+  --ui4u-text-link: #a5d8f2;
 
-  --ui4u-border: rgba(148, 180, 255, 0.14);
-  --ui4u-border-strong: rgba(148, 180, 255, 0.28);
-  --ui4u-border-subtle: rgba(148, 180, 255, 0.08);
-  --ui4u-divider: rgba(148, 180, 255, 0.12);
+  --ui4u-border: rgba(154, 176, 224, 0.14);
+  --ui4u-border-strong: rgba(154, 176, 224, 0.3);
+  --ui4u-border-subtle: rgba(154, 176, 224, 0.08);
+  --ui4u-divider: rgba(154, 176, 224, 0.11);
 
-  --ui4u-success: #34d399;
-  --ui4u-success-soft: rgba(52, 211, 153, 0.16);
-  --ui4u-warning: #fbbf24;
-  --ui4u-warning-soft: rgba(251, 191, 36, 0.16);
-  --ui4u-danger: #fb7185;
-  --ui4u-danger-hover: #f43f5e;
-  --ui4u-danger-soft: rgba(251, 113, 133, 0.16);
-  --ui4u-info: #60a5fa;
-  --ui4u-info-soft: rgba(96, 165, 250, 0.16);
+  --ui4u-success: #3fc79b;
+  --ui4u-success-soft: rgba(63, 199, 155, 0.15);
+  --ui4u-warning: #f5a524;
+  --ui4u-warning-soft: rgba(245, 165, 36, 0.16);
+  --ui4u-danger: #ee5f73;
+  --ui4u-danger-hover: #f97a8a;
+  --ui4u-danger-soft: rgba(238, 95, 115, 0.16);
+  --ui4u-info: #7b8fd1;
+  --ui4u-info-soft: rgba(123, 143, 209, 0.16);
 
-  --ui4u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --ui4u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
-  --ui4u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
-  --ui4u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
-  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* Blue-black, and tighter than a consumer app would use: glass casts an
+     ambient shadow, not a poster shadow. */
+  --ui4u-shadow-xs: 0 1px 2px rgba(3, 5, 12, 0.5);
+  --ui4u-shadow-sm: 0 1px 2px rgba(3, 5, 12, 0.45), 0 3px 10px rgba(3, 5, 12, 0.4);
+  --ui4u-shadow-md: 0 6px 18px rgba(3, 5, 12, 0.5), 0 14px 34px rgba(3, 5, 12, 0.4);
+  --ui4u-shadow-lg: 0 16px 40px rgba(3, 5, 12, 0.58), 0 40px 80px rgba(3, 5, 12, 0.48);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(176, 205, 255, 0.08);
 
-  --ui4u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
-  --ui4u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+  --ui4u-glow-primary: 0 0 0 1px rgba(127, 196, 232, 0.34), 0 0 18px rgba(127, 196, 232, 0.22);
+  --ui4u-glow-accent: 0 0 0 1px rgba(155, 140, 245, 0.34), 0 0 18px rgba(155, 140, 245, 0.2);
+
+  --ui4u-aurora:
+    radial-gradient(420px 180px at 12% 0%, rgba(127, 196, 232, 0.13), transparent 70%),
+    radial-gradient(320px 160px at 88% 10%, rgba(245, 165, 36, 0.08), transparent 72%);
 
   --ui4u-focus-ring-offset-shadow: 0 0 0 var(--ui4u-focus-ring-offset) var(--ui4u-bg);
 }
@@ -97,52 +125,62 @@
   :root:not([data-theme]) {
     color-scheme: dark;
 
-    --ui4u-primary: #38bdf8;
-    --ui4u-primary-hover: #7dd3fc;
-    --ui4u-primary-active: #0ea5e9;
-    --ui4u-primary-soft: rgba(56, 189, 248, 0.16);
-    --ui4u-primary-contrast: #04121f;
+    --ui4u-primary: #7fc4e8;
+    --ui4u-primary-hover: #a5d8f2;
+    --ui4u-primary-active: #5faad4;
+    --ui4u-primary-soft: rgba(127, 196, 232, 0.14);
+    --ui4u-primary-contrast: #04121c;
 
-    --ui4u-accent: #a78bfa;
-    --ui4u-accent-hover: #c4b5fd;
-    --ui4u-accent-soft: rgba(167, 139, 250, 0.18);
-    --ui4u-accent-contrast: #120a2b;
+    --ui4u-accent: #9b8cf5;
+    --ui4u-accent-hover: #b8acf9;
+    --ui4u-accent-soft: rgba(155, 140, 245, 0.16);
+    --ui4u-accent-contrast: #100c28;
 
-    --ui4u-bg: #05070f;
+    --ui4u-bg: #080b16;
     --ui4u-bg-pattern:
-      radial-gradient(1000px 520px at 12% -8%, rgba(56, 189, 248, 0.18), transparent 62%),
-      radial-gradient(900px 480px at 92% 4%, rgba(167, 139, 250, 0.16), transparent 60%);
-    --ui4u-surface: rgba(17, 24, 39, 0.72);
-    --ui4u-surface-2: rgba(28, 37, 55, 0.66);
-    --ui4u-surface-3: rgba(38, 50, 72, 0.6);
-    --ui4u-surface-sunken: rgba(4, 7, 15, 0.6);
-    --ui4u-surface-glass: rgba(15, 23, 42, 0.62);
-    --ui4u-surface-glass-strong: rgba(15, 23, 42, 0.82);
-    --ui4u-overlay: rgba(2, 5, 12, 0.68);
+      radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.09), transparent 62%),
+      radial-gradient(720px 400px at 94% 6%, rgba(245, 165, 36, 0.055), transparent 64%);
+    --ui4u-surface: #0e1322;
+    --ui4u-surface-2: #141a2c;
+    --ui4u-surface-3: #1b2340;
+    --ui4u-surface-sunken: #06080f;
+    --ui4u-surface-glass: rgba(24, 32, 58, 0.62);
+    --ui4u-surface-glass-strong: rgba(22, 30, 54, 0.86);
+    --ui4u-overlay: rgba(4, 6, 14, 0.72);
 
-    --ui4u-text: #e8eefc;
-    --ui4u-text-muted: #93a3bd;
-    --ui4u-text-subtle: #64748b;
-    --ui4u-text-inverse: #04101f;
-    --ui4u-text-link: #7dd3fc;
+    --ui4u-text: #e6ebf8;
+    --ui4u-text-muted: #98a4c2;
+    --ui4u-text-subtle: #6e7c9e;
+    --ui4u-text-inverse: #06080f;
+    --ui4u-text-link: #a5d8f2;
 
-    --ui4u-border: rgba(148, 180, 255, 0.14);
-    --ui4u-border-strong: rgba(148, 180, 255, 0.28);
-    --ui4u-border-subtle: rgba(148, 180, 255, 0.08);
-    --ui4u-divider: rgba(148, 180, 255, 0.12);
+    --ui4u-border: rgba(154, 176, 224, 0.14);
+    --ui4u-border-strong: rgba(154, 176, 224, 0.3);
+    --ui4u-border-subtle: rgba(154, 176, 224, 0.08);
+    --ui4u-divider: rgba(154, 176, 224, 0.11);
 
-    --ui4u-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --ui4u-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.4);
-    --ui4u-shadow-md: 0 6px 16px rgba(0, 0, 0, 0.48), 0 16px 36px rgba(0, 0, 0, 0.44);
-    --ui4u-shadow-lg: 0 14px 32px rgba(0, 0, 0, 0.55), 0 36px 72px rgba(0, 0, 0, 0.55);
-    --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --ui4u-shadow-xs: 0 1px 2px rgba(3, 5, 12, 0.5);
+    --ui4u-shadow-sm: 0 1px 2px rgba(3, 5, 12, 0.45), 0 3px 10px rgba(3, 5, 12, 0.4);
+    --ui4u-shadow-md: 0 6px 18px rgba(3, 5, 12, 0.5), 0 14px 34px rgba(3, 5, 12, 0.4);
+    --ui4u-shadow-lg: 0 16px 40px rgba(3, 5, 12, 0.58), 0 40px 80px rgba(3, 5, 12, 0.48);
+    --ui4u-shadow-inset: inset 0 1px 0 rgba(176, 205, 255, 0.08);
 
-    --ui4u-glow-primary: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 0 24px rgba(56, 189, 248, 0.32);
-    --ui4u-glow-accent: 0 0 0 1px rgba(167, 139, 250, 0.42), 0 0 24px rgba(167, 139, 250, 0.3);
+    --ui4u-glow-primary: 0 0 0 1px rgba(127, 196, 232, 0.34), 0 0 18px rgba(127, 196, 232, 0.22);
+    --ui4u-glow-accent: 0 0 0 1px rgba(155, 140, 245, 0.34), 0 0 18px rgba(155, 140, 245, 0.2);
+
+    --ui4u-aurora:
+      radial-gradient(420px 180px at 12% 0%, rgba(127, 196, 232, 0.13), transparent 70%),
+      radial-gradient(320px 160px at 88% 10%, rgba(245, 165, 36, 0.08), transparent 72%);
   }
 }
 
-/* High-contrast theme — WCAG AAA oriented, no translucency, heavy borders. */
+/**
+ * High-contrast theme — WCAG AAA oriented, no translucency, heavy borders.
+ *
+ * The accents go to their brightest, because on pure black a mid-tone ice
+ * loses the contrast that makes it usable as a selection colour. Amber stays
+ * amber: the signal must survive every theme, or it is decoration.
+ */
 [data-theme='contrast'] {
   color-scheme: dark;
 
@@ -153,23 +191,32 @@
   --ui4u-surface-sunken: #000000;
   --ui4u-surface-glass: #000000;
   --ui4u-surface-glass-strong: #000000;
-  --ui4u-overlay: rgba(0, 0, 0, 0.9);
+  --ui4u-overlay: rgba(0, 0, 0, 0.92);
 
   --ui4u-text: #ffffff;
-  --ui4u-text-muted: #e0e0e0;
-  --ui4u-text-subtle: #c0c0c0;
+  --ui4u-text-muted: #e6e6e6;
+  --ui4u-text-subtle: #c4c4c4;
   --ui4u-text-inverse: #000000;
-  --ui4u-text-link: #7dd3fc;
+  --ui4u-text-link: #9bd9f5;
 
-  --ui4u-primary: #7dd3fc;
-  --ui4u-primary-hover: #bae6fd;
+  --ui4u-primary: #9bd9f5;
+  --ui4u-primary-hover: #c7e9fb;
+  --ui4u-primary-active: #7cc4e6;
   --ui4u-primary-contrast: #000000;
-  --ui4u-accent: #c4b5fd;
+  --ui4u-accent: #c4bcfa;
+  --ui4u-accent-hover: #dcd6ff;
   --ui4u-accent-contrast: #000000;
 
-  --ui4u-border: rgba(255, 255, 255, 0.55);
+  --ui4u-success: #5fe0b4;
+  --ui4u-warning: #ffc24d;
+  --ui4u-danger: #ff8fa0;
+  --ui4u-danger-hover: #ffb0bd;
+  --ui4u-info: #a9b8ff;
+
+  --ui4u-border: rgba(255, 255, 255, 0.6);
   --ui4u-border-strong: #ffffff;
-  --ui4u-divider: rgba(255, 255, 255, 0.4);
+  --ui4u-border-subtle: rgba(255, 255, 255, 0.35);
+  --ui4u-divider: rgba(255, 255, 255, 0.45);
 
   --ui4u-shadow-xs: none;
   --ui4u-shadow-sm: none;
@@ -178,5 +225,9 @@
   --ui4u-shadow-inset: none;
 
   --ui4u-glass-blur: none;
+  --ui4u-aurora: none;
+  --ui4u-glow-primary: none;
+  --ui4u-glow-accent: none;
+  --ui4u-bg-pattern: none;
   --ui4u-focus-ring-width: 3px;
 }

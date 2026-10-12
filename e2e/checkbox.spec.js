@@ -186,12 +186,31 @@ test('every row is a comfortable touch target', async ({ page }) => {
 });
 
 test('applies design tokens from the linked stylesheet', async ({ page }) => {
-  const accent = await page
-    .locator(`${MAIN} input.ui4u-checkbox__native`)
-    .evaluate((node) => getComputedStyle(node).accentColor);
+  const applied = await page.locator(`${MAIN} input.ui4u-checkbox__native`).evaluate((node) => {
+    const token = getComputedStyle(document.documentElement)
+      .getPropertyValue('--ui4u-primary')
+      .trim();
 
-  // --ui4u-primary is #38bdf8 in the dark theme the demo page ships with.
-  expect(accent).toBe('rgb(56, 189, 248)');
+    /*
+     * The token is authored as hex; `accent-color` reports it as rgb(). A
+     * throwaway probe lets the browser normalise it, so the two sides can be
+     * compared without either one being written out by hand.
+     */
+    const probe = document.createElement('div');
+    probe.style.accentColor = token;
+    document.body.appendChild(probe);
+    const normalised = getComputedStyle(probe).accentColor;
+    probe.remove();
+
+    return { accent: getComputedStyle(node).accentColor, normalised, token };
+  });
+
+  // Read the token rather than a literal hex: the whole point of the token
+  // layer is that the palette can change without a test going stale, and a
+  // test that pins a colour is just a comment that fails.
+  expect(applied.token).not.toBe('');
+  expect(applied.normalised).not.toBe('');
+  expect(applied.accent).toBe(applied.normalised);
 });
 
 /**

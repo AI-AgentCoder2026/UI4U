@@ -71,11 +71,79 @@
         white-space: nowrap;
       }
 
+      /*
+       * The signal beacon. Amber means there is something open — the colour
+       * operations already uses for degraded — and it pulses only then, so a
+       * glance across the room answers "is this quiet?" without reading a word.
+       */
       .app-bar__dot {
-        width: 0.55rem;
-        height: 0.55rem;
+        width: 0.5rem;
+        height: 0.5rem;
         border-radius: var(--ui4u-radius-full);
         background: var(--ui4u-success);
+        box-shadow: 0 0 0 3px var(--ui4u-success-soft);
+        transition:
+          background-color var(--ui4u-duration-base) var(--ui4u-ease-standard),
+          box-shadow var(--ui4u-duration-base) var(--ui4u-ease-standard);
+      }
+
+      .app-bar__dot[data-signal='open'] {
+        background: var(--ui4u-warning);
+        box-shadow: 0 0 0 3px var(--ui4u-warning-soft);
+        animation: beacon 2.4s var(--ui4u-ease-standard) infinite;
+      }
+
+      @keyframes beacon {
+        0%,
+        100% {
+          box-shadow: 0 0 0 3px var(--ui4u-warning-soft);
+        }
+        50% {
+          box-shadow: 0 0 0 7px transparent;
+        }
+      }
+
+      /* Motion off means the beacon holds a steady ring, not a faster loop. */
+      @media (prefers-reduced-motion: reduce) {
+        .app-bar__dot[data-signal='open'] {
+          animation: none;
+        }
+      }
+
+      /* The beacon's readout. A dot with no number is decoration; the count is
+         what makes it an indicator. */
+      .app-bar__state {
+        padding-inline-end: var(--ui4u-space-3);
+        font-family: var(--ui4u-font-label);
+        font-size: var(--ui4u-font-size-xs);
+        letter-spacing: var(--ui4u-tracking-wide);
+        text-transform: uppercase;
+        white-space: nowrap;
+        color: var(--ui4u-warning);
+      }
+
+      .app-bar__state[data-signal='clear'] {
+        color: var(--ui4u-success);
+      }
+
+      /* --- the channel spine (signature) --------------------------------- */
+      /*
+       * One tick per row, on the row's signal axis: the release channel in one
+       * table, the incident severity in the other. This is the only thing on the
+       * page that answers "is anything off-baseline?" at a glance, and it is
+       * true information rather than decoration — jade for the safe baseline,
+       * amber for everything ahead of or worse than it.
+       *
+       * Drawn as an inset edge on the cell itself so it tracks the table
+       * through sorting, paging and filtering without any bookkeeping: an
+       * absolutely positioned rail would have to be told when rows moved.
+       */
+      [data-app-grid] td[data-spine='ok'] {
+        box-shadow: inset 3px 0 0 var(--ui4u-success);
+      }
+
+      [data-app-grid] td[data-spine='alert'] {
+        box-shadow: inset 3px 0 0 var(--ui4u-warning);
       }
 
       .app-bar ui-input {
@@ -109,9 +177,15 @@
 
       .kpi__value {
         margin: 0;
+        /*
+         * A readout, not a headline. Mono with tabular figures so four tiles
+         * line up digit-for-digit and a change in the last column is legible
+         * without reading it.
+         */
+        font-family: var(--ui4u-font-label);
+        font-variant-numeric: tabular-nums;
         font-size: var(--ui4u-font-size-2xl);
         font-weight: var(--ui4u-weight-bold);
-        font-variant-numeric: tabular-nums;
         letter-spacing: var(--ui4u-tracking-tight);
       }
 
@@ -183,7 +257,11 @@
       -->
       <ui-layout id="shell">
         <ui-toolbar slot="top" label="Application" class="app-bar">
-          <span class="app-bar__brand"><span class="app-bar__dot"></span>Beacon</span>
+          <span class="app-bar__brand"
+            ><span class="app-bar__dot" id="beacon" data-signal="open"></span>Beacon</span
+          >
+
+          <span class="app-bar__state" id="beacon-label">2 open</span>
 
           <ui-input
             id="global-search"
@@ -391,6 +469,62 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
 
       const SEVERITIES = ['low', 'medium', 'high', 'critical'];
 
+      /**
+       * The rota. Real data rather than a hard-coded "2 open" on a tile, so the
+       * beacon, the KPI and the incident list below all read from one place and
+       * cannot disagree with each other.
+       *
+       * @type {Array<{ id: string, title: string, severity: string, status: string, owner: string, budget: string, due: string }>}
+       */
+      const INCIDENTS = [
+        {
+          id: 'INC-241',
+          title: 'Checkout latency above p95',
+          severity: 'high',
+          status: 'mitigating',
+          owner: 'nadia',
+          budget: '45000',
+          due: '2026-12-18',
+        },
+        {
+          id: 'INC-238',
+          title: 'Webhook retries climbing',
+          severity: 'medium',
+          status: 'monitoring',
+          owner: 'tom',
+          budget: '12000',
+          due: '2026-11-30',
+        },
+        {
+          id: 'INC-235',
+          title: 'Docs build timing out',
+          severity: 'low',
+          status: 'resolved',
+          owner: 'jiro',
+          budget: '4000',
+          due: '2026-10-05',
+        },
+      ];
+
+      /** Anything that is not `resolved` still needs somebody looking at it. */
+      const openIncidents = () => INCIDENTS.filter((incident) => incident.status !== 'resolved');
+
+      /**
+       * Is this row at its safe baseline?
+       *
+       * The one place that knows what "normal" means for a release channel and
+       * for an incident severity. The spine renders the answer; it does not
+       * decide it.
+       *
+       * @param {Record<string, unknown>} row
+       * @returns {boolean}
+       */
+      function isBaseline(row) {
+        if ('channel' in row) return row.channel === 'stable';
+        if ('severity' in row) return row.severity === 'low';
+        return true;
+      }
+
       /** How many releases the console will hold in the comparison basket. */
       const MAX_COMPARE = 3;
 
@@ -457,6 +591,23 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
         statusEvent.textContent = message;
       };
 
+      /*
+       * The beacon, driven by the incident list rather than a constant: amber
+       * while anything is unresolved, jade when the rota is clear. `resolved` is
+       * the only status that counts as closed, so anything else — including a
+       * new one nobody has classified — stays lit.
+       */
+      const beacon = /** @type {HTMLElement} */ (document.getElementById('beacon'));
+      const beaconLabel = /** @type {HTMLElement} */ (document.getElementById('beacon-label'));
+
+      (() => {
+        const open = openIncidents().length;
+        const lit = open > 0;
+        beacon.setAttribute('data-signal', lit ? 'open' : 'clear');
+        beaconLabel.setAttribute('data-signal', lit ? 'open' : 'clear');
+        beaconLabel.textContent = lit ? `${open} open` : 'clear';
+      })();
+
       /* --------------------------------------------------- the shared grid */
 
       /** @type {Array<[string, string, string]>} */
@@ -469,13 +620,37 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
         ['Status', 'status', 'text'],
       ];
 
+      /*
+       * The rollup gets its own spec rather than reusing the release one with
+       * blank filler cells: "how many releases reached this channel" is a
+       * number, and leaving it empty would have been a lie told by omission.
+       */
+      const CHANNEL_COLUMNS = [
+        ['Channel', 'channel', 'text'],
+        ['Releases', 'releases', 'number'],
+        ['Downloads', 'downloads', 'number'],
+      ];
+
+      /*
+       * Five columns, not seven. Owner and budget live in the form below, and
+       * repeating them here only crowds the Title — which is the one column a person
+       * actually scans this table for.
+       */
+      const INCIDENT_COLUMNS = [
+        ['Incident', 'id', 'text'],
+        ['Title', 'title', 'text'],
+        ['Severity', 'severity', 'text'],
+        ['Status', 'status', 'text'],
+        ['Review by', 'due', 'text'],
+      ];
+
       /**
        * Builds a ui-tablegrid from a column spec and rows.
        *
        * @param {string} label
        * @param {Array<[string, string, string]>} columns
        * @param {Array<Record<string, string|number>>} rows
-       * @param {{ striped?: boolean, selectable?: boolean, copyable?: boolean, perPage?: number, searchable?: boolean, advanced?: boolean, toolbar?: boolean }} [options]
+       * @param {{ striped?: boolean, selectable?: boolean, copyable?: boolean, perPage?: number, searchable?: boolean, advanced?: boolean, toolbar?: boolean, spine?: string|null }} [options]
        * @returns {HTMLElement}
        */
       function tableGrid(label, columns, rows, options = {}) {
@@ -487,6 +662,7 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
           searchable = false,
           advanced = false,
           toolbar = false,
+          spine = null,
         } = options;
 
         const grid = node('ui-tablegrid', {
@@ -545,7 +721,13 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
           const tr = node('tr', { 'data-row': JSON.stringify(row) });
           for (const [, key] of columns) {
             const raw = String(row[key] ?? '');
-            tr.appendChild(node('td', { 'data-value': raw, text: formatFor(key, raw) }));
+            const props = { 'data-value': raw, text: formatFor(key, raw) };
+            // The spine marks the row's signal axis — release channel, incident
+            // severity. Only two states, and deciding which one is "fine" is a
+            // judgement about the domain, so it belongs here and not in a
+            // selector somewhere in a stylesheet.
+            if (key === spine) props['data-spine'] = isBaseline(row) ? 'ok' : 'alert';
+            tr.appendChild(node('td', props));
           }
           tbody.appendChild(tr);
         }
@@ -556,25 +738,31 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
 
       /** @param {string} key @param {string} value @returns {string} */
       function formatFor(key, value) {
-        if (key === 'downloads' || key === 'size') return group(Number(value));
+        if (key === 'downloads' || key === 'size' || key === 'releases') {
+          return group(Number(value));
+        }
         return value;
       }
 
-      /** @returns {Array<Record<string, string>>} downloads rolled up per channel */
+      /** @returns {Array<Record<string, string>>} downloads and count per channel */
       function channelRows() {
-        /** @type {Map<string, number>} */
+        /** @type {Map<string, { releases: number, downloads: number }>} */
         const totals = new Map();
         for (const row of RELEASES) {
-          totals.set(row.channel, (totals.get(row.channel) ?? 0) + row.downloads);
+          const seen = totals.get(row.channel) ?? { releases: 0, downloads: 0 };
+          seen.releases += 1;
+          seen.downloads += row.downloads;
+          totals.set(row.channel, seen);
         }
-        return [...totals].map(([channel, downloads]) => ({
-          version: channel,
-          channel: `${totals.size} channels`,
-          downloads: String(downloads),
-          size: '',
-          published: '',
-          status: '',
-        }));
+        // Stable first, then whatever is ahead of it — the order an operator
+        // reads them in.
+        return [...totals]
+          .sort(([a], [b]) => (a === 'stable' ? -1 : b === 'stable' ? 1 : a.localeCompare(b)))
+          .map(([channel, seen]) => ({
+            channel,
+            releases: String(seen.releases),
+            downloads: String(seen.downloads),
+          }));
       }
 
       /** @returns {Array<Record<string, string>>} one row per released version */
@@ -613,19 +801,22 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
             class: 'view__lede',
             text: 'Four views, one shell. Every tile is a ui-card; the tables below are ui-tablegrids.',
           }),
-          node('ui-cards', { label: 'Key figures', min: '11rem' }, [
-            kpi('Releases this quarter', '6', '↑ 2 on last quarter', 'up'),
-            kpi('Open incidents', '2', '↓ 1 resolved', 'down'),
-            kpi('Downloads, 90 days', '38.4k', '↑ 12%', 'up'),
-            kpi('Error budget left', '72%', '↓ 4% this sprint', 'down'),
+          node('ui-cards', { label: 'Key figures', min: '9.5rem' }, [
+            // Short metric names, with the qualifier on the delta line where it
+            // has room to be a sentence. A two-line eyebrow reads as a mistake.
+            kpi('Releases', String(RELEASES.length), '↑ 2 on last quarter', 'up'),
+            kpi('Incidents', String(openIncidents().length), '↓ 1 resolved', 'down'),
+            kpi('Downloads', '38.4k', '↑ 12% in 90 days', 'up'),
+            kpi('Error budget', '72%', '↓ 4% this sprint', 'down'),
           ]),
         ]);
 
-        // A ui-disclosure wrapping a ui-tabs: two readings of the same data,
-        // collapsed by default so the centre region still fits a laptop screen.
+        // A ui-disclosure wrapping a ui-tabs: two readings of the same data. Open by
+        // default, because the first thing an operator wants from this console
+        // is the numbers, and hiding them behind a click helps nobody.
         const tabs = node('ui-tabs', { label: 'Activity', variant: 'underline' });
         const byChannel = node('ui-tab', { label: 'By channel' }, [
-          tableGrid('Downloads by channel', RELEASE_COLUMNS, channelRows(), { striped: true }),
+          tableGrid('Downloads by channel', CHANNEL_COLUMNS, channelRows(), { striped: true }),
         ]);
         const byVersion = node('ui-tab', { label: 'By version' }, [
           tableGrid('Downloads by version', RELEASE_COLUMNS, versionRows(), { striped: true }),
@@ -633,7 +824,7 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
         tabs.append(byChannel, byVersion);
 
         wrap.appendChild(
-          node('ui-disclosure', { summary: 'Delivery activity' }, [
+          node('ui-disclosure', { summary: 'Delivery activity', open: true }, [
             node('p', {
               text: 'A ui-disclosure wrapping a ui-tabs — the same two components you would use on their own, nested.',
             }),
@@ -655,6 +846,7 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
           advanced: true,
           perPage: 5,
           toolbar: true,
+          spine: 'version',
         });
 
         const wrap = node('div', { class: 'view', 'data-view': 'releases' }, [
@@ -721,16 +913,22 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
           }),
         ]);
 
+        const open = tableGrid('Open incidents', INCIDENT_COLUMNS, openIncidents(), {
+          striped: true,
+          spine: 'severity',
+        });
+
         const wrap = node('div', { class: 'view', 'data-view': 'incidents' }, [
           node('h1', { class: 'view__title', text: 'Incidents' }),
           node('p', {
             class: 'view__lede',
-            text: 'One ui-form covering every field mode: amount, date with a display format, dropdown, radio group and checkbox.',
+            text: 'What is open right now, then one ui-form covering every field mode: amount, date with a display format, dropdown, radio group and checkbox.',
           }),
+          open,
           form,
         ]);
 
-        return { wrap, form, grids: [] };
+        return { wrap, form, grids: [open] };
       }
 
       /* ------------------------------------------------------ view: settings */

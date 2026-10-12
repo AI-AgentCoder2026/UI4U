@@ -108,10 +108,11 @@ ui-radio-group .ui4u-radio-group__legend {
   display: block;
   padding: 0;
   margin-block-end: var(--ui4u-space-2);
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-sm);
   font-weight: var(--ui4u-weight-semibold);
   line-height: var(--ui4u-line-tight);
-  letter-spacing: var(--ui4u-tracking-normal);
+  letter-spacing: var(--ui4u-tracking-wide);
   color: var(--ui4u-text-muted);
 }
 

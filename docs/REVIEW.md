@@ -98,6 +98,38 @@ actually asking for.
 - **`ui-calendar`** — genuinely useful, and a large surface. Only worth it once
   the tier 1 and 2 gaps are closed.
 
+## The visual identity
+
+Restyled at the token layer: `tokens.css` and `themes.css` rewritten, with a small
+retiering of the four components that were reading the translucent surface where a flat
+one belongs.
+
+**Indigo-slate ground, not neutral black.** Glass only reads as glass when there is colour
+underneath it to refract, so every surface from `--ui4u-bg` up carries a blue cast. A
+neutral ground makes the glass tier look like a grey smudge.
+
+**Two accents that mean something.** Ice (`--ui4u-primary`) is structural; amber
+(`--ui4u-warning`) is signal — the colour operations already assign to "degraded". Success,
+danger and info are a separate axis from brand and stay quiet until something is wrong.
+The trap here is near-black plus one acid accent, which is where "futuristic" defaults to
+and where this went instead.
+
+**Surface tiering.** This was the actual defect, and it was a token problem rather than a
+component problem: `ui-tablegrid`, `ui-tabs`, `ui-disclosure` and `ui-input` were all
+reading `--ui4u-surface-glass`, so a table, a tab strip, a section and a text field were all
+translucent. A data surface cannot be translucent — its contrast ratio shifts with whatever
+scrolls underneath it — so those four now read `--ui4u-surface*` and the translucent tier is
+spent only on things that genuinely float. Glass on everything stops meaning anything.
+
+**Two type voices.** `--ui4u-font-label` is the mono stack, applied to captions, eyebrows,
+legends, table column heads and figures a reader compares against each other. Prose, button
+text, tab labels and nav items stay in the sans. Zero cost: no webfont, no request, no
+dependency, and it falls through to whatever monospace the platform has.
+
+Four e2e tests were pinning literal token values (`--ui4u-radius-lg` is `16px`, the primary
+is `rgb(56, 189, 248)`). They now compare the rendered value against the token, which tests
+the contract — _the component reads the token_ — and survives the next palette change.
+
 ## Fixed while building the demo app
 
 `demo/app.html` is a whole application built from the library, and putting a

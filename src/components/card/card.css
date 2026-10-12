@@ -67,9 +67,10 @@ ui-card[data-interactive] .ui4u-card__frame:hover {
 }
 
 ui-card .ui4u-card__eyebrow {
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-xs);
   font-weight: var(--ui4u-weight-semibold);
-  letter-spacing: var(--ui4u-tracking-wide);
+  letter-spacing: var(--ui4u-tracking-widest);
   text-transform: uppercase;
   color: var(--ui4u-primary);
 }

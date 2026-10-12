@@ -152,12 +152,16 @@ test('the side picker moves the sidebar to the right edge', async ({ page, isMob
 test('applies design tokens from the linked stylesheet', async ({ page, isMobile }) => {
   inlineLayoutOnly(isMobile);
 
-  const radius = await page
-    .locator(`${MAIN} .ui4u-sidebar__panel`)
-    .evaluate((node) => getComputedStyle(node).borderTopLeftRadius);
+  const radii = await page.locator(`${MAIN} .ui4u-sidebar__panel`).evaluate((node) => ({
+    rendered: getComputedStyle(node).borderTopLeftRadius,
+    root: getComputedStyle(document.documentElement).getPropertyValue('--ui4u-radius-lg').trim(),
+  }));
 
-  // --ui4u-radius-lg resolves to 16px in the default theme.
-  expect(radius).toBe('16px');
+  // Compared against the token rather than a literal px, so the assertion tests
+  // the contract — the component reads `--ui4u-radius-lg` — and survives the
+  // palette being restyled.
+  expect(radii.rendered).toBe(radii.root);
+  expect(radii.root).not.toBe('');
 });
 
 test('the theme switcher updates data-theme', async ({ page, isMobile }) => {

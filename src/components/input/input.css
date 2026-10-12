@@ -34,10 +34,11 @@ ui-input {
 ui-input .ui4u-input__label {
   display: block;
   margin-block-end: var(--ui4u-space-2);
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-sm);
   font-weight: var(--ui4u-weight-semibold);
   line-height: var(--ui4u-line-tight);
-  letter-spacing: var(--ui4u-tracking-normal);
+  letter-spacing: var(--ui4u-tracking-wide);
   color: var(--ui4u-text-muted);
 }
 
@@ -60,7 +61,12 @@ ui-input .ui4u-input__native {
   line-height: var(--ui4u-line-normal);
   letter-spacing: var(--ui4u-tracking-normal);
   color: var(--ui4u-text);
-  background: var(--ui4u-surface-glass-strong);
+  /*
+   * Flat and sunken. You type *into* this, so its contrast ratio has to be
+   * fixed: a translucent field changes legibility depending on what is behind
+   * it, and the caret stops being findable on a busy background.
+   */
+  background: var(--ui4u-surface-2);
   box-shadow: var(--ui4u-shadow-inset);
   transition:
     border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),

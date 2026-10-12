@@ -7,17 +7,65 @@
  *
  * A theme is a token override — see `themes.css`. To restyle the library you
  * override these properties, you do not fork component CSS.
+ *
+ * ## The palette
+ *
+ * An **indigo-slate** ground rather than neutral black. Glass only reads as
+ * glass when there is colour underneath it to refract, so the ground carries a
+ * blue cast all the way down, and the surfaces are that same cast a few steps
+ * lighter. On top of it, two accents that mean something:
+ *
+ * - **Ice** (`--ui4u-primary`) — structural. Chosen, selected, active. A cold
+ *   pale blue, desaturated on purpose: an accent that saturates turns every
+ *   selected state into a beacon.
+ * - **Amber** (`--ui4u-warning`) — signal. Live, degraded, needs attention. It
+ *   is the colour operations already assigns to "degraded", so it is borrowed
+ *   rather than invented.
+ *
+ * Everything else — success, danger, info, the violet accent — is status, a
+ * separate axis from brand, and stays quiet until something is actually wrong.
+ *
+ * ## The type
+ *
+ * Chrome is a mono face; prose is the system sans. Console vernacular, and it
+ * costs nothing: no webfont, no network request, zero dependencies. The
+ * personality is carried by the tracking scale rather than by an exotic family —
+ * `--ui4u-tracking-widest` at 0.18em is what turns a plain uppercase label into
+ * an instrument label, across all seventeen components at once.
  */
 
 :root {
   color-scheme: light dark;
 
   /* ---------------------------------------------------------------- type */
+  /*
+   * No `Inter` in the stack. It is what every project reaches for, and it is
+   * rarely installed anyway — listing it bought a generic look for free.
+   * The mono stack leads with Cascadia Code and JetBrains Mono, which are what
+   * a terminal actually looks like, before falling through to the platform's
+   * own monospace.
+   */
   --ui4u-font-sans:
-    'Inter var', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text',
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --ui4u-font-mono:
-    ui-monospace, 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    ui-monospace, 'Cascadia Code', 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  /**
+   * The chrome voice.
+   *
+   * Captions, eyebrows, legends, column heads and any figure a reader has to
+   * compare against another figure. Console vernacular — an instrument labels
+   * its instruments in the instrument's own typeface, because that is what
+   * makes a readout scannable.
+   *
+   * Deliberately *not* for prose, button text, tab labels or nav items. Those
+   * are sentences, and a sentence set in mono is a costume rather than a
+   * choice. Everything still falls back through `--ui4u-font-mono`, so there
+   * is no new dependency and no new network request.
+   */
+  --ui4u-font-label: var(--ui4u-font-mono);
 
   --ui4u-font-size-xs: 0.75rem;
   --ui4u-font-size-sm: 0.8125rem;
@@ -25,7 +73,7 @@
   --ui4u-font-size-lg: 1.0625rem;
   --ui4u-font-size-xl: 1.25rem;
   --ui4u-font-size-2xl: 1.5rem;
-  --ui4u-font-size-3xl: 2rem;
+  --ui4u-font-size-3xl: 2.125rem;
 
   --ui4u-line-tight: 1.2;
   --ui4u-line-normal: 1.55;
@@ -36,10 +84,16 @@
   --ui4u-weight-semibold: 600;
   --ui4u-weight-bold: 700;
 
-  --ui4u-tracking-tight: -0.02em;
+  /*
+   * Wide tracking is the main typographic move in this system. Every label,
+   * eyebrow and caption in the library is upper-case and reads through these
+   * three tokens, so widening them is what gives the whole set an instrument
+   * voice rather than a default-app one.
+   */
+  --ui4u-tracking-tight: -0.025em;
   --ui4u-tracking-normal: 0;
-  --ui4u-tracking-wide: 0.06em;
-  --ui4u-tracking-widest: 0.14em;
+  --ui4u-tracking-wide: 0.08em;
+  --ui4u-tracking-widest: 0.18em;
 
   /* ------------------------------------------------------------ spacing */
   --ui4u-space-0: 0;
@@ -53,74 +107,102 @@
   --ui4u-space-8: 3rem;
 
   /* ------------------------------------------------------------- radius */
-  --ui4u-radius-xs: 4px;
-  --ui4u-radius-sm: 6px;
-  --ui4u-radius-md: 10px;
-  --ui4u-radius-lg: 16px;
-  --ui4u-radius-xl: 22px;
+  /*
+   * Crisper than a friendly consumer app. Rounder corners read as approachable;
+   * these read as equipment, and the difference is visible at the same radius
+   * everywhere without a single component change.
+   */
+  --ui4u-radius-xs: 3px;
+  --ui4u-radius-sm: 5px;
+  --ui4u-radius-md: 8px;
+  --ui4u-radius-lg: 12px;
+  --ui4u-radius-xl: 18px;
   --ui4u-radius-full: 999px;
 
   /* -------------------------------------------------------------- brand */
-  --ui4u-primary: #0ea5e9;
-  --ui4u-primary-hover: #0284c7;
-  --ui4u-primary-active: #0369a1;
-  --ui4u-primary-soft: rgba(14, 165, 233, 0.12);
+  /* Ice — structural. Dark enough to carry white text on a light ground. */
+  --ui4u-primary: #17688f;
+  --ui4u-primary-hover: #0e5476;
+  --ui4u-primary-active: #0b4260;
+  --ui4u-primary-soft: rgba(23, 104, 143, 0.12);
   --ui4u-primary-contrast: #ffffff;
 
-  --ui4u-accent: #8b5cf6;
-  --ui4u-accent-hover: #7c3aed;
-  --ui4u-accent-soft: rgba(139, 92, 246, 0.12);
+  /* Indigo-violet — the second brand voice. Structural, never loud. */
+  --ui4u-accent: #5747c4;
+  --ui4u-accent-hover: #4637a6;
+  --ui4u-accent-soft: rgba(87, 71, 196, 0.12);
   --ui4u-accent-contrast: #ffffff;
 
   /* ----------------------------------------------------------- surfaces */
-  --ui4u-bg: #eef2f8;
-  --ui4u-bg-pattern: radial-gradient(
-    1200px 600px at 15% -10%,
-    rgba(14, 165, 233, 0.16),
-    transparent 60%
-  );
+  /*
+   * Flat and cool. These are *data* surfaces — somewhere you read into — and
+   * they stay opaque so text keeps a stable contrast ratio instead of shifting
+   * with whatever scrolls underneath. The translucent tier is
+   * `--ui4u-surface-glass`, and it is meant for things that genuinely float.
+   */
+  --ui4u-bg: #e7ecf5;
+  --ui4u-bg-pattern:
+    radial-gradient(1100px 520px at 8% -12%, rgba(23, 104, 143, 0.09), transparent 60%),
+    radial-gradient(760px 420px at 96% 8%, rgba(169, 103, 8, 0.05), transparent 62%);
   --ui4u-surface: #ffffff;
-  --ui4u-surface-2: #f4f7fb;
-  --ui4u-surface-3: #e9eff7;
-  --ui4u-surface-glass: rgba(255, 255, 255, 0.72);
-  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.88);
-  --ui4u-surface-sunken: #e6ecf5;
-  --ui4u-overlay: rgba(9, 16, 32, 0.5);
+  --ui4u-surface-2: #f1f5fc;
+  --ui4u-surface-3: #e3e9f4;
+  --ui4u-surface-sunken: #dce3f0;
+  --ui4u-surface-glass: rgba(255, 255, 255, 0.74);
+  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.9);
+  --ui4u-overlay: rgba(10, 16, 32, 0.5);
 
   /* --------------------------------------------------------------- text */
-  --ui4u-text: #0b1220;
-  --ui4u-text-muted: #55637a;
-  --ui4u-text-subtle: #8595ad;
-  --ui4u-text-inverse: #f6f9ff;
-  --ui4u-text-link: var(--ui4u-primary-hover);
+  --ui4u-text: #0a0f1e;
+  --ui4u-text-muted: #48536e;
+  --ui4u-text-subtle: #6e7a96;
+  --ui4u-text-inverse: #f7faff;
+  --ui4u-text-link: var(--ui4u-primary);
 
   /* ------------------------------------------------------------ borders */
-  --ui4u-border: rgba(15, 32, 60, 0.1);
-  --ui4u-border-strong: rgba(15, 32, 60, 0.2);
-  --ui4u-border-subtle: rgba(15, 32, 60, 0.06);
-  --ui4u-divider: rgba(15, 32, 60, 0.08);
+  /* Cool rather than neutral: a grey hairline on a blue ground reads dirty. */
+  --ui4u-border: rgba(16, 28, 56, 0.12);
+  --ui4u-border-strong: rgba(16, 28, 56, 0.26);
+  --ui4u-border-subtle: rgba(16, 28, 56, 0.06);
+  --ui4u-divider: rgba(16, 28, 56, 0.09);
 
   /* ------------------------------------------------------------- status */
-  --ui4u-success: #10b981;
-  --ui4u-success-soft: rgba(16, 185, 129, 0.12);
-  --ui4u-warning: #f59e0b;
-  --ui4u-warning-soft: rgba(245, 158, 11, 0.14);
-  --ui4u-danger: #e11d48;
-  --ui4u-danger-hover: #be123c;
-  --ui4u-danger-soft: rgba(225, 29, 72, 0.12);
-  --ui4u-info: #3b82f6;
-  --ui4u-info-soft: rgba(59, 130, 246, 0.12);
+  --ui4u-success: #0b7a5c;
+  --ui4u-success-soft: rgba(11, 122, 92, 0.12);
+  --ui4u-warning: #a96708;
+  --ui4u-warning-soft: rgba(169, 103, 8, 0.13);
+  --ui4u-danger: #c22f49;
+  --ui4u-danger-hover: #a32339;
+  --ui4u-danger-soft: rgba(194, 47, 73, 0.12);
+  --ui4u-info: #3d5aa8;
+  --ui4u-info-soft: rgba(61, 90, 168, 0.12);
 
   /* ----------------------------------------------------- shadows + glow */
-  --ui4u-shadow-xs: 0 1px 2px rgba(9, 16, 32, 0.06);
-  --ui4u-shadow-sm: 0 1px 2px rgba(9, 16, 32, 0.06), 0 2px 6px rgba(9, 16, 32, 0.06);
-  --ui4u-shadow-md: 0 4px 12px rgba(9, 16, 32, 0.08), 0 12px 28px rgba(9, 16, 32, 0.08);
-  --ui4u-shadow-lg: 0 10px 24px rgba(9, 16, 32, 0.1), 0 28px 60px rgba(9, 16, 32, 0.14);
-  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Blue-black rather than neutral black, and tighter — glass casts a soft
+     ambient shadow, not a poster shadow. */
+  --ui4u-shadow-xs: 0 1px 2px rgba(10, 16, 32, 0.06);
+  --ui4u-shadow-sm: 0 1px 2px rgba(10, 16, 32, 0.06), 0 3px 10px rgba(10, 16, 32, 0.05);
+  --ui4u-shadow-md: 0 6px 18px rgba(10, 16, 32, 0.08), 0 14px 34px rgba(10, 16, 32, 0.07);
+  --ui4u-shadow-lg: 0 16px 40px rgba(10, 16, 32, 0.1), 0 40px 80px rgba(10, 16, 32, 0.12);
+  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 
-  --ui4u-glow-primary: 0 0 0 1px rgba(14, 165, 233, 0.28), 0 0 22px rgba(14, 165, 233, 0.28);
-  --ui4u-glow-accent: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 22px rgba(139, 92, 246, 0.26);
-  --ui4u-glass-blur: saturate(180%) blur(16px);
+  /* A rim light, not a neon tube. One thin ring and a short spill. */
+  --ui4u-glow-primary: 0 0 0 1px rgba(23, 104, 143, 0.26), 0 0 16px rgba(23, 104, 143, 0.18);
+  --ui4u-glow-accent: 0 0 0 1px rgba(87, 71, 196, 0.28), 0 0 16px rgba(87, 71, 196, 0.16);
+
+  /* Less saturation boost, more blur: softer, and closer to real glass. */
+  --ui4u-glass-blur: saturate(140%) blur(18px);
+
+  /**
+   * The single ambient bloom.
+   *
+   * One warm light behind one cool one. It exists so a bar or a header can be
+   * the brightest thing on the page without any component reaching for a
+   * gradient of its own — spend the restraint once, here.
+   */
+  --ui4u-aurora:
+    radial-gradient(420px 180px at 12% 0%, rgba(23, 104, 143, 0.16), transparent 70%),
+    radial-gradient(320px 160px at 88% 10%, rgba(169, 103, 8, 0.1), transparent 72%);
 
   /* ------------------------------------------------------------- motion */
   --ui4u-duration-instant: 60ms;

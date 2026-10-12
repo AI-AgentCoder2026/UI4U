@@ -147,7 +147,8 @@ ui-button-group
 
 ui-button-group .ui4u-button-group__label {
   color: var(--ui4u-button-group-label-color);
-  font-family: var(--ui4u-font-sans);
+  /* A group names one choice, so its label is a caption — not a sentence. */
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-sm);
   font-weight: var(--ui4u-weight-semibold);
   line-height: var(--ui4u-line-tight);

@@ -24,9 +24,12 @@ ui-tablegrid table {
   border-spacing: 0;
   border: 1px solid var(--ui4u-border);
   border-radius: var(--ui4u-tablegrid-radius);
-  background: var(--ui4u-surface-glass);
-  -webkit-backdrop-filter: var(--ui4u-glass-blur);
-  backdrop-filter: var(--ui4u-glass-blur);
+  /*
+ * A data surface, so flat and opaque: a translucent table would change its own
+ * contrast ratio as rows scrolled under whatever sits behind it. The hairline
+ * and the radius do the separating; there is nothing here worth floating over.
+ */
+  background: var(--ui4u-surface);
   box-shadow: var(--ui4u-shadow-sm);
   /* Scrolls horizontally on a narrow screen while the header stays put. */
   overflow: hidden;
@@ -40,6 +43,10 @@ ui-tablegrid thead th {
   z-index: var(--ui4u-z-sticky);
   padding: 0;
   text-align: left;
+  /* Column heads are captions. Mono and tracked makes a header row read as an
+     instrument panel rather than a list, and it is the single strongest
+     typographic cue in the whole system. */
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-sm);
   font-weight: var(--ui4u-weight-semibold);
   letter-spacing: var(--ui4u-tracking-wide);

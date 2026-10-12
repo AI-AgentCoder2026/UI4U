@@ -7,7 +7,7 @@ into any stack — or none. Every visual value is a `--ui4u-*` custom property, 
 theming a token override rather than a CSS fork.
 
 ```
-Seventeen components · 237.3 kB minified (~75.9 kB gzip) including tokens and themes
+Seventeen components · 244.2 kB minified (~78.2 kB gzip) including tokens and themes
 ```
 
 ## Status
@@ -162,19 +162,37 @@ tabs.addEventListener('ui4u:change', ({ detail }) => {
 Themes are token overrides. Set `data-theme` on `<html>` to switch, or override any token
 directly.
 
-```html
+````html
 <html data-theme="dark"></html>
-```
 
-Built-in themes: `light`, `dark`, `contrast`, plus an automatic `prefers-color-scheme`
-fallback when no `data-theme` is set.
+Built-in themes: `light`, `dark`, `contrast`, plus an automatic `prefers-color-scheme` fallback when
+no `data-theme` is set. ```css ui-tabs { --ui4u-primary: #f43f5e; --ui4u-radius-lg: 4px; }
+````
 
-```css
-ui-tabs {
-  --ui4u-primary: #f43f5e;
-  --ui4u-radius-lg: 4px;
-}
-```
+### The palette
+
+The ground is **indigo-slate**, not neutral black — glass only reads as glass when there is
+colour underneath it to refract, so every surface carries a blue cast. On top of it, two
+accents that mean something rather than two accents that look good:
+
+| Token                                              | Role                                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--ui4u-primary`                                   | **Ice.** Structural — chosen, selected, active. Desaturated on purpose: an accent that saturates turns every selected state into a beacon. |
+| `--ui4u-warning`                                   | **Signal.** Live, degraded, needs attention. Borrowed from the colour operations already assigns to "degraded".                            |
+| `--ui4u-success` / `--ui4u-danger` / `--ui4u-info` | Status, a separate axis from brand. Quiet until something is actually wrong.                                                               |
+| `--ui4u-accent`                                    | The second brand voice. Structural, never loud.                                                                                            |
+
+Surfaces are tiered, and the tier is the thing that keeps it from reading as a template:
+
+- **Flat and opaque** (`--ui4u-surface`, `--ui4u-surface-2`) for anything you read _into_ — a table, a section, a text field. A translucent data surface changes its own contrast ratio as content scrolls under it.
+- **Translucent** (`--ui4u-surface-glass*`) for anything that genuinely floats above the page — a popup, a tooltip, a dropdown panel, a secondary button. Glass on everything stops meaning anything.
+
+Type has two voices, and which one a string gets is a decision, not a default. Prose is the
+system sans. Captions, eyebrows, legends, table column heads and any figure a reader has to
+compare against another figure use `--ui4u-font-label`, which is the mono stack — console
+vernacular, and free: no webfont, no network request, no dependency. Button text, tab labels
+and nav items stay in the sans, because a sentence set in mono is a costume rather than a
+choice.
 
 Motion honours `prefers-reduced-motion` — every `--ui4u-duration-*` token collapses to
 `0ms` in one place, and components read those tokens rather than hardcoding timings.

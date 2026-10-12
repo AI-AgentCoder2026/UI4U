@@ -37,6 +37,7 @@ ui-toolbar[data-label]::before {
   align-self: center;
   padding-inline-end: var(--ui4u-space-2);
   color: var(--ui4u-text-subtle);
+  font-family: var(--ui4u-font-label);
   font-size: var(--ui4u-font-size-xs);
   font-weight: var(--ui4u-weight-semibold);
   letter-spacing: var(--ui4u-tracking-wide);

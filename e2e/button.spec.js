@@ -122,12 +122,17 @@ test('every variant renders with its own background colour', async ({ page }) =>
 });
 
 test('applies design tokens from the linked stylesheet', async ({ page }) => {
-  const radius = await page
-    .locator(CONTROL)
-    .evaluate((node) => getComputedStyle(node).borderTopLeftRadius);
+  const radii = await page.locator(CONTROL).evaluate((node) => ({
+    rendered: getComputedStyle(node).borderTopLeftRadius,
+    // The control declares `--ui4u-button-radius: var(--ui4u-radius-md)`, so
+    // this is the value that declaration resolves to on the page.
+    root: getComputedStyle(document.documentElement).getPropertyValue('--ui4u-radius-md').trim(),
+  }));
 
-  // --ui4u-button-radius defaults to --ui4u-radius-md, which is 10px.
-  expect(radius).toBe('10px');
+  // Compared against the token rather than a literal px: the contract is that
+  // the component reads the token, and that has to survive the palette changing.
+  expect(radii.root).not.toBe('');
+  expect(radii.rendered).toBe(radii.root);
 });
 
 test('the demo drives its options through UI4U components, not raw selects', async ({ page }) => {
