@@ -542,6 +542,54 @@ A segmented control: several buttons that together represent **one choice**.
   veto it, leaving the group exactly as it was.
 - **Events** — `ui4u:change` with `detail: { value, name }`.
 
+## 15. `ui-card` and `ui-cards`
+
+```html
+<ui-cards label="Components" min="17rem">
+  <ui-card eyebrow="Forms" heading="ui-checkbox" href="checkbox.html">
+    Real checkbox, indeterminate state, shared validation.
+  </ui-card>
+</ui-cards>
+```
+
+- **`ui-card`** is one item: an optional `eyebrow`, a `heading`, a body, and a row
+  of `actions`. Options: `configure({ heading, eyebrow, href, variant, padding,
+interactive, headingLevel, bindings })`; variants are `default` | `outline` |
+  `glass`, padding `none` | `sm` | `md` | `lg`.
+- **Deliberately not `title`** — that is the browser's tooltip attribute, and a
+  card does not want one. `heading` sets the card's name, and takes an `h3` by
+  default so the title is a real heading.
+- **Parts, not slots** — the author may claim `data-part="title|eyebrow|body|actions"`
+  on their own children; anything unclaimed becomes body content rather than
+  being dropped. A card supplied as a single element with `data-part="title"`
+  keeps that element, so their own heading level and markup survive.
+- **One link per card** — with `href` a real `<a>` wraps the heading and is
+  stretched over the card in CSS. That gives one tab stop whose accessible name
+  is the card's own title, rather than a `<div>` with a click handler and a
+  separate invisible link inside it. `target` and `rel` are forwarded onto the
+  anchor, so a card can open a repository safely.
+- **Actions stay clickable** — the actions row sits above the stretched link, so
+  a button inside the card is not swallowed by the card's own link. This is the
+  hazard the stretched-link pattern introduces, and it is handled rather than
+  left to the author.
+- **`ui-cards`** is the grid: `configure({ label, columns, min })`. It lays out
+  `auto-fill, minmax(min(100%, 17rem), 1fr)` by default, so the track count
+  follows the width instead of a media query. `columns` pins a fixed count,
+  which drops to one column below 30rem — two cards side by side on a 320px
+  screen is a hit area too small to use.
+- **List semantics** — the grid is `role="list"` and each card `role="listitem"`,
+  applied on every change so a card appended afterwards is not announced as an
+  orphan. Cards get `tabindex="-1"`, which keeps them out of the tab order (their
+  link is the tab stop) while letting the arrow keys move focus between them.
+  Arrows land on the card's own control where it has one, and clamp at the ends.
+- **No events of its own on the grid** — it is layout. Filtering is the host's:
+  hiding cards is all a card grid ever needed, and there is nothing a card can
+  match a criterion _against_ the way a table row matches a column.
+- **Bindings** — a `press` binding runs before the press is announced, so a veto
+  genuinely stops it, navigation included.
+- **Teardown** — the author's own nodes are put back exactly as written, so a
+  rebuild or a disconnect is not a lossy round trip.
+
 ## Definition of done, for every component
 
 - [ ] `src/components/<name>/<name>.js` with JSDoc `@param`/`@returns` and one runnable `@example`

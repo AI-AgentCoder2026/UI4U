@@ -1,0 +1,147 @@
+/**
+ * ui-card
+ *
+ * The card's own surface. Spacing, the stretched link and the interaction
+ * states live here; the grid it sits in belongs to `ui-cards`.
+ */
+
+ui-card {
+  --ui4u-card-radius: var(--ui4u-radius-lg);
+  --ui4u-card-padding: var(--ui4u-space-5);
+
+  display: block;
+  /* A position context, so the stretched link can cover the card without
+     escaping it. */
+  position: relative;
+  height: 100%;
+}
+
+ui-card[data-padding='none'] {
+  --ui4u-card-padding: 0;
+}
+
+ui-card[data-padding='sm'] {
+  --ui4u-card-padding: var(--ui4u-space-3);
+}
+
+ui-card[data-padding='lg'] {
+  --ui4u-card-padding: var(--ui4u-space-6);
+}
+
+ui-card .ui4u-card__frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui4u-space-2);
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--ui4u-card-padding);
+  border: 1px solid var(--ui4u-border);
+  border-radius: var(--ui4u-card-radius);
+  background: var(--ui4u-surface-2);
+  color: var(--ui4u-text);
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    transform var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-card[data-variant='outline'] .ui4u-card__frame {
+  background: transparent;
+  border-color: var(--ui4u-border-strong);
+}
+
+ui-card[data-variant='glass'] .ui4u-card__frame {
+  background: var(--ui4u-surface-glass);
+  -webkit-backdrop-filter: var(--ui4u-glass-blur);
+  backdrop-filter: var(--ui4u-glass-blur);
+}
+
+/*
+ * Only an interactive card reacts to hover. A static card that lifted on hover
+ * would promise something it does not do.
+ */
+ui-card[data-interactive] .ui4u-card__frame:hover {
+  border-color: var(--ui4u-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--ui4u-shadow-md);
+}
+
+ui-card .ui4u-card__eyebrow {
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-semibold);
+  letter-spacing: var(--ui4u-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ui4u-primary);
+}
+
+ui-card .ui4u-card__title {
+  margin: 0;
+  font-size: var(--ui4u-font-size-lg);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+  color: var(--ui4u-text);
+}
+
+ui-card .ui4u-card__link {
+  color: inherit;
+  text-decoration: none;
+  /* The anchor is a real link wrapping the title, so its accessible name is
+     the card's own name. It is stretched over the card below. */
+}
+
+ui-card .ui4u-card__body {
+  margin: 0;
+  color: var(--ui4u-text-muted);
+  font-size: var(--ui4u-font-size-sm);
+}
+
+ui-card .ui4u-card__body > :first-child {
+  margin-block-start: 0;
+}
+
+ui-card .ui4u-card__body > :last-child {
+  margin-block-end: 0;
+}
+
+ui-card .ui4u-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui4u-space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--ui4u-space-2);
+  /* Above the stretched link, so a button inside the card stays clickable. */
+  position: relative;
+  z-index: 1;
+}
+
+/* The whole card is the hit area for its own link. */
+ui-card .ui4u-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ui4u-card-radius);
+}
+
+ui-card .ui4u-card__link:focus-visible {
+  outline: none;
+}
+
+ui-card .ui4u-card__link:focus-visible::after {
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  ui-card[data-variant='glass'] .ui4u-card__frame {
+    background: var(--ui4u-surface-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-card .ui4u-card__frame {
+    transition: none;
+  }
+
+  ui-card[data-interactive] .ui4u-card__frame:hover {
+    transform: none;
+  }
+}

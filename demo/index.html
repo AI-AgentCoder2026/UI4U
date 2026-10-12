@@ -33,41 +33,32 @@
           <p class="lede">
             A framework-agnostic, mobile-first UI library. Vanilla ES6 modules, zero runtime
             dependencies, themed entirely through <code>--ui4u-*</code> custom properties. This
-            index is itself built from the library — the table is a <code>ui-tablegrid</code>, the
-            bar above it a <code>ui-toolbar</code>, and every control a <code>ui-button</code>.
+            index is itself built from the library — the catalogue below is a
+            <code>ui-cards</code> grid, the bar above it a <code>ui-toolbar</code>, and every
+            control a <code>ui-button</code>.
           </p>
         </div>
         <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
       </header>
 
       <!--
-        The catalogue is a ui-tablegrid rather than a list of links: it is sorted,
-        searchable, paged and keyboard-navigable without a line of bespoke code.
-        Its toolbar is a ui-toolbar, so the filter and the page size cost one Tab.
+        The catalogue is a ui-cards grid, not a table. A table gives one row per
+        component however wide the window is, which reads as a list; cards fill
+        the space — several per row on a desktop, one on a phone. The filter bar
+        above them is a ui-toolbar, so both fields cost one Tab.
       -->
-      <ui-tablegrid id="catalogue" label="Components" per-page="8" striped>
-        <ui-toolbar label="Catalogue" slot="toolbar">
-          <ui-input
-            id="filter"
-            label="Filter components"
-            placeholder="e.g. table"
-            size="sm"
-          ></ui-input>
-          <ui-dropdown id="kind" label="Kind" placeholder="All kinds" size="sm"></ui-dropdown>
-        </ui-toolbar>
+      <ui-toolbar id="catalogue-bar" label="Catalogue">
+        <ui-input
+          id="filter"
+          label="Filter components"
+          placeholder="e.g. table"
+          size="sm"
+        ></ui-input>
+        <ui-dropdown id="kind" label="Kind" placeholder="All kinds" size="sm"></ui-dropdown>
+        <ui-button id="reset" variant="ghost" size="sm" data-toolbar-end>Clear</ui-button>
+      </ui-toolbar>
 
-        <table>
-          <thead>
-            <tr>
-              <th scope="col" data-sort="name" data-type="text">Component</th>
-              <th scope="col" data-sort="kind" data-type="text">Kind</th>
-              <th scope="col">What it does</th>
-              <th scope="col">Open</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </ui-tablegrid>
+      <ui-cards id="catalogue" label="Components" min="17rem"></ui-cards>
 
       <div class="log" id="catalogue-log" role="status" aria-live="polite"></div>
 
@@ -192,11 +183,12 @@ import 'ui4u';</code></pre>
           'Data',
           'Column groups, sorting, search, filters, selection, copy',
         ],
+        ['ui-card', 'card.html', 'Layout', 'One item in a grid; several per row, one on a phone'],
+        ['ui-cards', 'card.html', 'Layout', 'The responsive grid those cards sit in'],
       ];
 
       const catalogue = document.getElementById('catalogue');
       const log = document.getElementById('catalogue-log');
-      const tbody = catalogue.querySelector('tbody');
 
       /** Builds one node. No innerHTML — a description is still text. */
       function node(tag, props = {}, children = []) {
@@ -210,22 +202,55 @@ import 'ui4u';</code></pre>
         return element;
       }
 
+      /*
+       * Filtering is a plain `hidden` toggle rather than a table query.
+       *
+       * A card is not a row: it has no columns to match a criterion against, and
+       * no header row describing them. Hiding is all a card grid ever needed to
+       * do, so there is nothing here worth building into the component.
+       */
+      let query = '';
+      let kindFilter = '';
+
+      function applyFilter() {
+        const needle = query.trim().toLowerCase();
+        const kindWanted = kindFilter.trim().toLowerCase();
+        let shown = 0;
+
+        for (const card of catalogue.cards) {
+          const body = (card.textContent ?? '').toLowerCase();
+          const kind = (card.dataset.kind ?? '').toLowerCase();
+
+          const matches =
+            (needle === '' || body.includes(needle)) && (kindWanted === '' || kind === kindWanted);
+
+          card.hidden = !matches;
+          if (matches) shown += 1;
+        }
+
+        log.textContent = `${shown} of ${CATALOGUE.length} components`;
+      }
+
       for (const [name, file, kind, description] of CATALOGUE) {
+        const card = node('ui-card', {
+          eyebrow: kind,
+          heading: name,
+          href: file,
+          'data-kind': kind,
+          variant: 'glass',
+        });
+
+        card.appendChild(node('p', { text: description }));
+
         const open = node('ui-button', {
-          variant: 'subtle',
+          variant: 'ghost',
           size: 'sm',
           href: file,
           text: 'View demo',
         });
+        card.appendChild(node('div', { 'data-part': 'actions' }, [open]));
 
-        tbody.appendChild(
-          node('tr', {}, [
-            node('td', { text: name, 'data-value': name }),
-            node('td', { text: kind, 'data-value': kind }),
-            node('td', { text: description }),
-            node('td', { class: 'demo-open' }, [open]),
-          ])
-        );
+        catalogue.appendChild(card);
       }
 
       // The kind filter, built from the same list so it cannot go stale.
@@ -236,30 +261,26 @@ import 'ui4u';</code></pre>
       }
 
       document.getElementById('filter').addEventListener('ui4u:input', (event) => {
-        catalogue.search(event.detail.value);
+        query = event.detail.value;
+        applyFilter();
       });
 
       kind.addEventListener('ui4u:change', (event) => {
-        // The quick filter is a substring match, so an exact kind needs a
-        // criterion instead. They combine, which is the point of both.
-        catalogue.setFilters(
-          event.detail.value
-            ? [{ field: 'kind', operator: 'equals', value: event.detail.value }]
-            : []
-        );
+        kindFilter = event.detail.value;
+        applyFilter();
       });
 
-      catalogue.addEventListener('ui4u:sort', (event) => {
-        const { column, direction } = event.detail;
-        log.textContent = `Sorted by ${column ?? 'nothing'} (${direction})`;
+      document.getElementById('reset').addEventListener('click', () => {
+        query = '';
+        kindFilter = '';
+        document.getElementById('filter').value = '';
+        kind.value = '';
+        applyFilter();
       });
 
-      catalogue.addEventListener('ui4u:page', (event) => {
-        log.textContent = `Page ${event.detail.page} of ${event.detail.pageCount}`;
-      });
-
-      // Announce the real total once, so the grid's own status is not the only cue.
-      log.textContent = `${CATALOGUE.length} components`;
+      // The grid sees its cards when they are appended, so the list semantics
+      // are already right by the time a reader gets here.
+      applyFilter();
     </script>
   </body>
 </html>

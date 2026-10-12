@@ -55,6 +55,8 @@ import {
   BUTTON_GROUP_STYLE_ID,
   buttonGroupCss,
 } from './components/button-group/index.js';
+import { Card, CARD_STYLE_ID, cardCss } from './components/card/index.js';
+import { Cards, CARDS_STYLE_ID, cardsCss } from './components/cards/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -118,6 +120,12 @@ export {
   ButtonGroup,
   BUTTON_GROUP_STYLE_ID,
   buttonGroupCss,
+  Card,
+  CARD_STYLE_ID,
+  cardCss,
+  Cards,
+  CARDS_STYLE_ID,
+  cardsCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -184,6 +192,8 @@ export const components = [
     styleId: BUTTON_GROUP_STYLE_ID,
     css: buttonGroupCss,
   },
+  { tag: 'ui-card', ctor: Card, styleId: CARD_STYLE_ID, css: cardCss },
+  { tag: 'ui-cards', ctor: Cards, styleId: CARDS_STYLE_ID, css: cardsCss },
 ];
 
 /**

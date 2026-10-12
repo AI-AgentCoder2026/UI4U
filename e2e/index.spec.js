@@ -3,48 +3,50 @@ import { expect, test } from '@playwright/test';
 /**
  * Smoke tests for the demo index.
  *
- * The catalogue is a `ui-tablegrid` with a `ui-toolbar` above it — the index
+ * The catalogue is a `ui-cards` grid under a `ui-toolbar`, so the index
  * demonstrates the library rather than sitting outside it. These assert the
- * pieces a reader actually uses: every demo reachable, sorted, filtered, paged.
+ * pieces a reader actually uses: every demo reachable, filterable, and — the
+ * reason the catalogue is cards at all — several per row.
  */
 
-const CATALOGUE = '#catalogue';
-const GRID = `${CATALOGUE} tbody tr:not([hidden])`;
+const CATALOGUE = 'ui-cards#catalogue';
+const BAR = '#catalogue-bar';
 
+/** Every component, in catalogue order. */
 const DEMOS = [
   'ui-tabs',
   'ui-disclosure',
   'ui-button',
+  'ui-button-group',
   'ui-tooltip',
   'ui-layout',
+  'ui-sidebar',
+  'ui-toolbar',
   'ui-popup',
   'ui-input',
-  'ui-tablegrid',
-  'ui-form',
-  'ui-sidebar',
   'ui-checkbox',
   'ui-radio',
   'ui-dropdown',
-  'ui-toolbar',
-  'ui-button-group',
+  'ui-form',
+  'ui-tablegrid',
+  'ui-card',
+  'ui-cards',
 ];
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/demo/index.html');
-  await page.waitForSelector(`${CATALOGUE} tbody tr`);
+  await page.waitForSelector(`${CATALOGUE} ui-card`);
 });
 
-test('every demo card link points at a page that responds', async ({ page }) => {
-  const broken = await page.locator('.demo-card').evaluateAll(async (links) => {
+test('every catalogue card links to a page that responds', async ({ page }) => {
+  const broken = await page.locator(`${CATALOGUE} a`).evaluateAll(async (links) => {
     /** @type {Array<{ href: string, status: number }>} */
     const results = [];
 
     for (const link of links) {
       const href = link.getAttribute('href') ?? '';
-      // The ends of the list are inert placeholders, not links.
-      if (!href || href === '#') continue;
       // The repository link leaves the site; fetch() cannot follow it cross-origin.
-      if (href.startsWith('http')) continue;
+      if (!href || href === '#' || href.startsWith('http')) continue;
 
       const response = await fetch(new URL(href, location.href));
       results.push({ href, status: response.status });
@@ -58,83 +60,110 @@ test('every demo card link points at a page that responds', async ({ page }) => 
 
 test('the catalogue is built from UI4U components', async ({ page }) => {
   // The point of the exercise: the demo site is a demonstration of the library.
-  await expect(page.locator(CATALOGUE)).toHaveJSProperty('localName', 'ui-tablegrid');
-  await expect(page.locator(`${CATALOGUE} > ui-toolbar`)).toHaveCount(1);
-  await expect(page.locator(`${CATALOGUE} ui-input`)).toHaveCount(1);
-  await expect(page.locator(`${CATALOGUE} ui-dropdown`)).toHaveCount(1);
+  await expect(page.locator(CATALOGUE)).toHaveJSProperty('localName', 'ui-cards');
+  await expect(page.locator(BAR)).toHaveJSProperty('localName', 'ui-toolbar');
+  await expect(page.locator(`${BAR} ui-input`)).toHaveCount(1);
+  await expect(page.locator(`${BAR} ui-dropdown`)).toHaveCount(1);
 
   const themeToggle = page.locator('ui-button[data-theme-toggle]');
   await expect(themeToggle).toHaveCount(1);
   await expect(themeToggle).toBeVisible();
 });
 
-test('lists every component, with a named link in each row', async ({ page }) => {
-  const names = await page
-    .locator(`${CATALOGUE} tbody td:first-child`)
-    .evaluateAll((cells) => cells.map((c) => c.textContent.trim()));
+test('lists every component as a card with a name and a link', async ({ page }) => {
+  const cards = page.locator(`${CATALOGUE} ui-card`);
+  await expect(cards).toHaveCount(DEMOS.length);
 
-  expect(names).toHaveLength(DEMOS.length);
+  const names = await page
+    .locator(`${CATALOGUE} ui-card .ui4u-card__title`)
+    .evaluateAll((nodes) => nodes.map((n) => n.textContent.trim()));
+
   expect([...names].sort()).toEqual([...DEMOS].sort());
 
-  const links = await page
-    .locator(`${CATALOGUE} ui-button[href]`)
-    .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href') ?? ''));
-
-  expect(links).toHaveLength(DEMOS.length);
-  expect(links.every((href) => href.endsWith('.html'))).toBe(true);
-});
-
-test('a demo link actually navigates', async ({ page }) => {
-  await page.locator(`${CATALOGUE} ui-button`, { hasText: 'View demo' }).first().click();
-
-  await expect(page).toHaveURL(/tabs\.html$/);
-  await expect(page.locator('h1 code')).toHaveText('ui-tabs');
-});
-
-test('sorts a column by clicking its header', async ({ page }) => {
-  await page.locator(`${CATALOGUE} th[data-sort="name"] .ui4u-tablegrid__sort`).click();
-
-  await expect(page.locator(`${CATALOGUE} th[data-sort="name"]`)).toHaveAttribute(
-    'aria-sort',
-    'ascending'
+  // Each card is a list item, and one real anchor named by its own title.
+  await expect(page.locator(`${CATALOGUE} ui-card[role="listitem"]`)).toHaveCount(DEMOS.length);
+  await expect(page.locator(`${CATALOGUE} ui-card > .ui4u-card__frame > a`)).toHaveCount(
+    DEMOS.length
   );
-  await expect(page.locator('#catalogue-log')).toContainText('Sorted by name (asc)');
-
-  // Exactly one column is sorted at a time.
-  await expect(page.locator(`${CATALOGUE} th[aria-sort]`)).toHaveCount(1);
 });
 
-test('filters rows from the toolbar field', async ({ page }) => {
-  // `dropdown` names exactly one row. A term like `table` matches two, because
-  // the toolbar's own description mentions "a table grid" — the filter is a
-  // substring match over every column, as documented.
-  await page.locator(`${CATALOGUE} ui-input .ui4u-input__native`).fill('dropdown');
-  await expect(page.locator(GRID)).toHaveCount(1);
-  await expect(page.locator(GRID).first()).toContainText('ui-dropdown');
+test('lays out several cards per row on desktop and one on a phone', async ({ page, isMobile }) => {
+  const perRow = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('#catalogue > ui-card')];
+    if (cards.length === 0) return 0;
+    const firstTop = Math.round(cards[0].getBoundingClientRect().top);
+    return cards.filter((c) => Math.round(c.getBoundingClientRect().top) === firstTop).length;
+  });
+
+  // The whole reason the catalogue is cards: a table would give one per row at
+  // every width. The grid fills the space on a desktop and drops to a single
+  // column below a phone width, which is what `ui-cards` does on its own.
+  if (isMobile) expect(perRow).toBe(1);
+  else expect(perRow).toBeGreaterThan(1);
 });
 
-test('filters rows by kind from the toolbar dropdown', async ({ page }) => {
-  await page.locator(`${CATALOGUE} ui-dropdown .ui4u-dropdown__trigger`).click();
-  await page.locator('.ui4u-dropdown__panel [role="option"]', { hasText: 'Forms' }).click();
+test('a card actually navigates', async ({ page }) => {
+  await page
+    .locator(`${CATALOGUE} ui-card`, { hasText: 'ui-checkbox' })
+    .locator('a')
+    .first()
+    .click();
 
-  // Five components are form controls.
-  await expect(page.locator(GRID)).toHaveCount(5);
-  const kinds = await page
-    .locator(`${CATALOGUE} tbody tr:not([hidden]) td:nth-child(2)`)
-    .evaluateAll((cells) => [...new Set(cells.map((c) => c.textContent.trim()))]);
-  expect(kinds).toEqual(['Forms']);
+  await expect(page).toHaveURL(/checkbox\.html$/);
+  await expect(page.locator('h1 code')).toHaveText('ui-checkbox');
 });
 
-test('pages through the catalogue', async ({ page }) => {
-  // Eight per page over fifteen components.
-  await expect(page.locator(GRID)).toHaveCount(8);
-  await expect(page.locator(`${CATALOGUE} .ui4u-tablegrid__page-status`)).toHaveText(
-    'Page 1 of 2 · 15 rows'
+test('filters cards from the toolbar field', async ({ page }) => {
+  await page.locator(`${BAR} ui-input .ui4u-input__native`).fill('table');
+
+  const shown = page.locator(`${CATALOGUE} ui-card:not([hidden])`);
+  await expect(shown).toHaveCount(2, { message: 'ui-tablegrid, and ui-toolbar mentioning it' });
+  await expect(page.locator('#catalogue-log')).toContainText('of 17 components');
+});
+
+test('filters cards by kind from the toolbar dropdown', async ({ page }) => {
+  await page.locator(`${BAR} ui-dropdown .ui4u-dropdown__trigger`).click();
+  await page.locator('.ui4u-dropdown__panel [role="option"]', { hasText: 'Data' }).click();
+
+  await expect(page.locator(`${CATALOGUE} ui-card:not([hidden])`)).toHaveCount(1);
+  await expect(page.locator(`${CATALOGUE} ui-card:not([hidden])`)).toContainText('ui-tablegrid');
+});
+
+test('the two filters combine', async ({ page }) => {
+  await page.locator(`${BAR} ui-dropdown .ui4u-dropdown__trigger`).click();
+  await page.locator('.ui4u-dropdown__panel [role="option"]', { hasText: 'Layout' }).click();
+
+  await page.locator(`${BAR} ui-input .ui4u-input__native`).fill('card');
+
+  const shown = page.locator(`${CATALOGUE} ui-card:not([hidden])`);
+  // Both card components are filed under Layout, and both names contain
+  // "card"; nothing else in that kind does.
+  await expect(shown).toHaveCount(2);
+
+  const headings = await shown
+    .locator('.ui4u-card__title')
+    .evaluateAll((nodes) => nodes.map((n) => n.textContent.trim()));
+  expect(headings.sort()).toEqual(['ui-card', 'ui-cards']);
+});
+
+test('the clear button puts every card back', async ({ page }) => {
+  await page.locator(`${BAR} ui-input .ui4u-input__native`).fill('zzz');
+  await expect(page.locator(`${CATALOGUE} ui-card:not([hidden])`)).toHaveCount(0);
+
+  await page.locator(`${BAR} ui-button#reset`).click();
+  await expect(page.locator(`${CATALOGUE} ui-card:not([hidden])`)).toHaveCount(DEMOS.length);
+});
+
+test('arrow keys move between cards', async ({ page }) => {
+  const cards = page.locator(`${CATALOGUE} ui-card`);
+  await cards.first().locator('a').first().focus();
+
+  await page.keyboard.press('ArrowRight');
+
+  const active = await page.evaluate(() =>
+    document.querySelector('#catalogue > ui-card:nth-child(2)')?.contains(document.activeElement)
   );
-
-  await page.locator(`${CATALOGUE} .ui4u-tablegrid__page-btn`, { hasText: 'Next' }).click();
-  await expect(page.locator(GRID)).toHaveCount(7);
-  await expect(page.locator('#catalogue-log')).toContainText('Page 2 of 2');
+  expect(active).toBe(true);
 });
 
 test('the page runs without script errors', async ({ page }) => {
@@ -142,7 +171,7 @@ test('the page runs without script errors', async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
 
   await page.goto('/demo/index.html', { waitUntil: 'networkidle' });
-  await page.locator(`${CATALOGUE} ui-input .ui4u-input__native`).fill('form');
+  await page.locator(`${BAR} ui-input .ui4u-input__native`).fill('form');
 
   expect(errors).toEqual([]);
 });

@@ -158,6 +158,7 @@ const DEMOS = [
   { file: 'tablegrid.html', label: 'ui-tablegrid' },
   { file: 'toolbar.html', label: 'ui-toolbar' },
   { file: 'button-group.html', label: 'ui-button-group' },
+  { file: 'card.html', label: 'ui-card' },
 ];
 
 /**

@@ -35,6 +35,7 @@ const PAGES = [
   ['dropdown', devices['Desktop Chrome'].viewport],
   ['toolbar', devices['Desktop Chrome'].viewport],
   ['button-group', devices['Desktop Chrome'].viewport],
+  ['card', devices['Desktop Chrome'].viewport],
 ];
 
 const only = process.argv[2];

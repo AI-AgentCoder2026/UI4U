@@ -14,23 +14,25 @@ All ten components · 117.8 kB minified (~37.7 kB gzip) including tokens and the
 
 Early, and deliberately incremental. Shipped:
 
-| Component         | Demo                                           | Notes                                                                     |
-| ----------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| `ui-tabs`         | [`demo/tabs.html`](demo/tabs.html)             | Keyboard nav, automatic + manual activation, 3 variants                   |
-| `ui-disclosure`   | [`demo/disclosure.html`](demo/disclosure.html) | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting   |
-| `ui-button`       | [`demo/button.html`](demo/button.html)         | 5 variants, 3 sizes, loading and disabled states                          |
-| `ui-tooltip`      | [`demo/tooltip.html`](demo/tooltip.html)       | Hover + focus, viewport flipping, `Escape` to dismiss                     |
-| `ui-layout`       | [`demo/layout.html`](demo/layout.html)         | All five regions resizable, recursive, keyboard + pointer splitters       |
-| `ui-popup`        | [`demo/popup.html`](demo/popup.html)           | Modal with a real focus trap, plus popover and drawer modes               |
-| `ui-input`        | [`demo/input.html`](demo/input.html)           | Native input preserved, plus `amount` (k/m/b) and `date` (picker) modes   |
-| `ui-form`         | [`demo/form.html`](demo/form.html)             | Validation, inline errors, `role="alert"` error summary                   |
-| `ui-sidebar`      | [`demo/sidebar.html`](demo/sidebar.html)       | Collapsible regions, off-canvas drawer on narrow screens                  |
-| `ui-tablegrid`    | [`demo/tablegrid.html`](demo/tablegrid.html)   | Column groups, sorting, search, advanced filters, selection, copy, paging |
-| `ui-checkbox`     | [`demo/checkbox.html`](demo/checkbox.html)     | Real `<input type="checkbox">`, `indeterminate`, shared validation        |
-| `ui-radio`        | [`demo/radio.html`](demo/radio.html)           | Radio group with one tab stop and arrow-key movement                      |
-| `ui-dropdown`     | [`demo/dropdown.html`](demo/dropdown.html)     | Listbox with type-ahead, arrow-key navigation and multi-select            |
-| `ui-toolbar`      | [`demo/toolbar.html`](demo/toolbar.html)       | A bar of controls that is one tab stop; plugs into a layout or a grid     |
-| `ui-button-group` | `demo/button-group.html`                       | Segmented control: buttons acting as one choice, one tab stop             |
+| Component         | Demo                                               | Notes                                                                     |
+| ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
+| `ui-tabs`         | [`demo/tabs.html`](demo/tabs.html)                 | Keyboard nav, automatic + manual activation, 3 variants                   |
+| `ui-disclosure`   | [`demo/disclosure.html`](demo/disclosure.html)     | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting   |
+| `ui-button`       | [`demo/button.html`](demo/button.html)             | 5 variants, 3 sizes, loading and disabled states                          |
+| `ui-tooltip`      | [`demo/tooltip.html`](demo/tooltip.html)           | Hover + focus, viewport flipping, `Escape` to dismiss                     |
+| `ui-layout`       | [`demo/layout.html`](demo/layout.html)             | All five regions resizable, recursive, keyboard + pointer splitters       |
+| `ui-popup`        | [`demo/popup.html`](demo/popup.html)               | Modal with a real focus trap, plus popover and drawer modes               |
+| `ui-input`        | [`demo/input.html`](demo/input.html)               | Native input preserved, plus `amount` (k/m/b) and `date` (picker) modes   |
+| `ui-form`         | [`demo/form.html`](demo/form.html)                 | Validation, inline errors, `role="alert"` error summary                   |
+| `ui-sidebar`      | [`demo/sidebar.html`](demo/sidebar.html)           | Collapsible regions, off-canvas drawer on narrow screens                  |
+| `ui-tablegrid`    | [`demo/tablegrid.html`](demo/tablegrid.html)       | Column groups, sorting, search, advanced filters, selection, copy, paging |
+| `ui-checkbox`     | [`demo/checkbox.html`](demo/checkbox.html)         | Real `<input type="checkbox">`, `indeterminate`, shared validation        |
+| `ui-radio`        | [`demo/radio.html`](demo/radio.html)               | Radio group with one tab stop and arrow-key movement                      |
+| `ui-dropdown`     | [`demo/dropdown.html`](demo/dropdown.html)         | Listbox with type-ahead, arrow-key navigation and multi-select            |
+| `ui-toolbar`      | [`demo/toolbar.html`](demo/toolbar.html)           | A bar of controls that is one tab stop; plugs into a layout or a grid     |
+| `ui-button-group` | [`demo/button-group.html`](demo/button-group.html) | Segmented control: buttons acting as one choice, one tab stop             |
+| `ui-card`         | [`demo/card.html`](demo/card.html)                 | One item in a grid: eyebrow, heading, body, actions, stretched link       |
+| `ui-cards`        | [`demo/card.html`](demo/card.html)                 | The responsive grid those cards sit in — several per row, one on a phone  |
 
 ![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
 

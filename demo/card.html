@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Card</title>
+    <meta
+      name="description"
+      content="ui-card and ui-cards — an eyebrow, a heading, a body and a row of actions, laid out by a grid that fills the space. With href the card is one real link."
+    />
+    <!--
+      Restores the theme chosen on any other demo page. Inline and blocking on
+      purpose: a deferred or module script would run after the stylesheet, and
+      the page would flash dark before settling on light.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('ui4u-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (error) {
+        /* storage unavailable — the default in the markup stands */
+      }
+    </script>
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+    <style>
+      /*
+       * Page layout only. Nothing here styles a card: the surface, the padding
+       * and the stretched link belong to `ui-card`. This just stops the
+       * single-card demos from stretching the full column, where one card
+       * reads as a section banner rather than as an item.
+       */
+      .ui4u-demo-single {
+        max-width: 30rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1><code>ui-card</code></h1>
+          <p class="lede">
+            One item in a grid: an optional eyebrow, a heading, a body and a row of actions.
+            <code>ui-cards</code> lays those out, so a catalogue fills the space it is given —
+            several per row on a desktop, one on a phone — with no media query of your own. Give a
+            card an <code>href</code> and it becomes <strong>one real link</strong> whose accessible
+            name is the card's own title, rather than a div with a click handler and a separate
+            invisible link somewhere inside it.
+          </p>
+        </div>
+        <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Variant</span>
+          <ui-tabs id="opt-variant" variant="underline" label="Variant">
+            <ui-tab label="default"></ui-tab>
+            <ui-tab label="outline"></ui-tab>
+            <ui-tab label="glass"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Padding</span>
+          <!-- The card's authored padding, so the control starts where the card does. -->
+          <ui-tabs id="opt-padding" variant="underline" label="Padding" active="2">
+            <ui-tab label="none"></ui-tab>
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Grid columns</span>
+          <ui-tabs id="opt-columns" variant="underline" label="Grid columns">
+            <ui-tab label="auto-fill"></ui-tab>
+            <ui-tab label="2"></ui-tab>
+            <ui-tab label="3"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <section>
+        <h2>One card, one link</h2>
+        <p class="lede">
+          The common case: three attributes and a body of text. The whole card is the hit area for
+          its link, and the link's name is the heading. The controls above drive this card.
+        </p>
+        <ui-cards class="ui4u-demo-single" label="Single card">
+          <ui-card
+            id="hero"
+            eyebrow="Disclosures"
+            heading="ui-disclosure"
+            href="disclosure.html"
+            variant="default"
+            padding="md"
+          >
+            A summary that is a real button, with the panel wired to it.
+          </ui-card>
+        </ui-cards>
+      </section>
+
+      <section>
+        <h2>Your own markup</h2>
+        <p class="lede">
+          Claim a slot with <code>data-part</code> and the card keeps your element — here your own
+          <code>&lt;h3&gt;</code>, so the heading level and anything inside the title are yours. Any
+          child you do not claim is still content, so it falls through to the body. The actions row
+          sits above the stretched link, which is why the button below stays clickable.
+        </p>
+        <ui-cards class="ui4u-demo-single" label="Author-supplied parts">
+          <ui-card id="parts" variant="outline" interactive href="popup.html">
+            <span data-part="eyebrow">Author-supplied</span>
+            <h3 data-part="title">The heading is your own element</h3>
+            <p data-part="body">
+              Two real buttons, because a card that goes somewhere still has to be able to do
+              something else.
+            </p>
+            <div data-part="actions">
+              <ui-button id="action-log" size="sm">Log a press</ui-button>
+              <ui-button variant="ghost" size="sm">Do nothing</ui-button>
+            </div>
+          </ui-card>
+        </ui-cards>
+      </section>
+
+      <section>
+        <h2>Variants</h2>
+        <p class="lede">
+          A theme is a token override; a variant is the same story one level down —
+          <code>default</code> for a filled surface, <code>outline</code> when the card has to sit
+          on a surface already, <code>glass</code> when it is floating over something.
+        </p>
+        <ui-cards id="variants" columns="3" label="Card variants">
+          <ui-card variant="default" heading="default" padding="lg">
+            The filled surface. Reads as an item on the page.
+          </ui-card>
+          <ui-card variant="outline" heading="outline" padding="lg">
+            No fill, a stronger border. Sits on a surface already.
+          </ui-card>
+          <ui-card variant="glass" heading="glass" padding="lg">
+            Translucent and blurred, for floating over content.
+          </ui-card>
+        </ui-cards>
+      </section>
+
+      <section>
+        <h2>Interception</h2>
+        <p class="lede">
+          Every card emits <code>ui4u:press</code>. A binding through
+          <code>bind('press', …)</code> runs <em>before</em> the card acts and can veto it —
+          returning <code>false</code> blocks the navigation too, not just the event. This card
+          starts out vetoed so it cannot navigate away from the demo by accident; the button
+          switches the veto off.
+        </p>
+        <ui-cards class="ui4u-demo-single" label="Press interception">
+          <ui-card id="press" eyebrow="Forms" heading="ui-checkbox" href="checkbox.html">
+            Real checkbox, indeterminate state, shared validation.
+          </ui-card>
+        </ui-cards>
+
+        <div class="controls">
+          <ui-button id="toggle-veto" variant="ghost" size="sm">Allow the press</ui-button>
+        </div>
+
+        <div class="log" id="log" role="status" aria-live="polite">
+          Press a card, or its action button, to see what the demo hears.
+        </div>
+      </section>
+
+      <section>
+        <h2>The grid</h2>
+        <p class="lede">
+          Six cards in one <code>ui-cards</code>. It decides nothing but the track count: by default
+          it auto-fills from a minimum width, so the count is whatever the space allows. Set
+          <code>columns</code> and the count is fixed instead — and forced back to one below a phone
+          width, because two cards side by side on a small screen is a hit area nobody can hit.
+        </p>
+        <ui-cards id="grid" label="UI4U components">
+          <ui-card eyebrow="Navigation" heading="ui-tabs" href="tabs.html">
+            Panels, keyboard navigation and a real roving tab stop.
+          </ui-card>
+          <ui-card eyebrow="Overlays" heading="ui-popup" href="popup.html">
+            Modal and non-modal, portalled to the body, focus trapped.
+          </ui-card>
+          <ui-card eyebrow="Forms" heading="ui-input" href="input.html">
+            A real native control with hint, error and validity.
+          </ui-card>
+          <ui-card eyebrow="Data" heading="ui-tablegrid" href="tablegrid.html">
+            Sorting, search, selection and copy.
+          </ui-card>
+          <ui-card eyebrow="Overlays" heading="ui-tooltip" href="tooltip.html">
+            Positioning that survives a transformed ancestor.
+          </ui-card>
+          <ui-card eyebrow="Layout" heading="ui-sidebar" href="sidebar.html">
+            A collapsible rail that remembers its state.
+          </ui-card>
+        </ui-cards>
+      </section>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, API and the tokens the surface is built from. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;!-- The common case: attributes for the slots, text for the body. --&gt;
+&lt;ui-card eyebrow="Forms" heading="ui-checkbox" href="checkbox.html"&gt;
+  Real checkbox, indeterminate state, shared validation.
+&lt;/ui-card&gt;
+
+&lt;!-- Or claim each slot, and the card keeps your own markup. --&gt;
+&lt;ui-card variant="outline" interactive href="popup.html"&gt;
+  &lt;span data-part="eyebrow"&gt;Author-supplied&lt;/span&gt;
+  &lt;h3 data-part="title"&gt;The heading is your own element&lt;/h3&gt;
+  &lt;p data-part="body"&gt;Body copy.&lt;/p&gt;
+  &lt;div data-part="actions"&gt;
+    &lt;ui-button size="sm"&gt;Log a press&lt;/ui-button&gt;
+  &lt;/div&gt;
+&lt;/ui-card&gt;
+
+&lt;!-- The grid decides only the track count. --&gt;
+&lt;ui-cards label="Components" min="18rem"&gt;
+  &lt;ui-card heading="ui-tabs" href="tabs.html"&gt;…&lt;/ui-card&gt;
+  &lt;ui-card heading="ui-card" href="card.html"&gt;…&lt;/ui-card&gt;
+&lt;/ui-cards&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="js">const card = document.querySelector('ui-card');
+
+// One options object. Options you leave out keep their current value.
+card.configure({
+  heading: 'ui-card',
+  eyebrow: 'Layout',
+  href: 'card.html',
+  variant: 'outline',  // default | outline | glass
+  padding: 'lg',       // none | sm | md | lg
+  interactive: true,
+  headingLevel: 2,
+});
+
+// `focus()` is overridden, so a caller never has to know whether this
+// particular card is a link: focusing a card always lands on something
+// the user can act from.
+card.focus();
+
+// Every press is announced, so a card can drive a router or a drawer.
+card.addEventListener('ui4u:press', (event) =&gt; {
+  const { href } = event.detail;
+  console.log('opening', href);
+});
+
+// A binding runs *before* the card acts. Return false — or call
+// event.preventDefault() — to veto it, navigation included.
+card.bind('press', (detail, event) =&gt; {
+  if (!detail.href) return false;
+});
+
+// The grid takes a fixed track count, or `null` to auto-fill.
+const cards = document.querySelector('ui-cards');
+cards.configure({ label: 'Components', columns: 3, min: '16rem' });
+cards.cards; // the cards currently in the grid</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork. */
+ui-card {
+  --ui4u-card-radius: var(--ui4u-radius-lg);
+  --ui4u-card-padding: var(--ui4u-space-5);
+}
+
+/* The anchor is a real link wrapping the title; this makes the whole card
+   its hit area without putting a click handler on a div. */
+ui-card .ui4u-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ui4u-card-radius);
+}
+
+/* …which is also why the actions have to sit above it. */
+ui-card .ui4u-card__actions {
+  position: relative;
+  z-index: 1;
+}
+
+ui-cards {
+  --ui4u-cards-gap: var(--ui4u-space-4);
+  grid-template-columns: var(--ui4u-cards-columns);
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes" variant="ghost">
+        <ul>
+          <li>
+            A card with <code>href</code> is a real <code>&lt;a&gt;</code> around its own heading,
+            so its accessible name is the card's title and middle-click, “open in new tab” and the
+            status bar all keep working. There is no second, invisible link hiding inside it.
+          </li>
+          <li>
+            The card is <strong>one</strong> tab stop. A card that has actions adds them as the next
+            stop, so Tab reaches the link and then the buttons, in that order.
+          </li>
+          <li>
+            The grid is <code>role="list"</code> and every card is <code>role="listitem"</code>,
+            applied on each change — so a card added later is still announced as an item rather than
+            as an orphan. <code>label</code> names the list; an unlabelled one is announced as an
+            unnamed group.
+          </li>
+          <li>
+            A card is a container, not a tab stop of its own: it carries
+            <code>tabindex="-1"</code> so the arrow keys can move focus into it, and never
+            <code>0</code>. Tab therefore lands on the card's own link or first control.
+          </li>
+          <li>
+            <kbd>ArrowRight</kbd> and <kbd>ArrowLeft</kbd> move between cards and land on the next
+            card's link or first control. Movement clamps at the ends rather than wrapping.
+          </li>
+          <li>
+            Only an interactive card lifts on hover. A static card that raised itself would promise
+            something it does not do.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const log = document.getElementById('log');
+      const hero = document.getElementById('hero');
+      const grid = document.getElementById('grid');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real component.
+      document.getElementById('opt-variant').addEventListener('ui4u:change', (event) => {
+        hero.configure({ variant: event.detail.label });
+        log.textContent = `ui-card.configure({ variant: '${event.detail.label}' })`;
+      });
+
+      document.getElementById('opt-padding').addEventListener('ui4u:change', (event) => {
+        hero.configure({ padding: event.detail.label });
+        log.textContent = `ui-card.configure({ padding: '${event.detail.label}' })`;
+      });
+
+      document.getElementById('opt-columns').addEventListener('ui4u:change', (event) => {
+        const { label } = event.detail;
+        // `null` is the documented "let the grid work it out" value, not 0.
+        grid.configure({ columns: label === 'auto-fill' ? null : Number(label) });
+        log.textContent = `ui-cards.configure({ columns: ${label === 'auto-fill' ? 'null' : label} })`;
+      });
+
+      /* --- an action row on a card that is also a link -------------------- */
+
+      // The anchor is stretched over the whole card, so this only works because
+      // the actions sit above it. If a click ever navigates instead of logging,
+      // that stacking is gone.
+      document.getElementById('action-log').addEventListener('click', () => {
+        log.textContent = 'card actions → button pressed, the card did not navigate';
+      });
+
+      /* --- a binding that can veto ---------------------------------------- */
+
+      const press = document.getElementById('press');
+      const toggle = document.getElementById('toggle-veto');
+      let vetoing = true;
+
+      press.bind('press', (detail) => {
+        log.textContent = vetoing
+          ? `press → ${detail.href} (vetoed — navigation blocked)`
+          : `press → ${detail.href} (allowed)`;
+        return !vetoing;
+      });
+
+      // Vetoed by default, so clicking the card cannot navigate the demo away
+      // before the reader has read what happened.
+      toggle.addEventListener('click', () => {
+        vetoing = !vetoing;
+        toggle.textContent = vetoing ? 'Allow the press' : 'Veto the press';
+        log.textContent = vetoing
+          ? 'press binding now vetoes — the card will not navigate'
+          : 'press binding now allows — the card will navigate';
+      });
+
+      press.addEventListener('ui4u:press', (event) => {
+        // Only reached when the binding let the press through.
+        log.textContent = `ui4u:press → ${event.detail.href}`;
+      });
+    </script>
+  </body>
+</html>

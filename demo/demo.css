@@ -313,50 +313,22 @@ kbd {
 /*
  * The index catalogue.
  *
- * It is a `ui-tablegrid`, so sorting, the filter field, paging and the sticky
- * header all come from the component. The shell only decides how the table sits
- * in the page and keeps the action column from stretching.
+ * It is a `ui-cards` grid, so the track count and the card surface both come
+ * from the component. The shell only decides how the filter bar and the grid
+ * sit in the page.
  */
+#catalogue-bar {
+  margin-block: var(--ui4u-space-7) var(--ui4u-space-4);
+}
+
 #catalogue {
-  margin-top: var(--ui4u-space-7);
+  /* Several per row on a desktop, and the component drops to one below a
+     phone width on its own. */
+  --ui4u-cards-min: 17rem;
 }
 
-/* The toolbar is the grid's own chrome, so it needs no gap above the table. */
-#catalogue ui-toolbar[data-toolbar='grid'] {
-  margin-bottom: var(--ui4u-space-3);
-}
-
-#catalogue td:first-child {
-  font-weight: var(--ui4u-weight-semibold);
-  color: var(--ui4u-primary);
-  white-space: nowrap;
-}
-
-#catalogue td:nth-child(3) {
-  color: var(--ui4u-text-muted);
-}
-
-/* The action column sizes to its button instead of taking an equal share. */
-#catalogue th:last-child,
-#catalogue td.demo-open {
-  width: 1%;
-  white-space: nowrap;
-}
-
-#catalogue .ui4u-tablegrid__pager {
-  margin-top: var(--ui4u-space-3);
-}
-
-/*
- * A phone has room for the component and the link, not for the description as
- * well. Keeping all four columns forces the table wider than the viewport, and
- * a table that scrolls sideways hides the action column off the right edge.
- */
-@media (max-width: 44rem) {
-  #catalogue th:nth-child(3),
-  #catalogue td:nth-child(3) {
-    display: none;
-  }
+#catalogue ui-card[hidden] {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

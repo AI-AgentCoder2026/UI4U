@@ -1,0 +1,37 @@
+/**
+ * ui-cards
+ *
+ * The grid only. All it decides is the track count; the card inside it is
+ * styled by `ui-card`.
+ */
+
+ui-cards {
+  --ui4u-cards-gap: var(--ui4u-space-4);
+
+  display: grid;
+  grid-template-columns: var(
+    --ui4u-cards-columns,
+    repeat(auto-fill, minmax(min(100%, 18rem), 1fr))
+  );
+  gap: var(--ui4u-cards-gap);
+  /* Cards stretch to the tallest in their row, so an uneven description does
+     not leave a ragged bottom edge. */
+  align-items: stretch;
+}
+
+/*
+ * A fixed track count is a deliberate choice, not a fallback. Below a phone
+ * width, force a single column: two cards side by side on a 320px screen
+ * leaves a hit area too small to use.
+ */
+@media (max-width: 30rem) {
+  ui-cards[data-columns] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-cards {
+    transition: none;
+  }
+}
