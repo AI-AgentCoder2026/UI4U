@@ -33,15 +33,20 @@ Every component follows the same shape — keep new ones consistent:
 - Zero runtime dependencies; no global CSS — styles live in the component folder, scoped to the element
 - One options object, never long positional argument lists; every option documented in JSDoc
 - Theming only through CSS custom properties prefixed `--ui4u-`; never hardcode color, spacing, radius, or shadow values in component CSS
-- Anything positioned with `position: fixed` (tooltip, popup) must be portalled to `<body>` — an ancestor with `transform`, `filter` or `backdrop-filter` otherwise becomes its containing block
+- Anything positioned with `position: fixed` (tooltip, popup) must be portalled to `<body>` — an ancestor with `transform`, `filter` or `backdrop-filter` otherwise becomes its containing block. When a component _has_ to move itself for that reason, use `UI4UElement.moveTo(parent)`: plain `appendChild` fires `disconnectedCallback`/`connectedCallback` and rebuilds the component from scratch
 - Mobile-first: base styles target small screens, desktop refinements go in container/`@media` queries
 - Public API carries JSDoc `@param`/`@returns` plus one runnable `@example`
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure` · `button` · `button-group` · `tooltip` · `layout` · `popup` · `input` · `checkbox` · `radio` · `dropdown` · `tablegrid` · `form` · `sidebar` · `toolbar` · `card`
+Shipped: `tabs` · `disclosure` · `button` · `button-group` · `tooltip` · `layout` · `popup` · `input` · `checkbox` · `radio` · `dropdown` · `tablegrid` · `form` · `sidebar` · `toolbar` · `card` · `cards`
 
 Roadmap: none outstanding. Next candidates and the audit findings live in `docs/REVIEW.md`.
+
+`demo/app.html` (**Beacon**) is not a component — it is the whole library wired
+into one console. `e2e/app.spec.js` asserts that every component above appears
+somewhere in it, so a component that cannot be expressed there is a gap in the
+component, not a licence to hand-roll something.
 
 The delivery plan, with per-component API and acceptance criteria, lives in `docs/ROADMAP.md`.
 

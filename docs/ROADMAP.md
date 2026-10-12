@@ -1,25 +1,62 @@
 # UI4U roadmap
 
-Delivery plan for the remaining components. Each one ships only when its demo
+Delivery plan for the components. Each one ships only when its demo
 page and tests exist — see the component contract in [`AGENTS.md`](../AGENTS.md).
 
 ## Status
 
-| Phase | Component      | State                                                           |
-| ----- | -------------- | --------------------------------------------------------------- |
-| 1     | `ui-button`    | ✅ shipped                                                      |
-| 1     | `ui-tooltip`   | ✅ shipped (also brought in `core/position.js`)                 |
-| 1     | `ui-popup`     | ✅ shipped (also brought in `core/focus-trap.js`)               |
-| 2     | `ui-input`     | ✅ shipped                                                      |
-| 2     | `ui-form`      | ⏳ next                                                         |
-| 3     | `ui-tablegrid` | Browsable data table: sortable columns, keyboard cell nav       |
-| 3     | `ui-sidebar`   | ⏳ planned                                                      |
-| 3     | `ui-layout`    | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
+Every component on the original plan has shipped. The table is kept because the
+per-component sections below are the acceptance criteria each one was built to,
+and they are still the reference for changing one.
+
+| Phase | Component              | State                                                           |
+| ----- | ---------------------- | --------------------------------------------------------------- |
+| 1     | `ui-button`            | ✅ shipped                                                      |
+| 1     | `ui-tooltip`           | ✅ shipped (also brought in `core/position.js`)                 |
+| 1     | `ui-popup`             | ✅ shipped (also brought in `core/focus-trap.js`)               |
+| 2     | `ui-input`             | ✅ shipped (plus `amount` and `date` modes)                     |
+| 2     | `ui-form`              | ✅ shipped                                                      |
+| 3     | `ui-tablegrid`         | ✅ shipped                                                      |
+| 3     | `ui-sidebar`           | ✅ shipped (consumes `core/focus-trap.js`)                      |
+| 3     | `ui-layout`            | ✅ shipped (also brought in `core/pointer.js` + `core/size.js`) |
+| 4     | `ui-checkbox`          | ✅ shipped                                                      |
+| 4     | `ui-radio`             | ✅ shipped (group included)                                     |
+| 4     | `ui-dropdown`          | ✅ shipped                                                      |
+| 4     | `ui-toolbar`           | ✅ shipped                                                      |
+| 4     | `ui-button-group`      | ✅ shipped                                                      |
+| 5     | Event bindings         | ✅ shipped — `bind`/`unbind`/`bindAll` on `UI4UElement`         |
+| 5     | `ui-card` + `ui-cards` | ✅ shipped                                                      |
+| 6     | **Beacon demo app**    | ✅ shipped — [`demo/app.html`](../demo/app.html)                |
 
 Shared helpers extracted so far: `core/position.js`, `core/pointer.js`,
 `core/size.js`, `core/focus-trap.js`. `dom.js` still owns `focusables()` and
-re-exports it; `ui-sidebar` should consume the trap rather than growing a
-second one.
+re-exports it.
+
+### 6. Beacon — the demo app
+
+Not a component: a whole application, built from the seventeen above and
+nothing else. One `ui-layout` shell with a `ui-toolbar` app bar, a `ui-sidebar`
+of sections, an inspector and a status bar; four views that swap in the centre
+region without the shell reloading.
+
+It earns its place for three reasons.
+
+- **It is the coverage test.** `e2e/app.spec.js` asserts that every component in
+  the library appears somewhere in the app, and that the page contains zero
+  `<select>` elements. A component that cannot be expressed here is a gap in the
+  component.
+- **It is the regression suite.** Putting a `ui-sidebar` inside a `ui-layout` —
+  the arrangement almost every real console has — found a drawer trapped under
+  its own backdrop. See [`REVIEW.md`](REVIEW.md#a-drawer-trapped-under-its-own-backdrop).
+- **It is the documentation.** Two `<figure class="demo-code">` samples explain
+  the two ideas the per-component demos cannot show together: a layout with a
+  toolbar band and collapsible regions, and bindings that observe _and_ veto.
+
+Acceptance criteria are the app's own spec: view switching keeps the shell
+alive, the sidebar and the segmented control agree in both directions, the grid
+sorts/searches/pages/selects, the form refuses an empty submit, a destructive
+action is trapped behind a confirm, and the whole thing raises no script errors
+on any view at either viewport.
 
 ## Build order
 

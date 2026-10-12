@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Beacon — UI4U demo app</title>
+    <meta
+      name="description"
+      content="Beacon — a release and incident console built entirely with UI4U, exercising every component in the library."
+    />
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+    <!--
+      Restores the theme chosen on any other demo page. Inline and blocking on
+      purpose: a deferred or module script would run after the stylesheet, and
+      the page would flash dark before settling on light.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('ui4u-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (error) {
+        /* storage unavailable — the default in the markup stands */
+      }
+    </script>
+    <style>
+      /* --- shell ---------------------------------------------------------- */
+      /*
+       * The shared `.page` wrapper is centred at 62rem, which is right for a
+       * reading page and wrong for an application. Widening it here — rather
+       * than forking `demo.css` — keeps the demo chrome (the nav bar the shared
+       * script injects) working exactly as it does everywhere else.
+       */
+      .app-page {
+        max-width: 82rem;
+      }
+
+      #shell {
+        /*
+         * A fixed viewport height, not `100dvh`: the page also carries the
+         * disclosure and the code samples below, and a full-height layout would
+         * push them off the end of a page nobody can scroll.
+         */
+        height: min(76dvh, 44rem);
+        border: 1px solid var(--ui4u-border);
+        border-radius: var(--ui4u-radius-lg);
+        overflow: hidden;
+      }
+
+      #shell ui-panel {
+        min-height: 0;
+        min-width: 0;
+      }
+
+      /* --- app bar --------------------------------------------------------- */
+      .app-bar {
+        border-radius: 0;
+        border-inline: 0;
+        border-block-start: 0;
+      }
+
+      .app-bar__brand {
+        display: flex;
+        align-items: center;
+        gap: var(--ui4u-space-2);
+        padding-inline-end: var(--ui4u-space-4);
+        font-weight: var(--ui4u-weight-bold);
+        letter-spacing: var(--ui4u-tracking-tight);
+        color: var(--ui4u-text);
+        white-space: nowrap;
+      }
+
+      .app-bar__dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: var(--ui4u-radius-full);
+        background: var(--ui4u-success);
+      }
+
+      .app-bar ui-input {
+        flex: 1 1 10rem;
+        min-width: 7rem;
+      }
+
+      /* --- view scaffolding ------------------------------------------------- */
+      .view {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ui4u-space-5);
+      }
+
+      .view__title {
+        margin: 0;
+        font-size: var(--ui4u-font-size-xl);
+        font-weight: var(--ui4u-weight-bold);
+        letter-spacing: var(--ui4u-tracking-tight);
+      }
+
+      .view__lede {
+        margin: 0;
+        color: var(--ui4u-text-muted);
+      }
+
+      /* --- KPI cards --------------------------------------------------------- */
+      .kpi {
+        --ui4u-card-padding: var(--ui4u-space-4);
+      }
+
+      .kpi__value {
+        margin: 0;
+        font-size: var(--ui4u-font-size-2xl);
+        font-weight: var(--ui4u-weight-bold);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: var(--ui4u-tracking-tight);
+      }
+
+      .kpi__delta[data-trend='up'] {
+        color: var(--ui4u-success);
+      }
+
+      .kpi__delta[data-trend='down'] {
+        color: var(--ui4u-danger);
+      }
+
+      /* --- inspector --------------------------------------------------------- */
+      .inspector {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ui4u-space-4);
+      }
+
+      .inspector__empty {
+        margin: 0;
+        color: var(--ui4u-text-subtle);
+        font-size: var(--ui4u-font-size-sm);
+      }
+
+      /* --- status bar ---------------------------------------------------------- */
+      .status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--ui4u-space-3);
+        margin: 0;
+        font-family: var(--ui4u-font-mono);
+        font-size: var(--ui4u-font-size-xs);
+        color: var(--ui4u-text-muted);
+      }
+
+      /* --- popup ---------------------------------------------------------------- */
+      .confirm {
+        display: flex;
+        flex-direction: column;
+        gap: var(--ui4u-space-4);
+        max-width: 24rem;
+      }
+
+      .confirm__title {
+        margin: 0;
+        font-size: var(--ui4u-font-size-lg);
+        font-weight: var(--ui4u-weight-bold);
+      }
+
+      .confirm__body {
+        margin: 0;
+        color: var(--ui4u-text-muted);
+      }
+
+      .confirm__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--ui4u-space-2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page app-page">
+      <!--
+        The shell. One persistent layout: the app bar, sidebar and status bar
+        never reload, only the centre region swaps. That is how a real app is
+        built, and it is why this is one page rather than four.
+      -->
+      <ui-layout id="shell">
+        <ui-toolbar slot="top" label="Application" class="app-bar">
+          <span class="app-bar__brand"><span class="app-bar__dot"></span>Beacon</span>
+
+          <ui-input
+            id="global-search"
+            label="Search"
+            placeholder="Filter everything"
+            size="sm"
+            sr-only
+          ></ui-input>
+
+          <ui-button-group id="view-switch" label="View" size="sm">
+            <ui-button value="overview">Overview</ui-button>
+            <ui-button value="releases">Releases</ui-button>
+            <ui-button value="incidents">Incidents</ui-button>
+            <ui-button value="settings">Settings</ui-button>
+          </ui-button-group>
+
+          <ui-tooltip content="Show or hide navigation" placement="bottom">
+            <ui-button variant="ghost" size="sm" data-nav-toggle aria-pressed="false">
+              Menu
+            </ui-button>
+          </ui-tooltip>
+
+          <ui-button id="new-incident" variant="primary" size="sm" data-toolbar-end>
+            New incident
+          </ui-button>
+          <ui-tooltip content="Show or hide the inspector" placement="bottom">
+            <ui-button variant="ghost" size="sm" data-inspector-toggle aria-pressed="false">
+              Details
+            </ui-button>
+          </ui-tooltip>
+          <ui-button variant="ghost" size="sm" data-theme-toggle>Theme</ui-button>
+        </ui-toolbar>
+
+        <ui-panel slot="left" label="Navigation" size="13rem" min="9rem" resizable collapsible>
+          <ui-sidebar id="nav" label="Sections" expanded width="100%" rail="3rem">
+            <ui-sidebar-item
+              label="Overview"
+              icon="◈"
+              active
+              data-view="overview"
+            ></ui-sidebar-item>
+            <ui-sidebar-item label="Releases" icon="▤" data-view="releases"></ui-sidebar-item>
+            <ui-sidebar-item label="Incidents" icon="⚠" data-view="incidents"></ui-sidebar-item>
+            <ui-sidebar-item label="Settings" icon="◐" data-view="settings"></ui-sidebar-item>
+          </ui-sidebar>
+        </ui-panel>
+
+        <ui-panel slot="center" label="Content">
+          <div id="view-host"></div>
+        </ui-panel>
+
+        <ui-panel slot="right" label="Inspector" size="17rem" min="11rem" resizable collapsible>
+          <div id="inspector" class="inspector">
+            <p class="inspector__empty">Open a release to see its details here.</p>
+          </div>
+        </ui-panel>
+
+        <ui-panel slot="bottom" label="Status" size="3rem" min="2rem" resizable>
+          <p class="status" role="status" aria-live="polite">
+            <span id="status-selection">0 selected</span>
+            <span aria-hidden="true">·</span>
+            <span id="status-event">Starting up…</span>
+          </p>
+        </ui-panel>
+      </ui-layout>
+
+      <ui-disclosure summary="How this page is built">
+        <p>
+          Every control above is a UI4U component and every value comes from
+          <code>--ui4u-*</code> tokens, so the whole console re-themes from one attribute on
+          <code>&lt;html&gt;</code>. There is no hand-written CSS and no
+          <code>innerHTML</code> anywhere: the views are built with
+          <code>document.createElement</code>, because a release title is data.
+        </p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-layout&gt;
+  &lt;!-- A toolbar is a first-class layout region: a thin, non-resizable band. --&gt;
+  &lt;ui-toolbar slot="top" label="Application"&gt;
+    &lt;ui-input label="Search" placeholder="Filter everything" size="sm" sr-only&gt;&lt;/ui-input&gt;
+    &lt;ui-button-group id="view-switch" label="View" size="sm"&gt;
+      &lt;ui-button value="overview"&gt;Overview&lt;/ui-button&gt;
+      &lt;ui-button value="releases"&gt;Releases&lt;/ui-button&gt;
+    &lt;/ui-button-group&gt;
+  &lt;/ui-toolbar&gt;
+
+  &lt;!-- A panel with `resizable` gets a separator; `collapsible` gives it a closed state. --&gt;
+  &lt;ui-panel slot="left" label="Navigation" size="13rem" resizable collapsible&gt;
+    &lt;ui-sidebar label="Sections" expanded&gt;
+      &lt;ui-sidebar-item label="Overview" icon="◈" active&gt;&lt;/ui-sidebar-item&gt;
+    &lt;/ui-sidebar&gt;
+  &lt;/ui-panel&gt;
+
+  &lt;ui-panel slot="center"&gt;
+    &lt;!-- Views swap in here; the shell never reloads. --&gt;
+  &lt;/ui-panel&gt;
+&lt;/ui-layout&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="js">// Every component takes a binding. Returning `false` — or calling
+// `preventDefault()` — makes the component skip its own behaviour.
+grid.bind('sort', ({ column, direction }) =&gt; {
+  status.textContent = `Sorted by ${column} (${direction})`;
+  return true; // falsy would veto the sort
+});
+
+// The same component as a real form control, driven by its own value.
+channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
+  if (detail.value) grid.addFilter({ field: 'channel', operator: 'equals', value: detail.value });
+  else grid.clearFilters();
+});</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <p>
+        <ui-button variant="ghost" size="sm" href="index.html">← Back to all demos</ui-button>
+      </p>
+    </div>
+
+    <!--
+      A modal with a real focus trap. Used for the destructive actions, because
+      "are you sure" deserves a trap and a toast does not.
+    -->
+    <ui-popup id="confirm" label="Confirm" mode="modal" dismissible>
+      <div class="confirm">
+        <h2 class="confirm__title" id="confirm-title"></h2>
+        <p class="confirm__body" id="confirm-body"></p>
+        <div class="confirm__actions">
+          <ui-button id="confirm-cancel" variant="ghost">Cancel</ui-button>
+          <ui-button id="confirm-ok" variant="danger">Confirm</ui-button>
+        </div>
+      </div>
+    </ui-popup>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      /* --------------------------------------------------------------- data */
+
+      const RELEASES = [
+        {
+          version: '1.0.0',
+          channel: 'stable',
+          downloads: 3900,
+          size: 41200,
+          published: '2026-05-01',
+          status: 'shipped',
+        },
+        {
+          version: '1.1.0',
+          channel: 'stable',
+          downloads: 5120,
+          size: 42400,
+          published: '2026-06-02',
+          status: 'shipped',
+        },
+        {
+          version: '1.2.0-beta.1',
+          channel: 'beta',
+          downloads: 1120,
+          size: 43100,
+          published: '2026-07-21',
+          status: 'shipped',
+        },
+        {
+          version: '1.2.0',
+          channel: 'stable',
+          downloads: 8421,
+          size: 44000,
+          published: '2026-08-14',
+          status: 'shipped',
+        },
+        {
+          version: '1.3.0-rc.1',
+          channel: 'rc',
+          downloads: 640,
+          size: 44680,
+          published: '2026-10-08',
+          status: 'candidate',
+        },
+        {
+          version: '1.3.0',
+          channel: 'stable',
+          downloads: 9260,
+          size: 45300,
+          published: '2026-11-02',
+          status: 'planned',
+        },
+      ];
+
+      const SEVERITIES = ['low', 'medium', 'high', 'critical'];
+
+      /** How many releases the console will hold in the comparison basket. */
+      const MAX_COMPARE = 3;
+
+      /* ------------------------------------------------------- tiny helpers */
+
+      /**
+       * Builds one node. Never innerHTML — every string here can carry data.
+       *
+       * A prop whose name starts with `on` and whose value is a function is
+       * attached as a listener; everything else is an attribute, and `text`
+       * becomes a text node rather than markup.
+       *
+       * @param {string} tag
+       * @param {Record<string, unknown>} [props]
+       * @param {Array<Node>} [children]
+       * @returns {HTMLElement}
+       */
+      function node(tag, props = {}, children = []) {
+        const element = document.createElement(tag);
+        for (const [name, value] of Object.entries(props)) {
+          if (name === 'text') element.textContent = /** @type {string} */ (value);
+          else if (typeof value === 'function' && name.startsWith('on')) {
+            element.addEventListener(name.slice(2), /** @type {EventListener} */ (value));
+          } else element.setAttribute(name, /** @type {string} */ (value));
+        }
+        for (const child of children) element.appendChild(child);
+        return element;
+      }
+
+      /**
+       * A label element. Its text is the field's own label, so it is never
+       * generic — this reads better in the DOM than an inline string.
+       *
+       * @param {string} text
+       * @returns {HTMLElement}
+       */
+      function option(text) {
+        return node('span', { text });
+      }
+
+      /** @param {number} value @returns {string} */
+      const group = (value) => new Intl.NumberFormat('en-GB').format(value);
+
+      /* --------------------------------------------------------- the shell */
+
+      const shell = /** @type {HTMLElement} */ (document.getElementById('shell'));
+      const viewHost = /** @type {HTMLElement} */ (document.getElementById('view-host'));
+      const inspector = /** @type {HTMLElement} */ (document.getElementById('inspector'));
+      const statusEvent = /** @type {HTMLElement} */ (document.getElementById('status-event'));
+      const statusSelection = /** @type {HTMLElement} */ (
+        document.getElementById('status-selection')
+      );
+      const globalSearch = /** @type {HTMLElement} */ (document.getElementById('global-search'));
+      const confirmPopup = /** @type {HTMLElement} */ (document.getElementById('confirm'));
+
+      /** The release the inspector is showing, or `null`. @type {string|null} */
+      let inspected = null;
+      /** The toolbar's destructive action, which follows the mounted view. @type {HTMLElement|null} */
+      let yankButton = null;
+      /** Density is a preference, not a one-shot: it outlives the view. @type {'roomy'|'compact'} */
+      let densityValue = 'roomy';
+
+      const say = (message) => {
+        statusEvent.textContent = message;
+      };
+
+      /* --------------------------------------------------- the shared grid */
+
+      /** @type {Array<[string, string, string]>} */
+      const RELEASE_COLUMNS = [
+        ['Version', 'version', 'text'],
+        ['Channel', 'channel', 'text'],
+        ['Downloads', 'downloads', 'number'],
+        ['Size (kB)', 'size', 'number'],
+        ['Published', 'published', 'text'],
+        ['Status', 'status', 'text'],
+      ];
+
+      /**
+       * Builds a ui-tablegrid from a column spec and rows.
+       *
+       * @param {string} label
+       * @param {Array<[string, string, string]>} columns
+       * @param {Array<Record<string, string|number>>} rows
+       * @param {{ striped?: boolean, selectable?: boolean, copyable?: boolean, perPage?: number, searchable?: boolean, advanced?: boolean, toolbar?: boolean }} [options]
+       * @returns {HTMLElement}
+       */
+      function tableGrid(label, columns, rows, options = {}) {
+        const {
+          striped = false,
+          selectable = false,
+          copyable = false,
+          perPage,
+          searchable = false,
+          advanced = false,
+          toolbar = false,
+        } = options;
+
+        const grid = node('ui-tablegrid', {
+          label,
+          'data-app-grid': '',
+          ...(striped ? { striped: '' } : {}),
+          ...(selectable ? { selectable: '', multi: '' } : {}),
+          ...(copyable ? { copyable: '' } : {}),
+          ...(searchable ? { searchable: '' } : {}),
+          ...(advanced ? { 'advanced-search': '' } : {}),
+          ...(perPage ? { 'per-page': String(perPage) } : {}),
+        });
+
+        if (toolbar) {
+          const bar = node('ui-toolbar', { label: 'Release actions' });
+
+          // A filter the author never has to write SQL for: the grid takes the
+          // filter, the dropdown only supplies the value.
+          const channel = node('ui-dropdown', {
+            label: 'Channel',
+            placeholder: 'Any channel',
+            'data-channel-filter': '',
+          });
+          for (const value of ['stable', 'beta', 'rc']) {
+            channel.appendChild(node('ui-dropdown-option', { value }, [option(value)]));
+          }
+
+          bar.append(
+            channel,
+            node('ui-button', {
+              variant: 'danger',
+              size: 'sm',
+              'data-yank': '',
+              disabled: '',
+              text: 'Yank release…',
+            }),
+            node('ui-button', {
+              variant: 'ghost',
+              size: 'sm',
+              'data-clear-filters': '',
+              text: 'Clear filters',
+            })
+          );
+          grid.appendChild(bar);
+        }
+
+        const headRow = node('tr');
+        for (const [title, key, type] of columns) {
+          headRow.appendChild(
+            node('th', { scope: 'col', 'data-sort': key, 'data-type': type, text: title })
+          );
+        }
+
+        const tbody = node('tbody');
+        for (const row of rows) {
+          const tr = node('tr', { 'data-row': JSON.stringify(row) });
+          for (const [, key] of columns) {
+            const raw = String(row[key] ?? '');
+            tr.appendChild(node('td', { 'data-value': raw, text: formatFor(key, raw) }));
+          }
+          tbody.appendChild(tr);
+        }
+
+        grid.appendChild(node('table', {}, [node('thead', {}, [headRow]), tbody]));
+        return grid;
+      }
+
+      /** @param {string} key @param {string} value @returns {string} */
+      function formatFor(key, value) {
+        if (key === 'downloads' || key === 'size') return group(Number(value));
+        return value;
+      }
+
+      /** @returns {Array<Record<string, string>>} downloads rolled up per channel */
+      function channelRows() {
+        /** @type {Map<string, number>} */
+        const totals = new Map();
+        for (const row of RELEASES) {
+          totals.set(row.channel, (totals.get(row.channel) ?? 0) + row.downloads);
+        }
+        return [...totals].map(([channel, downloads]) => ({
+          version: channel,
+          channel: `${totals.size} channels`,
+          downloads: String(downloads),
+          size: '',
+          published: '',
+          status: '',
+        }));
+      }
+
+      /** @returns {Array<Record<string, string>>} one row per released version */
+      function versionRows() {
+        return RELEASES.map((row) => ({
+          version: row.version,
+          channel: row.channel,
+          downloads: String(row.downloads),
+          size: String(row.size),
+          published: row.published,
+          status: row.status,
+        }));
+      }
+
+      /* --------------------------------------------------------- view: cards */
+
+      /**
+       * @param {string} label
+       * @param {string} value
+       * @param {string} delta
+       * @param {'up'|'down'|'flat'} trend
+       * @returns {HTMLElement}
+       */
+      function kpi(label, value, delta, trend) {
+        const card = node('ui-card', { class: 'kpi', eyebrow: label, variant: 'glass' }, [
+          node('p', { class: 'kpi__value', text: value }),
+          node('span', { class: 'kpi__delta', 'data-trend': trend, text: delta }),
+        ]);
+        return card;
+      }
+
+      function viewOverview() {
+        const wrap = node('div', { class: 'view', 'data-view': 'overview' }, [
+          node('h1', { class: 'view__title', text: 'Overview' }),
+          node('p', {
+            class: 'view__lede',
+            text: 'Four views, one shell. Every tile is a ui-card; the tables below are ui-tablegrids.',
+          }),
+          node('ui-cards', { label: 'Key figures', min: '11rem' }, [
+            kpi('Releases this quarter', '6', '↑ 2 on last quarter', 'up'),
+            kpi('Open incidents', '2', '↓ 1 resolved', 'down'),
+            kpi('Downloads, 90 days', '38.4k', '↑ 12%', 'up'),
+            kpi('Error budget left', '72%', '↓ 4% this sprint', 'down'),
+          ]),
+        ]);
+
+        // A ui-disclosure wrapping a ui-tabs: two readings of the same data,
+        // collapsed by default so the centre region still fits a laptop screen.
+        const tabs = node('ui-tabs', { label: 'Activity', variant: 'underline' });
+        const byChannel = node('ui-tab', { label: 'By channel' }, [
+          tableGrid('Downloads by channel', RELEASE_COLUMNS, channelRows(), { striped: true }),
+        ]);
+        const byVersion = node('ui-tab', { label: 'By version' }, [
+          tableGrid('Downloads by version', RELEASE_COLUMNS, versionRows(), { striped: true }),
+        ]);
+        tabs.append(byChannel, byVersion);
+
+        wrap.appendChild(
+          node('ui-disclosure', { summary: 'Delivery activity' }, [
+            node('p', {
+              text: 'A ui-disclosure wrapping a ui-tabs — the same two components you would use on their own, nested.',
+            }),
+            tabs,
+          ])
+        );
+
+        return { wrap, grids: [...wrap.querySelectorAll('[data-app-grid]')] };
+      }
+
+      /* --------------------------------------------------------- view: table */
+
+      function viewReleases() {
+        const grid = tableGrid('Releases', RELEASE_COLUMNS, RELEASES, {
+          striped: true,
+          selectable: true,
+          copyable: true,
+          searchable: true,
+          advanced: true,
+          perPage: 5,
+          toolbar: true,
+        });
+
+        const wrap = node('div', { class: 'view', 'data-view': 'releases' }, [
+          node('h1', { class: 'view__title', text: 'Releases' }),
+          node('p', {
+            class: 'view__lede',
+            text: 'Sorting, search, the filter builder, paging, row selection and copy — one component, no bespoke code.',
+          }),
+          grid,
+        ]);
+
+        return { wrap, grids: [grid] };
+      }
+
+      /* ------------------------------------------------------- view: the form */
+
+      function viewIncidents() {
+        const severity = node('ui-dropdown', {
+          label: 'Severity',
+          name: 'severity',
+          required: true,
+        });
+        for (const value of SEVERITIES) {
+          severity.appendChild(node('ui-dropdown-option', { value }, [option(value)]));
+        }
+
+        const form = node('ui-form', { 'validate-on': 'submit', 'data-incident-form': '' }, [
+          node('ui-input', {
+            label: 'Title',
+            name: 'title',
+            required: true,
+            placeholder: 'What broke?',
+          }),
+          severity,
+          node('ui-radio-group', { label: 'Status', name: 'status', value: 'open' }, [
+            node('ui-radio', { value: 'open' }, [option('Open')]),
+            node('ui-radio', { value: 'mitigating' }, [option('Mitigating')]),
+            node('ui-radio', { value: 'resolved' }, [option('Resolved')]),
+          ]),
+          node('ui-input', {
+            label: 'Budget at risk',
+            name: 'budget',
+            type: 'amount',
+            placeholder: 'e.g. 45k',
+            hint: 'Accepts k, m and b — try 45k.',
+          }),
+          node('ui-input', {
+            label: 'Review by',
+            name: 'due',
+            type: 'date',
+            format: 'dd/MM/yyyy',
+            hint: 'Pick it or type it; the value stays ISO.',
+          }),
+          node('ui-checkbox', { label: 'Notify the on-call rota', name: 'notify' }),
+          node('ui-disclosure', { summary: 'Notes' }, [
+            node('p', { text: 'Anything the next person needs to know.' }),
+          ]),
+          node('ui-button', { variant: 'primary', type: 'submit', text: 'Save incident' }),
+          node('ui-button', {
+            variant: 'ghost',
+            type: 'button',
+            'data-reset': '',
+            text: 'Reset',
+          }),
+        ]);
+
+        const wrap = node('div', { class: 'view', 'data-view': 'incidents' }, [
+          node('h1', { class: 'view__title', text: 'Incidents' }),
+          node('p', {
+            class: 'view__lede',
+            text: 'One ui-form covering every field mode: amount, date with a display format, dropdown, radio group and checkbox.',
+          }),
+          form,
+        ]);
+
+        return { wrap, form, grids: [] };
+      }
+
+      /* ------------------------------------------------------ view: settings */
+
+      function viewSettings() {
+        const theme = node(
+          'ui-button-group',
+          { id: 'settings-theme', label: 'Theme', size: 'sm' },
+          [
+            node('ui-button', { value: 'dark', text: 'Dark' }),
+            node('ui-button', { value: 'light', text: 'Light' }),
+            node('ui-button', { value: 'contrast', text: 'Contrast' }),
+          ]
+        );
+
+        const density = node(
+          'ui-button-group',
+          { id: 'settings-density', label: 'Table density', size: 'sm' },
+          [
+            node('ui-button', { value: 'roomy', text: 'Roomy' }),
+            node('ui-button', { value: 'compact', text: 'Compact' }),
+          ]
+        );
+
+        const wrap = node('div', { class: 'view', 'data-view': 'settings' }, [
+          node('h1', { class: 'view__title', text: 'Settings' }),
+          node('p', {
+            class: 'view__lede',
+            text: 'Appearance and density, wired straight to the library’s tokens.',
+          }),
+          node('ui-disclosure', { summary: 'Appearance', variant: 'ghost', open: true }, [
+            node('p', {
+              text: 'A theme is a token override, never a fork of the component CSS.',
+            }),
+            theme,
+            node('p', {
+              class: 'view__lede',
+              style: 'margin-block-start: var(--ui4u-space-4)',
+              text: 'Density applies to every table in the app.',
+            }),
+            density,
+          ]),
+          node('ui-disclosure', { summary: 'Error colour', variant: 'ghost', open: true }, [
+            node('p', {
+              text: 'Each component reads its own token, so you can tint just your fields — or override the theme token and change them all at once.',
+            }),
+            node('ui-checkbox', {
+              label: 'Override --ui4u-danger on this page',
+              name: 'custom-danger',
+            }),
+          ]),
+        ]);
+
+        return { wrap, theme, density, grids: [] };
+      }
+
+      /* -------------------------------------------------------------- mounting */
+
+      /** @type {Record<string, () => any>} */
+      const VIEWS = {
+        overview: viewOverview,
+        releases: viewReleases,
+        incidents: viewIncidents,
+        settings: viewSettings,
+      };
+
+      /**
+       * Renders a view into the centre region and wires it up.
+       *
+       * @param {string} view
+       */
+      function mount(view) {
+        const build = VIEWS[view] ?? viewOverview;
+        const built = build();
+
+        shell.setAttribute('data-view', view);
+        viewHost.replaceChildren(built.wrap);
+        // The destructive action belongs to the releases toolbar; on any other
+        // view there is nothing for it to act on.
+        yankButton = null;
+
+        for (const grid of built.grids ?? []) {
+          wireGrid(grid);
+          grid.configure({ dense: densityValue === 'compact' });
+        }
+        if (built.form) wireForm(built.form);
+        if (built.theme) wireTheme(built.theme);
+        if (built.density) wireDensity(built.density);
+
+        // The error-colour override proves the customisation hooks are real.
+        const custom = /** @type {HTMLElement|null} */ (
+          viewHost.querySelector('[name="custom-danger"]')
+        );
+        custom?.addEventListener('ui4u:change', ({ detail }) => {
+          const root = document.documentElement;
+          if (detail.checked) root.style.setProperty('--ui4u-danger', '#f59e0b');
+          else root.style.removeProperty('--ui4u-danger');
+          say(detail.checked ? 'Errors are amber on this page' : 'Errors use the theme colour');
+        });
+
+        statusSelection.textContent = '0 selected';
+        say(`${view} loaded`);
+        syncSidebar(view);
+      }
+
+      /**
+       * Points the sidebar at the mounted view.
+       *
+       * The sidebar owns its own active item and offers no setter for it, so the
+       * honest way to move it is the same way a person does: click the control
+       * the sidebar generated for that entry. It matches on that exact control,
+       * so clicking the item element itself would find nothing — and the
+       * `activeItem` guard is what stops the click coming straight back here.
+       *
+       * @param {string} view
+       */
+      function syncSidebar(view) {
+        const item = /** @type {HTMLElement|null} */ (
+          nav.querySelector(`ui-sidebar-item[data-view="${view}"]`)
+        );
+        if (item && item !== nav.activeItem) {
+          /** @type {HTMLElement|null} */ (item.firstElementChild)?.click();
+        }
+      }
+
+      /* ------------------------------------------------------- event plumbing */
+
+      /**
+       * Subscribes to a grid's own events and mirrors them into the status bar.
+       *
+       * @param {Element|undefined} grid
+       */
+      function wireGrid(grid) {
+        if (!grid) return;
+
+        // Bindings, not listeners: returning `false` would stop the component
+        // acting, which is the whole point of the API. The binding runs *before*
+        // the grid mutates, so a refusal here leaves the selection untouched.
+        grid.bind('sort', ({ column, direction }) => {
+          statusEvent.textContent = `Sorted by ${column ?? 'none'} (${direction})`;
+          return true;
+        });
+
+        grid.bind('select', ({ all } = /** @type {any} */ ({})) => {
+          // `all` is only set by select-all; `undefined` means one row was
+          // toggled, and `selectedRows` is still the state before the toggle.
+          if (all === undefined && grid.selectedRows.length >= MAX_COMPARE) {
+            say(`At most ${MAX_COMPARE} releases can be compared at once`);
+            return false;
+          }
+          return true;
+        });
+
+        // The count only exists once the selection has actually changed, so it
+        // arrives on the event rather than on the binding.
+        grid.addEventListener('ui4u:select', ({ detail }) => {
+          statusSelection.textContent = `${detail.count} selected`;
+          say(detail.count ? `${detail.count} selected` : 'Selection cleared');
+        });
+
+        // Row activation fills the inspector; a real app would navigate here.
+        for (const row of grid.querySelectorAll('tbody tr')) {
+          row.addEventListener('dblclick', () => inspect(row.getAttribute('data-row')));
+        }
+
+        const channel = grid.querySelector('[data-channel-filter]');
+        channel?.addEventListener('ui4u:change', ({ detail }) => {
+          if (detail.value) {
+            grid.addFilter({ field: 'channel', operator: 'equals', value: detail.value });
+            say(`Filtered to the ${detail.value} channel`);
+          } else {
+            grid.clearFilters();
+            say('Channel filter cleared');
+          }
+        });
+
+        grid.querySelector('[data-clear-filters]')?.addEventListener('click', () => {
+          grid.clearFilters();
+          if (channel) channel.value = '';
+          say('Filters cleared');
+        });
+
+        // Destructive, so it stays unavailable until there is something to act
+        // on and asks before it does.
+        yankButton = /** @type {HTMLElement|null} */ (grid.querySelector('[data-yank]'));
+        yankButton?.addEventListener('click', () => {
+          if (inspected) askToYank(inspected);
+        });
+      }
+
+      /** @param {Element|undefined} form */
+      function wireForm(form) {
+        if (!form) return;
+
+        form.addEventListener('ui4u:submit', ({ detail }) => {
+          // A *valid* submit is the browser's to send — that is what makes a
+          // UI4U form work without JavaScript. This console has no server, so
+          // the app takes it over, which is exactly what the detail's event is
+          // for. An invalid one is already cancelled by the component.
+          detail.event.preventDefault();
+          const title = detail.values?.title ?? 'the incident';
+          say(`Saved ${title}`);
+        });
+
+        form.addEventListener('ui4u:invalid', ({ detail }) => {
+          say(`${detail.errors.length} field(s) need attention`);
+        });
+
+        form.querySelector('[data-reset]')?.addEventListener('click', () => {
+          // `ui-form` owns validation, not values: each field clears itself and
+          // the form drops its error state. Pretending a form-level `reset()`
+          // exists would be a lie about the API.
+          for (const field of form.querySelectorAll('ui-input, ui-dropdown')) field.value = '';
+          for (const box of form.querySelectorAll('ui-checkbox')) box.checked = false;
+          const status = form.querySelector('ui-radio-group');
+          if (status) status.value = 'open';
+          form.resetValidity();
+          say('Form cleared');
+        });
+      }
+
+      /** @param {Element} group */
+      function wireTheme(group) {
+        group.select(document.documentElement.dataset.theme ?? 'dark');
+        group.addEventListener('ui4u:change', ({ detail }) => {
+          document.documentElement.dataset.theme = detail.value;
+          try {
+            localStorage.setItem('ui4u-theme', detail.value);
+          } catch {
+            /* not available; the choice lasts for this page */
+          }
+          say(`Theme set to ${detail.value}`);
+        });
+      }
+
+      /** @param {Element} group */
+      function wireDensity(group) {
+        group.select(densityValue);
+        group.addEventListener('ui4u:change', ({ detail }) => {
+          densityValue = detail.value === 'compact' ? 'compact' : 'roomy';
+          for (const grid of document.querySelectorAll('[data-app-grid]')) {
+            grid.configure({ dense: densityValue === 'compact' });
+          }
+          say(`Tables are ${densityValue}`);
+        });
+      }
+
+      /* ---------------------------------------------------------- the inspector */
+
+      /**
+       * Fills the inspector with a release's details.
+       *
+       * @param {string|null} json
+       */
+      function inspect(json) {
+        inspector.replaceChildren();
+        yankButton?.toggleAttribute('disabled', true);
+
+        if (!json) {
+          inspected = null;
+          inspector.appendChild(
+            node('p', {
+              class: 'inspector__empty',
+              text: 'Open a release to see its details here.',
+            })
+          );
+          return;
+        }
+
+        const release = JSON.parse(json);
+        inspected = release.version;
+
+        const card = node(
+          'ui-card',
+          { eyebrow: release.channel, heading: release.version, variant: 'outline' },
+          [
+            node('p', {
+              text: `${group(release.downloads)} downloads · ${group(release.size)} kB · published ${release.published}`,
+            }),
+            node('div', { 'data-part': 'actions' }, [
+              node(
+                'ui-tooltip',
+                {
+                  content: 'Yank removes the release from every channel',
+                  placement: 'top',
+                },
+                [
+                  node('ui-button', {
+                    variant: 'danger',
+                    size: 'sm',
+                    text: 'Yank release',
+                    onclick: () => askToYank(release.version),
+                  }),
+                ]
+              ),
+              node('ui-button', {
+                variant: 'ghost',
+                size: 'sm',
+                text: 'Close',
+                onclick: () => inspect(null),
+              }),
+            ]),
+          ]
+        );
+
+        const status = node('ui-disclosure', {
+          summary: `Status: ${release.status}`,
+          variant: 'ghost',
+          open: true,
+        });
+        status.appendChild(
+          node('p', {
+            text:
+              release.status === 'shipped'
+                ? 'Out on every channel.'
+                : release.status === 'candidate'
+                  ? 'Release candidate, not yet promoted.'
+                  : 'Scheduled. Promotion needs a sign-off.',
+          })
+        );
+
+        inspector.append(card, status);
+        yankButton?.removeAttribute('disabled');
+        say(`Inspecting ${release.version}`);
+      }
+
+      /* ----------------------------------------------------------- the popup */
+
+      /**
+       * @param {string} title
+       * @param {string} body
+       * @param {() => void} onConfirm
+       */
+      function ask(title, body, onConfirm) {
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-body').textContent = body;
+
+        const ok = /** @type {HTMLElement} */ (document.getElementById('confirm-ok'));
+        const cancel = /** @type {HTMLElement} */ (document.getElementById('confirm-cancel'));
+
+        const done = () => {
+          ok.removeEventListener('click', accept);
+          cancel.removeEventListener('click', dismiss);
+        };
+        const accept = () => {
+          done();
+          confirmPopup.closePopup();
+          onConfirm();
+        };
+        const dismiss = () => {
+          done();
+          confirmPopup.closePopup();
+        };
+
+        ok.addEventListener('click', accept);
+        cancel.addEventListener('click', dismiss);
+        confirmPopup.openPopup();
+      }
+
+      /** @param {string} version */
+      function askToYank(version) {
+        ask(
+          `Yank ${version}?`,
+          'It is removed from every channel immediately. This cannot be undone.',
+          () => {
+            say(`Yanked ${version}`);
+            inspect(null);
+          }
+        );
+      }
+
+      /* ------------------------------------------------------------- wiring */
+
+      const switcher = /** @type {HTMLElement} */ (document.getElementById('view-switch'));
+
+      switcher.bind('change', ({ value }) => {
+        if (typeof value === 'string' && value) mount(value);
+        return true;
+      });
+
+      // The sidebar and the segmented control are two views of one state, so
+      // neither owns it: picking one drives the other through the group.
+      const nav = /** @type {HTMLElement} */ (document.getElementById('nav'));
+      nav.addEventListener('click', ({ target }) => {
+        const item = /** @type {HTMLElement|null} */ (
+          (target instanceof Element ? target : null)?.closest('ui-sidebar-item')
+        );
+        const view = item?.getAttribute('data-view');
+        if (view) switcher.select(view);
+      });
+
+      document.getElementById('new-incident').addEventListener('click', () => {
+        switcher.select('incidents');
+        ask(
+          'Open a new incident?',
+          'This switches to the incident form with every field cleared.',
+          () => {
+            mount('incidents');
+            say('New incident');
+          }
+        );
+      });
+
+      globalSearch.addEventListener('input', ({ target }) => {
+        const needle = String(target?.value ?? '')
+          .trim()
+          .toLowerCase();
+        for (const grid of document.querySelectorAll('[data-app-grid]')) grid.search(needle);
+        for (const item of document.querySelectorAll('#nav ui-sidebar-item')) {
+          item.hidden = needle !== '' && !item.textContent.toLowerCase().includes(needle);
+        }
+        say(needle ? `Searching for “${needle}”` : 'Search cleared');
+      });
+
+      // On a phone the inspector and the sidebar are noise, so the layout's own
+      // collapse keeps both out of the way — with no bespoke media query in the
+      // stylesheet. Both come back from the app bar, because a region a reader
+      // cannot reopen is a region they will assume is missing.
+      const inspectorToggle = /** @type {HTMLElement} */ (
+        document.querySelector('[data-inspector-toggle]')
+      );
+      const navToggle = /** @type {HTMLElement} */ (document.querySelector('[data-nav-toggle]'));
+
+      /**
+       * @param {'left'|'right'} slot
+       * @param {boolean} open
+       */
+      function setPanel(slot, open) {
+        shell.setSlotCollapsed(slot, !open);
+        const control = slot === 'right' ? inspectorToggle : navToggle;
+        control?.setAttribute('aria-pressed', String(open));
+      }
+
+      const narrow = window.matchMedia('(max-width: 60rem)');
+      /** @param {MediaQueryList|{ matches: boolean }} query */
+      const applyNarrow = (query) => {
+        setPanel('right', !query.matches);
+        setPanel('left', !query.matches);
+      };
+
+      /** @param {'left'|'right'} slot */
+      const togglePanel = (slot) => {
+        const open = shell.panel(slot)?.collapsed ?? false;
+        setPanel(slot, open);
+        say(
+          open
+            ? `${slot === 'right' ? 'Inspector' : 'Navigation'} shown`
+            : `${slot === 'right' ? 'Inspector' : 'Navigation'} hidden`
+        );
+      };
+
+      inspectorToggle?.addEventListener('click', () => togglePanel('right'));
+      navToggle?.addEventListener('click', () => togglePanel('left'));
+
+      applyNarrow(narrow);
+      narrow.addEventListener('change', applyNarrow);
+
+      // The binding runs before the group mutates anything, so this both picks
+      // the first view and mounts it — one call, no separate bootstrap.
+      switcher.select('overview');
+    </script>
+  </body>
+</html>

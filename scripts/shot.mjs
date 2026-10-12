@@ -36,6 +36,7 @@ const PAGES = [
   ['toolbar', devices['Desktop Chrome'].viewport],
   ['button-group', devices['Desktop Chrome'].viewport],
   ['card', devices['Desktop Chrome'].viewport],
+  ['app', devices['Desktop Chrome'].viewport],
 ];
 
 const only = process.argv[2];
@@ -72,13 +73,29 @@ for (const [name, viewport] of targets) {
     await page.waitForTimeout(300);
   }
 
+  // The demo app opens on the overview, which is four empty-ish KPI tiles.
+  // The releases view is the one that shows the library doing real work, so
+  // that is what the docs image is of.
+  if (name === 'app') {
+    await page.locator('#view-switch ui-button', { hasText: 'Releases' }).click();
+    await page.locator('[data-app-grid] tbody tr').first().dblclick();
+    await page.waitForTimeout(300);
+
+    // The centre panel scrolls on its own, so the window-level reset below is
+    // not enough — the grid's own toolbar would be shot half out of frame.
+    await page.locator('#shell ui-panel[slot="center"]').evaluate((panel) => {
+      panel.scrollTop = 0;
+    });
+  }
+
   // `window` lives in the browser; this runs under Node, so the eslint browser
   // globals have to be named where they are used.
   await page.evaluate(() => globalThis.scrollTo(0, 0));
 
   // The table grid has a tall control area above it; shooting the component
   // itself keeps the docs image about the table rather than the pickers.
-  const target = name === 'tablegrid' ? page.locator('#demo') : page;
+  const target =
+    name === 'tablegrid' ? page.locator('#demo') : name === 'app' ? page.locator('#shell') : page;
   await target.screenshot({ path: fileURLToPath(new URL(`${name}-desktop-dark.png`, OUT)) });
   await page.close();
   console.log(`captured ${name}`);

@@ -44,6 +44,8 @@ export class UI4UElement extends HTMLElementBase {
   /** @type {Array<() => void>} */
   #disposers = [];
   #live = false;
+  /** True while this element is being relocated inside the document. */
+  #moving = false;
   /** Semantic event name → handlers. @type {Map<string, Set<Function>>} */
   #bindings = new Map();
 
@@ -53,16 +55,47 @@ export class UI4UElement extends HTMLElementBase {
   }
 
   connectedCallback() {
+    // A relocation is not a new element: rebuilding here would tear down
+    // state, listeners and focus that the move was meant to preserve.
+    if (this.#moving) return;
     this.#live = true;
     this.onConnect();
   }
 
   disconnectedCallback() {
+    if (this.#moving) return;
     this.#live = false;
     this.onDisconnect();
 
     for (const dispose of this.#disposers) dispose();
     this.#disposers = [];
+  }
+
+  /**
+   * Moves this element to another parent **without** a disconnect/reconnect.
+   *
+   * `appendChild` on a connected node fires both callbacks, which for most
+   * components means a teardown and a rebuild. Some have to relocate
+   * themselves — a sidebar that becomes an off-canvas drawer must leave any
+   * `transform`ed, `filter`ed or `backdrop-filter`ed ancestor, or that ancestor
+   * becomes the containing block for its fixed positioning — and that must not
+   * cost them their identity.
+   *
+   * @param {Node} parent
+   * @returns {this}
+   *
+   * @example
+   * document.body.contains(sidebar) ? sidebar.moveTo(dock) : sidebar.moveTo(document.body);
+   */
+  moveTo(parent) {
+    if (this.parentNode === parent) return this;
+    this.#moving = true;
+    try {
+      parent.appendChild(this);
+    } finally {
+      this.#moving = false;
+    }
+    return this;
   }
 
   attributeChangedCallback(_name, _oldValue, _newValue) {}

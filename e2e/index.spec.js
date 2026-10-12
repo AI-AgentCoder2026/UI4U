@@ -31,6 +31,7 @@ const DEMOS = [
   'ui-tablegrid',
   'ui-card',
   'ui-cards',
+  'Beacon app',
 ];
 
 test.beforeEach(async ({ page }) => {
@@ -118,7 +119,7 @@ test('filters cards from the toolbar field', async ({ page }) => {
 
   const shown = page.locator(`${CATALOGUE} ui-card:not([hidden])`);
   await expect(shown).toHaveCount(2, { message: 'ui-tablegrid, and ui-toolbar mentioning it' });
-  await expect(page.locator('#catalogue-log')).toContainText('of 17 components');
+  await expect(page.locator('#catalogue-log')).toContainText(`of ${DEMOS.length} components`);
 });
 
 test('filters cards by kind from the toolbar dropdown', async ({ page }) => {

@@ -143,6 +143,7 @@ const REPO_URL = 'https://github.com/AI-AgentCoder2026/UI4U';
  */
 const DEMOS = [
   { file: 'index.html', label: 'Home' },
+  { file: 'app.html', label: 'Beacon app' },
   { file: 'tabs.html', label: 'ui-tabs' },
   { file: 'disclosure.html', label: 'ui-disclosure' },
   { file: 'button.html', label: 'ui-button' },

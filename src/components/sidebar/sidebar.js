@@ -103,6 +103,13 @@ export class Sidebar extends UI4UElement {
   #trapArmed = false;
   /** Guards the property -> attribute reflect loop. @type {boolean} */
   #syncing = false;
+  /**
+   * Where the author put this sidebar. A drawer is portalled to `<body>`, and
+   * this is what it goes back to when the viewport widens again.
+   *
+   * @type {Node|null}
+   */
+  #home = null;
 
   /* ------------------------------------------------------------------ api */
 
@@ -324,6 +331,7 @@ export class Sidebar extends UI4UElement {
     this.#backdrop = backdrop;
     this.#records = records;
     this.#stash = stash;
+    this.#home = this.parentNode;
     this.#built = true;
 
     // The host is the trap's last-resort focus target when the panel has no
@@ -377,18 +385,32 @@ export class Sidebar extends UI4UElement {
         })
       );
     }
-    // Delegated, so a consumer adding items later needs no extra wiring.
+    /*
+     * Delegated from the panel, not the host: the host is portalled to `<body>`
+     * while it is a drawer (see `#placeDrawer`), so it is still the one element
+     * both modes share — but the panel is what the user actually clicks, and
+     * attaching there keeps the listener independent of where the host sits.
+     */
     this.track(
-      on(this, 'click', (event) => {
+      on(panel, 'click', (event) => {
         const index = this.#indexFrom(event.target);
         if (index !== -1) this.#activate(index, { focus: true });
       })
     );
-    this.track(on(this, 'keydown', (event) => this.#onKeydown(event)));
+    this.track(on(panel, 'keydown', (event) => this.#onKeydown(event)));
     // A rail strip is unreadable without labels: entering it expands it.
     this.track(
-      on(this, 'focusin', (event) => {
-        if (this.#indexFrom(/** @type {Node|null} */ (event.target)) !== -1) this.#expandOnFocus();
+      on(panel, 'focusin', (event) => {
+        if (this.#indexFrom(/** @type {Node|null} */ (event.target)) === -1) return;
+        /*
+         * Docked only. A closed *drawer* is off-canvas by design, and its items
+         * are out of the tab order, so nothing a reader does can land focus in
+         * there. Something programmatic can — activating an item to keep the
+         * nav in step, say — and expanding would slam a modal sheet with a
+         * focus trap over the page for a focus nobody asked for.
+         */
+        if (this.narrow) return;
+        this.#expandOnFocus();
       })
     );
 
@@ -470,6 +492,7 @@ export class Sidebar extends UI4UElement {
     this.#backdrop = null;
     this.#records = [];
     this.#index = 0;
+    this.#home = null;
     this.removeAttribute('tabindex');
     this.removeAttribute('role');
     delete this.dataset.expanded;
@@ -536,6 +559,7 @@ export class Sidebar extends UI4UElement {
     this.dataset.expanded = String(expanded);
     this.dataset.rail = String(!expanded);
     this.dataset.drawer = String(narrow);
+    this.#placeDrawer(narrow);
 
     if (this.#toggle) {
       this.#toggle.setAttribute('aria-expanded', String(expanded));
@@ -566,6 +590,28 @@ export class Sidebar extends UI4UElement {
 
     if (narrow && expanded) this.#activateTrap();
     else this.#releaseTrap();
+  }
+
+  /**
+   * Moves the whole host in or out of `<body>` with the drawer.
+   *
+   * The backdrop is already portalled, and the two have to land in the *same*
+   * stacking context to stack against each other. Leaving the host behind traps
+   * its `position: fixed` panel inside whatever ancestor carries a `transform`,
+   * `filter` or `backdrop-filter` — a `ui-layout`, typically — and that ancestor
+   * becomes the panel's containing block, so the drawer ends up *below* a
+   * backdrop that has no such ancestor and swallows every click on its own
+   * links.
+   *
+   * The host moves rather than the panel, so `ui-sidebar .ui4u-sidebar__*`
+   * keeps describing a sidebar wherever it happens to be sitting.
+   *
+   * @param {boolean} narrow
+   */
+  #placeDrawer(narrow) {
+    const host = narrow ? (this.ownerDocument?.body ?? this) : this.#home;
+    if (!host) return;
+    this.moveTo(host);
   }
 
   #activateTrap() {
@@ -648,7 +694,19 @@ export class Sidebar extends UI4UElement {
 
     if (focus) this.#records[next].control.focus();
 
-    if (!silent) this.emit('ui4u:navigate', { item: record.item, index: next, href: record.href });
+    if (!silent) {
+      /*
+       * A drawer is dismissed by choosing from it. Leaving the sheet open over
+       * a page whose view has already changed leaves the reader with a modal
+       * sheet and no way back except Escape, and — because the backdrop covers
+       * everything — no way to the thing they just asked for. Done after the
+       * focus move above, so the trap is released and focus is handed to the
+       * toggle rather than dropped.
+       */
+      if (this.narrow && this.expanded) this.close();
+
+      this.emit('ui4u:navigate', { item: record.item, index: next, href: record.href });
+    }
   }
 
   /** @param {KeyboardEvent} event */

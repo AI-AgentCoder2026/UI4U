@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { cleanup, click, mount, press, setupDom } from '../helpers/dom.js';
@@ -471,6 +471,64 @@ describe('ui-sidebar narrow drawer', () => {
     assert.ok(backdrop, 'backdrop rendered');
     assert.equal(sidebar.contains(backdrop), false, 'backdrop is not a descendant of the host');
     assert.equal(backdrop.parentNode, document.body);
+  });
+
+  it('portals the panel and toggle alongside the backdrop while it is a drawer', () => {
+    const host = mount(THREE_ITEMS);
+    const sidebar = host.querySelector('ui-sidebar');
+
+    // Docked: everything lives where the author put it.
+    assert.equal(sidebar.parentNode, host);
+
+    sidebar.narrow = true;
+
+    /*
+     * A fixed box left behind inside a `transform`ed, `filter`ed or
+     * `backdrop-filter`ed ancestor — a `ui-layout`, typically — becomes that
+     * ancestor's containing block, and the drawer ends up *under* a backdrop
+     * that has no such ancestor. Same stacking context, or it does not work.
+     */
+    assert.equal(sidebar.parentNode, document.body);
+    assert.equal(sidebar.dataset.drawer, 'true');
+
+    // The host moves, not its parts: `ui-sidebar .ui4u-sidebar__*` still
+    // describes a sidebar, so every consumer selector keeps working.
+    assert.ok(sidebar.querySelector('.ui4u-sidebar__panel'));
+    assert.equal(controlsOf(sidebar).length, 3);
+
+    sidebar.narrow = false;
+    assert.equal(sidebar.parentNode, host, "returns to the author's parent when it docks again");
+  });
+
+  it('relocates without tearing itself down', () => {
+    const host = mount(THREE_ITEMS);
+    const sidebar = host.querySelector('ui-sidebar');
+    const panel = sidebar.querySelector('.ui4u-sidebar__panel');
+    const first = controlsOf(sidebar)[0];
+
+    sidebar.narrow = true;
+
+    // `appendChild` fires disconnected/connected; `moveTo` must swallow both,
+    // or the drawer would be rebuilt from scratch — listeners, bindings and
+    // focus included — every time the viewport changed.
+    //
+    // Focus itself is not asserted: jsdom blurs a focused node the moment it is
+    // re-parented, which a browser does not, so the check would be measuring the
+    // harness rather than the component.
+    assert.equal(sidebar.isLive, true);
+    assert.equal(sidebar.querySelector('.ui4u-sidebar__panel'), panel, 'same panel, not a rebuild');
+    assert.equal(controlsOf(sidebar)[0], first, 'the very same controls');
+    assert.equal(toggleOf(sidebar).getAttribute('aria-controls'), panel.id);
+  });
+
+  it('still activates an item once it is portalled', () => {
+    const host = mount(THREE_ITEMS);
+    const sidebar = host.querySelector('ui-sidebar');
+
+    sidebar.narrow = true;
+
+    click(controlsOf(sidebar)[2]);
+    assert.equal(sidebar.activeIndex, 2);
   });
 
   it('keeps focus inside the drawer while it is open', () => {

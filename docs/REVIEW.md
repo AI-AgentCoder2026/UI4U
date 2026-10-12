@@ -97,3 +97,35 @@ actually asking for.
   and demonstrated by four coloured buttons; a studio would prove it.
 - **`ui-calendar`** — genuinely useful, and a large surface. Only worth it once
   the tier 1 and 2 gaps are closed.
+
+## Fixed while building the demo app
+
+`demo/app.html` is a whole application built from the library, and putting a
+`ui-sidebar` inside a `ui-layout` — the arrangement almost every real console
+has — turned up a defect the unit tests could not see.
+
+### A drawer trapped under its own backdrop
+
+`ui-layout` is a glass surface, so it carries `backdrop-filter`. That makes it a
+containing block for `position: fixed` descendants _and_ a stacking context. A
+drawer-mode `ui-sidebar` inside one therefore had its `fixed` panel positioned
+against the layout instead of the viewport, and — because the backdrop was
+already portalled to `<body>` — painted **below** it. The drawer was visible but
+completely inert: every click on its own links landed on the backdrop.
+
+Two changes fix it:
+
+- `UI4UElement.moveTo(parent)` relocates an element without firing
+  `disconnectedCallback`/`connectedCallback`. `appendChild` on a connected node
+  fires both, which would have rebuilt the sidebar from scratch — listeners,
+  bindings, focus and all — every time the viewport crossed the breakpoint.
+- `ui-sidebar` now moves its **host** to `<body>` in drawer mode, not just its
+  backdrop. The host rather than the panel, so `ui-sidebar .ui4u-sidebar__*`
+  keeps describing a sidebar wherever it is and no consumer selector breaks.
+
+Focus-expansion was narrowed at the same time: a docked rail still springs open
+when focus enters it (a collapsed rail is unreadable without labels), but a
+closed drawer no longer does. Nothing a reader does can put focus inside a
+closed drawer — its items are out of the tab order — so the only thing that
+could trigger it was programmatic activation, and that should not slam a modal
+sheet with a focus trap over the page.

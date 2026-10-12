@@ -7,7 +7,7 @@ into any stack — or none. Every visual value is a `--ui4u-*` custom property, 
 theming a token override rather than a CSS fork.
 
 ```
-All ten components · 117.8 kB minified (~37.7 kB gzip) including tokens and themes
+Seventeen components · 237.3 kB minified (~75.9 kB gzip) including tokens and themes
 ```
 
 ## Status
@@ -35,6 +35,18 @@ Early, and deliberately incremental. Shipped:
 | `ui-cards`        | [`demo/card.html`](demo/card.html)                 | The responsive grid those cards sit in — several per row, one on a phone  |
 
 ![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
+
+### Beacon — the demo app
+
+[`demo/app.html`](demo/app.html) is not a component page. It is a working release-and-incident
+console — layout shell, sidebar, four views, a data grid, a validated form, a confirm modal —
+built from every component above and nothing else. No framework, no build step for the page, and
+no `innerHTML`: the views are assembled with `document.createElement`, because a release title
+is data.
+
+It is also the library's regression suite in disguise. Putting a `ui-sidebar` inside a
+`ui-layout` — the arrangement almost every real console has — found a drawer trapped under its
+own backdrop, which is written up in [`docs/REVIEW.md`](docs/REVIEW.md#a-drawer-trapped-under-its-own-backdrop).
 
 Every component from the original roadmap has shipped. What to build next, and what the
 audits found, is written up in [`docs/REVIEW.md`](docs/REVIEW.md).

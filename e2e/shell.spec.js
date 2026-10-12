@@ -13,6 +13,7 @@ const REPO_URL = 'https://github.com/AI-AgentCoder2026/UI4U';
 /** Every demo page, in the order the nav walks them. */
 const DEMOS = [
   'index.html',
+  'app.html',
   'tabs.html',
   'disclosure.html',
   'button.html',
@@ -172,7 +173,7 @@ test('the home link works from every demo', async ({ page }) => {
   await page.locator(`${NAV} ui-button`, { hasText: 'All demos' }).click();
 
   await expect(page).toHaveURL(/index\.html$/);
-  await expect(page.locator('#catalogue ui-card')).toHaveCount(17);
+  await expect(page.locator('#catalogue ui-card')).toHaveCount(18);
 });
 
 /* --- theme persistence ---------------------------------------------------- */
