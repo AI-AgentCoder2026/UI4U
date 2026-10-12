@@ -310,15 +310,6 @@ kbd {
   color: transparent;
 }
 
-.demo-todo {
-  margin-top: var(--ui4u-space-6);
-  padding: var(--ui4u-space-4);
-  border: 1px dashed var(--ui4u-border-strong);
-  border-radius: var(--ui4u-radius-md);
-  color: var(--ui4u-text-subtle);
-  font-size: var(--ui4u-font-size-sm);
-}
-
 /*
  * The index catalogue.
  *
