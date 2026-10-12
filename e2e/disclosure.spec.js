@@ -93,3 +93,92 @@ test('the Source panel is a ui-disclosure and opens on click', async ({ page }) 
   await expect(source.locator('[data-highlight]')).toHaveCount(3);
   expect(await source.locator('span[class^="tok-"]').count()).toBeGreaterThan(0);
 });
+
+/* --- nested panels ------------------------------------------------------- */
+
+/**
+ * The chevron transform of a disclosure's own trigger.
+ *
+ * Compared as a matrix rather than a boolean: two chevrons at the same angle
+ * mean the same state, so the assertion is "do these two agree, and should
+ * they?".
+ *
+ * Only meaningful while both chevrons are *rendered*. A closed disclosure sets
+ * `hidden` on its region, and anything inside a `display: none` subtree reports
+ * `transform: none` — so every case below opens the outer panel first.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{ outerOpen: boolean, innerOpen: boolean, same: boolean }>}
+ */
+async function chevrons(page) {
+  // Long enough for the 200ms transform transition to settle.
+  await page.waitForTimeout(450);
+
+  return page.evaluate(() => {
+    const outer = document.querySelectorAll('ui-disclosure')[1];
+    const inner = outer.querySelector('ui-disclosure');
+
+    const transform = (element) =>
+      element ? getComputedStyle(element, '::after').transform : /** @type {never} */ (undefined);
+
+    const outerTrigger = outer.querySelector(':scope > .ui4u-disclosure__summary');
+    const innerTrigger = inner.querySelector(':scope > .ui4u-disclosure__summary');
+
+    return {
+      outerOpen: outer.hasAttribute('open'),
+      innerOpen: inner.hasAttribute('open'),
+      same: transform(outerTrigger) === transform(innerTrigger),
+    };
+  });
+}
+
+test('a nested panel shows its own arrow state, not its parent', async ({ page }) => {
+  // The bug: `ui-disclosure[open] .ui4u-disclosure__summary` is a descendant
+  // selector, so opening the outer panel rotated the inner chevron too — and
+  // the inner panel was still closed.
+  await page.getByRole('button', { name: 'Second panel' }).click();
+
+  const open = await chevrons(page);
+  expect(open.outerOpen).toBe(true);
+  expect(open.innerOpen).toBe(false);
+  expect(open.same).toBe(false);
+
+  // Opening the inner one then puts them in the same state, so they agree again.
+  await page.getByRole('button', { name: 'Nested panel' }).click();
+
+  const both = await chevrons(page);
+  expect(both.outerOpen).toBe(true);
+  expect(both.innerOpen).toBe(true);
+  expect(both.same).toBe(true);
+});
+
+test('closing a nested panel rotates only its own arrow back', async ({ page }) => {
+  await page.getByRole('button', { name: 'Second panel' }).click();
+  await page.getByRole('button', { name: 'Nested panel' }).click();
+  expect((await chevrons(page)).same).toBe(true);
+
+  await page.getByRole('button', { name: 'Nested panel' }).click();
+
+  const after = await chevrons(page);
+  expect(after.outerOpen).toBe(true);
+  expect(after.innerOpen).toBe(false);
+  expect(after.same).toBe(false);
+});
+
+test('a nested panel keeps its state when its parent closes', async ({ page }) => {
+  await page.getByRole('button', { name: 'Second panel' }).click();
+  await page.getByRole('button', { name: 'Nested panel' }).click();
+  await page.getByRole('button', { name: 'Second panel' }).click();
+
+  // The inner trigger now sits inside a hidden region, so it is out of the
+  // accessibility tree and cannot be reached by role. Read the DOM directly:
+  // what matters is that closing the parent did not reset the child.
+  const expanded = await page.evaluate(() => {
+    const outer = document.querySelectorAll('ui-disclosure')[1];
+    const inner = outer.querySelector('ui-disclosure');
+    const trigger = inner.querySelector(':scope > .ui4u-disclosure__summary');
+    return trigger ? trigger.getAttribute('aria-expanded') : null;
+  });
+
+  expect(expanded).toBe('true');
+});

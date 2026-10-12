@@ -16,7 +16,7 @@ ui-disclosure {
   overflow: hidden;
 }
 
-ui-disclosure .ui4u-disclosure__summary {
+ui-disclosure > .ui4u-disclosure__summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -38,18 +38,18 @@ ui-disclosure .ui4u-disclosure__summary {
     background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
 }
 
-ui-disclosure .ui4u-disclosure__summary:hover {
+ui-disclosure > .ui4u-disclosure__summary:hover {
   color: var(--ui4u-primary);
   background: var(--ui4u-surface-3);
 }
 
-ui-disclosure .ui4u-disclosure__summary:focus-visible {
+ui-disclosure > .ui4u-disclosure__summary:focus-visible {
   outline: none;
   box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
 }
 
 /* Chevron drawn with two borders, so it inherits the current color. */
-ui-disclosure .ui4u-disclosure__summary::after {
+ui-disclosure > .ui4u-disclosure__summary::after {
   content: '';
   flex: 0 0 auto;
   width: var(--ui4u-space-2);
@@ -62,17 +62,17 @@ ui-disclosure .ui4u-disclosure__summary::after {
   transition: transform var(--ui4u-duration-base) var(--ui4u-ease-out);
 }
 
-ui-disclosure[open] .ui4u-disclosure__summary::after {
+ui-disclosure[open] > .ui4u-disclosure__summary::after {
   transform: rotate(225deg) translate(-25%, -25%);
 }
 
-ui-disclosure .ui4u-disclosure__content {
+ui-disclosure > .ui4u-disclosure__content {
   padding: 0 var(--ui4u-space-5) var(--ui4u-space-5);
   border-top: 1px solid var(--ui4u-divider);
   padding-top: var(--ui4u-space-5);
 }
 
-ui-disclosure .ui4u-disclosure__content[hidden] {
+ui-disclosure > .ui4u-disclosure__content[hidden] {
   display: none;
 }
 
@@ -93,19 +93,26 @@ ui-disclosure[data-variant='ghost'] {
   border-color: var(--ui4u-border-subtle);
 }
 
-@container (min-width: 40rem) {
-  ui-disclosure .ui4u-disclosure__summary {
+/*
+ * Was `@container (min-width: 40rem)`, which could never match: nothing in the
+ * library declares `container-type` on `ui-disclosure`, so the roomier padding
+ * it asked for silently never applied. A viewport query states the same intent
+ * without quietly adding size containment to a component that wraps arbitrary
+ * author content.
+ */
+@media (min-width: 40rem) {
+  ui-disclosure > .ui4u-disclosure__summary {
     padding-inline: var(--ui4u-space-6);
   }
 
-  ui-disclosure .ui4u-disclosure__content {
+  ui-disclosure > .ui4u-disclosure__content {
     padding-inline: var(--ui4u-space-6);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ui-disclosure .ui4u-disclosure__summary,
-  ui-disclosure .ui4u-disclosure__summary::after {
+  ui-disclosure > .ui4u-disclosure__summary,
+  ui-disclosure > .ui4u-disclosure__summary::after {
     transition: none;
   }
 }
