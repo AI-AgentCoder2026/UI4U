@@ -48,7 +48,7 @@ const TYPES = ['submit', 'reset'];
  */
 export class Button extends UI4UElement {
   static get observedAttributes() {
-    return ['variant', 'size', 'type', 'disabled', 'loading', 'href'];
+    return ['variant', 'size', 'type', 'disabled', 'loading', 'href', 'target', 'rel'];
   }
 
   /** @type {HTMLElement|null} the native `<button>` or `<a>` */
@@ -196,7 +196,7 @@ export class Button extends UI4UElement {
       this.dataset.size = this.size;
     } else if (name === 'type') {
       this.#applyType();
-    } else if (name === 'href') {
+    } else if (name === 'href' || name === 'target' || name === 'rel') {
       // The native element itself changes, so the control is rebuilt.
       this.#rebuild();
     } else {
@@ -217,6 +217,20 @@ export class Button extends UI4UElement {
       ? el('a', { class: 'ui4u-button__control', href: this.href })
       : el('button', { class: 'ui4u-button__control', type: this.type });
     control.id = `${baseId}-control`;
+
+    /*
+     * `target` and `rel` belong to the anchor, not the host, so they are copied
+     * across. A button that renders a link has to be able to open one safely:
+     * `rel="noopener noreferrer"` on a `target="_blank"` link is the difference
+     * between a link and a vulnerability.
+     */
+    if (this.href) {
+      for (const name of ['target', 'rel', 'download', 'hreflang']) {
+        const value = this.getAttribute(name);
+        if (value !== null) control.setAttribute(name, value);
+      }
+    }
+
     // The label is the accessible name, so it moves into the control.
     append(control, stash);
 

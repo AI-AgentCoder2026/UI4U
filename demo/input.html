@@ -23,7 +23,7 @@
             because the control is never re-rendered from a property.
           </p>
         </div>
-        <button type="button" data-theme-toggle>Toggle theme</button>
+        <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
       </header>
 
       <!-- The demo drives its own options through UI4U components, not <select>. -->
@@ -180,7 +180,7 @@
         <figure class="demo-code">
           <figcaption class="demo-code__head">
             <span class="demo-code__lang">HTML</span>
-            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
           </figcaption>
           <pre><code data-highlight="html">&lt;ui-input label="Email" type="email" required hint="We never share it."&gt;&lt;/ui-input&gt;
 &lt;ui-input label="Name" value="Ada" error="That name is taken" size="lg"&gt;&lt;/ui-input&gt;
@@ -194,7 +194,7 @@
         <figure class="demo-code">
           <figcaption class="demo-code__head">
             <span class="demo-code__lang">JavaScript</span>
-            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
           </figcaption>
           <pre><code data-highlight="js">const field = document.querySelector('ui-input');
 
@@ -228,7 +228,7 @@ field.addEventListener('ui4u:input', (event) =&gt; {
         <figure class="demo-code">
           <figcaption class="demo-code__head">
             <span class="demo-code__lang">CSS</span>
-            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
           </figcaption>
           <pre><code data-highlight="css">/* Every value is a token — override, never fork.
    The few measurements without a global token live on the

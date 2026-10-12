@@ -30,6 +30,9 @@ const EXPOSED = [
   'KeyboardEvent',
   'MouseEvent',
   'PointerEvent',
+  // A component watching its own subtree for content changes needs this to be
+  // exercised at all; every consumer browser has it, jsdom implements it.
+  'MutationObserver',
   'getComputedStyle',
 ];
 

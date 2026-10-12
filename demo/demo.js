@@ -139,25 +139,50 @@ const DEMOS = [
 ];
 
 /**
+ * Builds one navigation button.
+ *
+ * A `ui-button` with `href` renders a real `<a>`, so these stay links: middle
+ * click, "open in new tab" and the status bar all keep working, which a
+ * click-handler `<div>` would have quietly broken.
+ *
  * @param {string} href
  * @param {string} text
- * @param {string} [className]
- * @returns {HTMLAnchorElement}
+ * @param {{ variant?: string, disabled?: boolean, external?: boolean, end?: boolean }} [options]
+ * @returns {HTMLElement}
  */
-function navLink(href, text, className = '') {
-  const link = document.createElement('a');
-  link.href = href;
-  link.className = className;
+function navButton(href, text, options = {}) {
+  const { variant = 'ghost', disabled = false, external = false, end = false } = options;
+
+  const button = document.createElement('ui-button');
+  button.setAttribute('variant', variant);
+  button.setAttribute('size', 'sm');
+
+  if (href) button.setAttribute('href', href);
+  if (disabled) button.setAttribute('disabled', '');
+  if (end) button.setAttribute('data-toolbar-end', '');
+  if (external) {
+    button.setAttribute('target', '_blank');
+    // A `target="_blank"` link without this hands the opened page a reference to
+    // this one. Copied onto the anchor by the component.
+    button.setAttribute('rel', 'noopener noreferrer');
+  }
+
   // `textContent`, never innerHTML — a label is still text.
-  link.textContent = text;
-  return link;
+  button.textContent = text;
+  return button;
 }
 
 /**
- * Appends a prev / home / next bar and a repository link to every demo page.
+ * Prepends a prev / home / next bar and a repository link to every demo page.
  *
- * Generated rather than authored into thirteen files, so a new demo cannot ship
- * without navigation and none of them can drift apart.
+ * At the **top** of the page, not the bottom: the chrome scrolls away on a long
+ * demo, and a reader who has to scroll to the end to find their way around has
+ * no way back to the rest of the library.
+ *
+ * Built from `ui-toolbar` and `ui-button` rather than bespoke markup — the demo
+ * site should be a demonstration of the library, not a separate implementation
+ * of it. As a toolbar the whole bar is also a single tab stop, so reaching the
+ * next demo costs one Tab rather than four.
  *
  * @returns {void}
  */
@@ -170,29 +195,32 @@ function wireDemoNav() {
   if (index === -1) return;
 
   /** @type {HTMLElement} */
-  const nav = document.createElement('nav');
+  const nav = document.createElement('ui-toolbar');
   nav.className = 'demo-nav';
-  nav.setAttribute('aria-label', 'Demo navigation');
+  nav.setAttribute('label', 'Demo navigation');
+  nav.setAttribute('sr-only', '');
 
   const previous = DEMOS[index - 1];
   const next = DEMOS[index + 1];
 
-  // `aria-disabled` rather than `aria-hidden`, so the slot keeps its place in
-  // the tab order at the ends of the list instead of vanishing.
-  if (previous) nav.appendChild(navLink(previous.file, `← ${previous.label}`, 'demo-nav__link'));
-  else nav.appendChild(navLink('#', '← Previous', 'demo-nav__link demo-nav__link--off'));
+  // A disabled placeholder rather than a hidden slot, so the bar keeps its shape
+  // at the ends of the list instead of visibly shifting sideways.
+  if (previous) nav.appendChild(navButton(previous.file, `← ${previous.label}`));
+  else nav.appendChild(navButton('', '← Previous', { disabled: true }));
 
-  nav.appendChild(navLink('index.html', 'All demos', 'demo-nav__link demo-nav__link--home'));
+  nav.appendChild(
+    navButton('index.html', 'All demos', {
+      variant: current === 'index.html' ? 'primary' : 'ghost',
+      disabled: current === 'index.html',
+    })
+  );
 
-  if (next) nav.appendChild(navLink(next.file, `${next.label} →`, 'demo-nav__link'));
-  else nav.appendChild(navLink('#', 'Next →', 'demo-nav__link demo-nav__link--off'));
+  if (next) nav.appendChild(navButton(next.file, `${next.label} →`));
+  else nav.appendChild(navButton('', 'Next →', { disabled: true }));
 
-  const repo = navLink(REPO_URL, 'GitHub', 'demo-nav__link demo-nav__link--repo');
-  repo.rel = 'noopener noreferrer';
-  repo.target = '_blank';
-  nav.appendChild(repo);
+  nav.appendChild(navButton(REPO_URL, 'GitHub', { external: true, end: true }));
 
-  page.appendChild(nav);
+  page.prepend(nav);
 }
 
 highlightAll();

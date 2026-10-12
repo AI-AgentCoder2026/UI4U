@@ -55,6 +55,7 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 - `demo/*.html` doubles as local playground **and** the published GitHub Pages site
 - Demos must drive themselves with UI4U components wherever one exists — never raw `<select>` or hand-rolled widgets. `e2e/tabs.spec.js` asserts the tabs demo contains zero `<select>` elements
 - Shared demo chrome lives in `demo/demo.css` and `demo/demo.js` — do not duplicate page styles per demo
+- **The demo shell is itself built from UI4U.** The navigation bar is a `ui-toolbar` of `ui-button`s, the index catalogue is a `ui-tablegrid` with a `ui-toolbar`, and every chrome control is a `ui-button`. The site is the library's own showcase — if the chrome can be expressed as a component, it must be. `e2e/shell.spec.js` and `e2e/index.spec.js` assert this, so a regression to hand-written markup fails the build. A component that cannot yet express something the shell needs is a gap in the component, not a licence to hand-roll it
 - Class names carry the `ui4u-` prefix (`ui4u-tabs__list`, `ui4u-disclosure__summary`), matching the CSS custom property prefix
 - Add a `<figure class="demo-code">` with `<code data-highlight="html|js|css">` for copyable samples; `demo.js` tokenises and injects them with no dependency
 - Reference assets with absolute paths (`/dist/…`, `/src/…`); `scripts/build-pages.mjs` flattens and rewrites them to relative for Pages

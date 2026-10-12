@@ -163,8 +163,10 @@ export class TableGrid extends UI4UElement {
   #selectAllBox = null;
   /** @type {HTMLElement|null} */
   #copyButton = null;
-  /** An author-supplied `<ui-toolbar>` acting as this grid's toolbar. @type {HTMLElement|null} */
+  /** @type {HTMLElement|null} */
   #toolbar = null;
+  /** Watches the body for rows added or removed after connect. @type {MutationObserver|null} */
+  #observer = null;
   /** @type {HTMLElement|null} */
   #filterBar = null;
   /** Advanced search criteria. @type {TableFilter[]} */
@@ -843,6 +845,50 @@ export class TableGrid extends UI4UElement {
     }
   }
 
+  /**
+   * Keeps `#authored` in step with the rows actually in the `<tbody>`.
+   *
+   * Rows are captured once at connect, which is fine for a server-rendered
+   * table and useless for one built in JavaScript — the very common case, and
+   * this demo's own. Without this, rows appended after the grid upgraded are
+   * invisible to sorting, search and paging alike.
+   *
+   * New rows are appended to `#authored` rather than merged by DOM position,
+   * because a live sort has already moved the existing ones around and the
+   * markup order is what `resetSort()` has to be able to restore.
+   */
+  #watchBody(body) {
+    if (typeof MutationObserver !== 'function') return;
+    this.#observer?.disconnect();
+
+    const observer = new MutationObserver(() => {
+      const present = new Set([...body.rows]);
+      const known = new Set(this.#authored);
+
+      const added = [...present].filter((row) => !known.has(row));
+      const removed = this.#authored.filter((row) => !present.has(row));
+
+      /*
+       * Re-sorting and paging re-append rows, which is itself a `childList`
+       * mutation. Returning when the *set* of rows is unchanged breaks what
+       * would otherwise be an infinite loop, and skips a refilter that has
+       * nothing to do anyway.
+       */
+      if (added.length === 0 && removed.length === 0) return;
+
+      // New rows go on the end rather than merged by DOM position, because a
+      // live sort has already moved the existing ones around and the markup
+      // order is what `resetSort()` has to be able to restore.
+      this.#authored = [...this.#authored.filter((row) => present.has(row)), ...added];
+
+      this.#refilter();
+      this.#applyView();
+    });
+
+    observer.observe(body, { childList: true });
+    this.#observer = observer;
+  }
+
   /* --------------------------------------------------------------- build */
 
   #build() {
@@ -922,6 +968,7 @@ export class TableGrid extends UI4UElement {
     this.#buildCopy();
     this.#buildFilters();
     this.#buildPager();
+    this.#watchBody(body);
 
     // Rows must be collected before navigation, which walks them to apply the
     // grid roles.
@@ -942,6 +989,8 @@ export class TableGrid extends UI4UElement {
    * is safe to repeat when an attribute forces a rebuild.
    */
   #teardown() {
+    this.#observer?.disconnect();
+    this.#observer = null;
     for (const dispose of this.#disposers) dispose();
     this.#disposers = [];
 

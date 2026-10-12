@@ -30,7 +30,7 @@ const DEMOS = [
   'button-group.html',
 ];
 
-const NAV = '.demo-nav';
+const NAV = 'ui-toolbar.demo-nav';
 
 test('every demo page renders the navigation bar', async ({ page }) => {
   const missing = [];
@@ -42,6 +42,37 @@ test('every demo page renders the navigation bar', async ({ page }) => {
   }
 
   expect(missing).toEqual([]);
+});
+
+test('the navigation is at the top, above the page header', async ({ page }) => {
+  await page.goto('/demo/tablegrid.html');
+
+  // A bar at the foot is useless on a long demo: the chrome scrolls away and the
+  // reader has no way back to the rest of the library.
+  const order = await page.evaluate(() => {
+    const shell = document.querySelector('.page');
+    // Tagged as well as classed: the page header carries no class of its own.
+    return [...(shell?.children ?? [])].map(
+      (node) => `${node.localName}.${node.className.split(' ')[0]}`
+    );
+  });
+
+  expect(order[0]).toBe('ui-toolbar.demo-nav');
+  expect(order.indexOf('ui-toolbar.demo-nav')).toBeLessThan(order.indexOf('header.'));
+});
+
+test('the navigation stays reachable at the top of a long page', async ({ page }) => {
+  await page.goto('/demo/tablegrid.html');
+
+  const before = await page.locator(NAV).boundingBox();
+  await page.evaluate(() => window.scrollTo(0, 2000));
+  await page.waitForTimeout(100);
+
+  // Sticky, so scrolling pins it to the top rather than taking it away.
+  const after = await page.locator(NAV).boundingBox();
+  expect(before).not.toBeNull();
+  expect(after.y).toBeGreaterThanOrEqual(-1);
+  expect(after.y).toBeLessThan(2);
 });
 
 test('every nav link points at a page that responds', async ({ page }) => {
@@ -68,11 +99,23 @@ test('every nav link points at a page that responds', async ({ page }) => {
   expect(broken).toEqual([]);
 });
 
+test('the nav is built from UI4U components', async ({ page }) => {
+  await page.goto('/demo/tablegrid.html');
+
+  // The demo site should demonstrate the library, not sit outside it.
+  await expect(page.locator(NAV)).toHaveJSProperty('localName', 'ui-toolbar');
+  await expect(page.locator(`${NAV} ui-button`)).toHaveCount(4);
+
+  // As a toolbar the whole bar is one tab stop.
+  await expect(page.locator(`${NAV} [tabindex="0"]`)).toHaveCount(1);
+});
+
 test('the nav links to the repository, safely', async ({ page }) => {
   await page.goto('/demo/tablegrid.html');
 
-  const repo = page.locator(`${NAV} .demo-nav__link--repo`);
-  await expect(repo).toHaveAttribute('href', REPO_URL);
+  // `ui-button` renders a real anchor and copies target/rel across to it.
+  const repo = page.locator(`${NAV} ui-button[data-toolbar-end] a`);
+  await expect(repo).toHaveAttribute('href', 'https://github.com/AI-AgentCoder2026/UI4U');
   await expect(repo).toHaveAttribute('rel', /noopener/);
   await expect(repo).toHaveAttribute('target', '_blank');
 });
@@ -80,37 +123,38 @@ test('the nav links to the repository, safely', async ({ page }) => {
 test('previous and next follow the declared order', async ({ page }) => {
   await page.goto('/demo/input.html');
 
-  // The bar is [previous, home, next, repository].
-  await expect(page.locator(`${NAV} a`).first()).toHaveAttribute('href', 'popup.html');
-  await expect(page.locator(`${NAV} a`).nth(1)).toHaveAttribute('href', 'index.html');
-  await expect(page.locator(`${NAV} a`).nth(2)).toHaveAttribute('href', 'checkbox.html');
+  // The bar is [previous, all demos, next, repository].
+  const links = page.locator(`${NAV} ui-button`);
+  await expect(links.nth(0).locator('a')).toHaveAttribute('href', 'popup.html');
+  await expect(links.nth(1).locator('a')).toHaveAttribute('href', 'index.html');
+  await expect(links.nth(2).locator('a')).toHaveAttribute('href', 'checkbox.html');
 });
 
-test('the ends of the list show a placeholder rather than vanishing', async ({ page }) => {
+test('the ends of the list show a disabled placeholder rather than vanishing', async ({ page }) => {
   await page.goto('/demo/index.html');
 
-  const links = page.locator(`${NAV} a`);
-  await expect(links.first()).toHaveClass(/demo-nav__link--off/);
-  await expect(links.nth(2)).toHaveAttribute('href', DEMOS[1]);
+  const links = page.locator(`${NAV} ui-button`);
+  await expect(links.nth(0)).toHaveAttribute('disabled', '');
+  await expect(links.nth(2).locator('a')).toHaveAttribute('href', DEMOS[1]);
 
   // Derived from DEMOS, not hard-coded: naming the last page here meant this
   // test broke every time a demo was added.
   const last = DEMOS[DEMOS.length - 1];
   await page.goto(`/demo/${last}`);
 
-  // Slot 2 is "next"; slot 3 is the repository link, which is always present.
-  await expect(page.locator(`${NAV} a`).nth(2)).toHaveClass(/demo-nav__link--off/);
-  await expect(page.locator(`${NAV} a`).last()).toHaveAttribute('href', REPO_URL);
+  // Slot 2 is "next"; slot 3 is the repository link, always present.
+  await expect(links.nth(2)).toHaveAttribute('disabled', '');
+  await expect(links.nth(3).locator('a')).toHaveAttribute('href', REPO_URL);
 });
 
 test('the nav can actually navigate between demos', async ({ page }) => {
   await page.goto('/demo/dropdown.html');
 
-  await page.locator(`${NAV} a`, { hasText: 'ui-radio' }).click();
+  await page.locator(`${NAV} ui-button`, { hasText: 'ui-radio' }).click();
   await expect(page).toHaveURL(/radio\.html$/);
 
   await page.goBack();
-  await page.locator(`${NAV} a`, { hasText: 'ui-form' }).click();
+  await page.locator(`${NAV} ui-button`, { hasText: 'ui-form' }).click();
   await expect(page).toHaveURL(/form\.html$/);
 
   await page.goBack();
@@ -124,8 +168,8 @@ test('the nav is labelled as navigation', async ({ page }) => {
 
 test('the home link works from every demo', async ({ page }) => {
   await page.goto('/demo/sidebar.html');
-  await page.locator(`${NAV} a`, { hasText: 'All demos' }).click();
+  await page.locator(`${NAV} ui-button`, { hasText: 'All demos' }).click();
 
   await expect(page).toHaveURL(/index\.html$/);
-  await expect(page.locator('.demo-card').first()).toBeVisible();
+  await expect(page.locator('#catalogue tbody tr')).toHaveCount(15);
 });

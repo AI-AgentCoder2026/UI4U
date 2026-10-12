@@ -1194,3 +1194,37 @@ describe('ui-dropdown bindings', () => {
     assert.deepEqual(seen, ['open', 'sg']);
   });
 });
+
+/* --- options added after connect ----------------------------------------- */
+
+describe('ui-dropdown dynamic options', () => {
+  afterEach(() => cleanup());
+
+  const EMPTY = `<ui-dropdown label="Kind"><ui-dropdown-option value="a">A</ui-dropdown-option></ui-dropdown>`;
+
+  it('picks up an option appended after it connected', async () => {
+    const dropdown = mount(EMPTY).querySelector('ui-dropdown');
+
+    const option = document.createElement('ui-dropdown-option');
+    option.setAttribute('value', 'b');
+    option.textContent = 'B';
+    dropdown.appendChild(option);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepEqual(
+      dropdown.options.map((o) => o.value),
+      ['a', 'b']
+    );
+  });
+
+  it('forgets an option that was removed', async () => {
+    const dropdown = mount(EMPTY).querySelector('ui-dropdown');
+    assert.equal(dropdown.options.length, 1);
+
+    dropdown.querySelector('ui-dropdown-option').remove();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(dropdown.options.length, 0);
+  });
+});

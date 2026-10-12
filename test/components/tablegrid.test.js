@@ -1289,3 +1289,85 @@ describe('ui-tablegrid configuration', () => {
     assert.deepEqual(order(grid), ['1.1.0']);
   });
 });
+
+/* --- rows added after connect -------------------------------------------- */
+
+describe('ui-tablegrid dynamic rows', () => {
+  afterEach(() => cleanup());
+
+  const EMPTY = `
+    <ui-tablegrid label="Releases" per-page="2">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" data-sort="version" data-type="text">Version</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </ui-tablegrid>
+  `;
+
+  it('picks up rows appended after it connected', async () => {
+    const grid = mount(EMPTY).querySelector('ui-tablegrid');
+    const body = grid.querySelector('tbody');
+
+    for (const version of ['1.0.0', '1.1.0', '1.2.0']) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.textContent = version;
+      row.appendChild(cell);
+      body.appendChild(row);
+    }
+
+    // The observer runs on a microtask, so let it settle.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(grid.rows.length, 3);
+    assert.deepEqual(
+      grid.rows.map((r) => r.cells[0].textContent),
+      ['1.0.0', '1.1.0', '1.2.0']
+    );
+  });
+
+  it('picks up rows appended after it connected, when there is no observer', async () => {
+    // jsdom has no MutationObserver, so the component cannot self-heal there.
+    // What matters without one is that a rebuild still sees the rows.
+    const grid = mount(EMPTY).querySelector('ui-tablegrid');
+    const body = grid.querySelector('tbody');
+
+    for (const version of ['1.0.0', '1.1.0']) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.textContent = version;
+      row.appendChild(cell);
+      body.appendChild(row);
+    }
+
+    grid.toggleAttribute('navigate');
+    grid.toggleAttribute('navigate');
+
+    assert.equal(grid.rows.length, 2);
+  });
+
+  it('forgets rows that were removed', async () => {
+    const grid = mount(EMPTY).querySelector('ui-tablegrid');
+    const body = grid.querySelector('tbody');
+
+    for (const version of ['1.0.0', '1.1.0', '1.2.0']) {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.textContent = version;
+      row.appendChild(cell);
+      body.appendChild(row);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(grid.rows.length, 3);
+
+    body.lastElementChild.remove();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(grid.rows.length, 2);
+  });
+});

@@ -130,6 +130,8 @@ export class Dropdown extends UI4UElement {
   #optionEls = [];
   /** @type {Set<string>} */
   #selection = new Set();
+  /** Watches for `<ui-dropdown-option>` children added after connect. @type {MutationObserver|null} */
+  #observer = null;
   #activeIndex = -1;
   #baseId = '';
   #built = false;
@@ -558,6 +560,42 @@ export class Dropdown extends UI4UElement {
     this.prepend(label, trigger);
     this.append(hint, error);
 
+    /*
+     * Options written in markup are seen above. Options built in JavaScript
+     * arrive afterwards — populating a list from data is the normal way to use
+     * this — so the children are watched for the rest of the element's life.
+     *
+     * Rebuilding re-orders the author's own options between the generated
+     * nodes, which is itself a `childList` mutation. Comparing the option set
+     * is what keeps that from looping.
+     */
+    if (typeof MutationObserver === 'function') {
+      this.#observer?.disconnect();
+      const observer = new MutationObserver(() => {
+        /*
+         * While the list is open the options live in the portalled panel, not
+         * in the host — they are moved, not cloned. Counting only this element
+         * would see them vanish every time the list opened.
+         */
+        const isOption = (node) => node.localName === OPTION_TAG;
+        const found = [
+          ...[...this.children].filter(isOption),
+          ...[...(this.#panel?.children ?? [])].filter(isOption),
+        ];
+
+        const current = new Set(this.#optionEls);
+        const changed =
+          found.length !== current.size || found.some((option) => !current.has(option));
+        if (!changed) return;
+
+        this.#optionEls = found;
+        this.#renderOptions();
+        this.#sync();
+      });
+      observer.observe(this, { childList: true });
+      this.#observer = observer;
+    }
+
     this.#renderOptions();
     this.#applyValueFromAttribute();
     this.#sync();
@@ -566,6 +604,8 @@ export class Dropdown extends UI4UElement {
   }
 
   #teardown() {
+    this.#observer?.disconnect();
+    this.#observer = null;
     this.#destroyPanel();
 
     for (const option of this.#optionEls) {

@@ -19,110 +19,44 @@
           <h1 class="demo-hero">UI4U</h1>
           <p class="lede">
             A framework-agnostic, mobile-first UI library. Vanilla ES6 modules, zero runtime
-            dependencies, themed entirely through <code>--ui4u-*</code> custom properties.
+            dependencies, themed entirely through <code>--ui4u-*</code> custom properties. This
+            index is itself built from the library — the table is a <code>ui-tablegrid</code>, the
+            bar above it a <code>ui-toolbar</code>, and every control a <code>ui-button</code>.
           </p>
         </div>
-        <button type="button" data-theme-toggle>Toggle theme</button>
+        <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
       </header>
 
-      <ul class="demo-cards">
-        <li>
-          <a class="demo-card" href="/demo/tabs.html">
-            <code>ui-tabs</code>
-            <span>Keyboard navigation, automatic + manual activation, three variants</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/disclosure.html">
-            <code>ui-disclosure</code>
-            <span>Collapsible sections, real button trigger, aria-expanded</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/button.html">
-            <code>ui-button</code>
-            <span>Five variants, three sizes, loading and disabled states</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/tooltip.html">
-            <code>ui-tooltip</code>
-            <span>Hover and focus, automatic edge flipping, Escape to dismiss</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/layout.html">
-            <code>ui-layout</code>
-            <span>Resizable top/left/right/center/bottom, recursive</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/popup.html">
-            <code>ui-popup</code>
-            <span>Modal with a real focus trap, plus popover and drawer</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/input.html">
-            <code>ui-input</code>
-            <span>Native input, label/hint/error wiring, validation surface</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/tablegrid.html">
-            <code>ui-tablegrid</code>
-            <span>Column groups, sorting, search, pagination, cell navigation</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/form.html">
-            <code>ui-form</code>
-            <span>Validation, error summary, focus the first invalid field</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/sidebar.html">
-            <code>ui-sidebar</code>
-            <span>Rail mode, arrow-key navigation, off-canvas drawer</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/checkbox.html">
-            <code>ui-checkbox</code>
-            <span>Real checkbox, indeterminate state, shared validation</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/radio.html">
-            <code>ui-radio</code>
-            <span>Radio group with one tab stop and arrow keys</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/dropdown.html">
-            <code>ui-dropdown</code>
-            <span>Listbox with type-ahead and multi-select</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/toolbar.html">
-            <code>ui-toolbar</code>
-            <span>One tab stop; plugs into a layout or a table grid</span>
-          </a>
-        </li>
-        <li>
-          <a class="demo-card" href="/demo/button-group.html">
-            <code>ui-button-group</code>
-            <span>Segmented control — buttons acting as one choice</span>
-          </a>
-        </li>
-      </ul>
+      <!--
+        The catalogue is a ui-tablegrid rather than a list of links: it is sorted,
+        searchable, paged and keyboard-navigable without a line of bespoke code.
+        Its toolbar is a ui-toolbar, so the filter and the page size cost one Tab.
+      -->
+      <ui-tablegrid id="catalogue" label="Components" per-page="8" striped>
+        <ui-toolbar label="Catalogue" slot="toolbar">
+          <ui-input
+            id="filter"
+            label="Filter components"
+            placeholder="e.g. table"
+            size="sm"
+          ></ui-input>
+          <ui-dropdown id="kind" label="Kind" placeholder="All kinds" size="sm"></ui-dropdown>
+        </ui-toolbar>
 
-      <p class="demo-todo">
-        Every component from the original roadmap has shipped. See
-        <a href="https://github.com/AI-AgentCoder2026/UI4U/blob/main/docs/REVIEW.md">the review</a>
-        for what to build next.
-      </p>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" data-sort="name" data-type="text">Component</th>
+              <th scope="col" data-sort="kind" data-type="text">Kind</th>
+              <th scope="col">What it does</th>
+              <th scope="col">Open</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </ui-tablegrid>
+
+      <div class="log" id="catalogue-log" role="status" aria-live="polite"></div>
 
       <ui-disclosure summary="Get started">
         <p>
@@ -134,7 +68,7 @@
         <figure class="demo-code">
           <figcaption class="demo-code__head">
             <span class="demo-code__lang">JavaScript</span>
-            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
           </figcaption>
           <pre><code data-highlight="js">npm install ui4u
 
@@ -145,7 +79,7 @@ import 'ui4u';</code></pre>
         <figure class="demo-code">
           <figcaption class="demo-code__head">
             <span class="demo-code__lang">HTML</span>
-            <button class="demo-code__copy" type="button" data-copy>Copy</button>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
           </figcaption>
           <pre><code data-highlight="html">&lt;ui-tabs label="Project sections"&gt;
   &lt;ui-tab label="Overview"&gt;Overview panel&lt;/ui-tab&gt;
@@ -162,6 +96,157 @@ import 'ui4u';</code></pre>
     <script type="module">
       import '/dist/ui4u.esm.js';
       import '/demo/demo.js';
+
+      /*
+       * One source of truth, shared with the navigation bar in demo.js: the
+       * catalogue and the prev/next links cannot describe different libraries.
+       */
+      const KINDS = ['Layout', 'Navigation', 'Forms', 'Data', 'Feedback'];
+
+      const CATALOGUE = [
+        [
+          'ui-tabs',
+          'tabs.html',
+          'Navigation',
+          'Keyboard navigation, automatic and manual activation, three variants',
+        ],
+        [
+          'ui-disclosure',
+          'disclosure.html',
+          'Navigation',
+          'Collapsible sections, a real button trigger, aria-expanded',
+        ],
+        [
+          'ui-button',
+          'button.html',
+          'Feedback',
+          'Five variants, three sizes, loading and disabled states',
+        ],
+        [
+          'ui-button-group',
+          'button-group.html',
+          'Feedback',
+          'Segmented control — buttons acting as one choice',
+        ],
+        [
+          'ui-tooltip',
+          'tooltip.html',
+          'Feedback',
+          'Hover and focus, automatic edge flipping, Escape to dismiss',
+        ],
+        ['ui-layout', 'layout.html', 'Layout', 'Resizable top/left/right/center/bottom, recursive'],
+        [
+          'ui-sidebar',
+          'sidebar.html',
+          'Layout',
+          'Rail mode, arrow-key navigation, off-canvas drawer',
+        ],
+        [
+          'ui-toolbar',
+          'toolbar.html',
+          'Layout',
+          'One tab stop; plugs into a layout or a table grid',
+        ],
+        [
+          'ui-popup',
+          'popup.html',
+          'Feedback',
+          'Modal with a real focus trap, plus popover and drawer',
+        ],
+        [
+          'ui-input',
+          'input.html',
+          'Forms',
+          'Native input, amount and date modes, validation surface',
+        ],
+        [
+          'ui-checkbox',
+          'checkbox.html',
+          'Forms',
+          'Real checkbox, indeterminate state, shared validation',
+        ],
+        ['ui-radio', 'radio.html', 'Forms', 'Radio group with one tab stop and arrow keys'],
+        ['ui-dropdown', 'dropdown.html', 'Forms', 'Listbox with type-ahead and multi-select'],
+        [
+          'ui-form',
+          'form.html',
+          'Forms',
+          'Validation, error summary, focus the first invalid field',
+        ],
+        [
+          'ui-tablegrid',
+          'tablegrid.html',
+          'Data',
+          'Column groups, sorting, search, filters, selection, copy',
+        ],
+      ];
+
+      const catalogue = document.getElementById('catalogue');
+      const log = document.getElementById('catalogue-log');
+      const tbody = catalogue.querySelector('tbody');
+
+      /** Builds one node. No innerHTML — a description is still text. */
+      function node(tag, props = {}, children = []) {
+        const element = document.createElement(tag);
+        for (const [name, value] of Object.entries(props)) {
+          if (name === 'text') element.textContent = value;
+          else if (name === 'class') element.className = value;
+          else element.setAttribute(name, value);
+        }
+        for (const child of children) element.appendChild(child);
+        return element;
+      }
+
+      for (const [name, file, kind, description] of CATALOGUE) {
+        const open = node('ui-button', {
+          variant: 'subtle',
+          size: 'sm',
+          href: file,
+          text: 'View demo',
+        });
+
+        tbody.appendChild(
+          node('tr', {}, [
+            node('td', { text: name, 'data-value': name }),
+            node('td', { text: kind, 'data-value': kind }),
+            node('td', { text: description }),
+            node('td', { class: 'demo-open' }, [open]),
+          ])
+        );
+      }
+
+      // The kind filter, built from the same list so it cannot go stale.
+      const kind = document.getElementById('kind');
+      kind.appendChild(node('ui-dropdown-option', { value: '', text: 'All kinds' }));
+      for (const name of KINDS) {
+        kind.appendChild(node('ui-dropdown-option', { value: name, text: name }));
+      }
+
+      document.getElementById('filter').addEventListener('ui4u:input', (event) => {
+        catalogue.search(event.detail.value);
+      });
+
+      kind.addEventListener('ui4u:change', (event) => {
+        // The quick filter is a substring match, so an exact kind needs a
+        // criterion instead. They combine, which is the point of both.
+        catalogue.setFilters(
+          event.detail.value
+            ? [{ field: 'kind', operator: 'equals', value: event.detail.value }]
+            : []
+        );
+      });
+
+      catalogue.addEventListener('ui4u:sort', (event) => {
+        const { column, direction } = event.detail;
+        log.textContent = `Sorted by ${column ?? 'nothing'} (${direction})`;
+      });
+
+      catalogue.addEventListener('ui4u:page', (event) => {
+        log.textContent = `Page ${event.detail.page} of ${event.detail.pageCount}`;
+      });
+
+      // Announce the real total once, so the grid's own status is not the only cue.
+      log.textContent = `${CATALOGUE.length} components`;
     </script>
   </body>
 </html>
