@@ -657,6 +657,23 @@ export class Dropdown extends UI4UElement {
     });
   }
 
+  /**
+   * Writes the validity state onto the listbox.
+   *
+   * Called from `#sync()` *and* from panel creation, because the panel only
+   * exists while the listbox is open — syncing alone would leave the attributes
+   * off a panel that had just been built.
+   *
+   * @param {string} [errorText]
+   */
+  #syncPanelValidity(errorText = this.error) {
+    if (this.required) this.#panel?.setAttribute('aria-required', 'true');
+    else this.#panel?.removeAttribute('aria-required');
+
+    if (errorText) this.#panel?.setAttribute('aria-invalid', 'true');
+    else this.#panel?.removeAttribute('aria-invalid');
+  }
+
   /** Mirrors every option except `value` onto the trigger and the ARIA. */
   #sync() {
     const label = this.#label;
@@ -685,11 +702,26 @@ export class Dropdown extends UI4UElement {
     if (describedBy) trigger.setAttribute('aria-describedby', describedBy);
     else trigger.removeAttribute('aria-describedby');
 
-    if (errorText) trigger.setAttribute('aria-invalid', 'true');
-    else trigger.removeAttribute('aria-invalid');
+    /*
+     * `aria-invalid` and `aria-required` do not go on the trigger.
+     *
+     * The trigger is a `<button>`, and ARIA in HTML does not allow either
+     * attribute on that role — a screen reader is entitled to ignore them, and
+     * `aria-required` on a button is reported as an error by every conformance
+     * checker. Both belong on the listbox, which is the element whose role
+     * actually supports them.
+     *
+     * Nothing is lost when the panel is shut: the trigger is named by the label,
+     * and the label chains `aria-describedby` to the error, so the error is
+     * announced on arrival either way. The visible required marker on the label
+     * is the sighted counterpart.
+     */
+    this.#syncPanelValidity(errorText);
 
-    if (this.required) trigger.setAttribute('aria-required', 'true');
-    else trigger.removeAttribute('aria-required');
+    // Cleared rather than left alone: an older build, or an author who set them
+    // by hand, would otherwise leave attributes the role does not allow.
+    trigger.removeAttribute('aria-required');
+    trigger.removeAttribute('aria-invalid');
 
     trigger.disabled = this.disabled;
 
@@ -779,6 +811,9 @@ export class Dropdown extends UI4UElement {
     const host = this.ownerDocument?.body ?? this.ownerDocument?.documentElement;
     host?.appendChild(panel);
     this.#panel = panel;
+
+    // The panel did not exist a moment ago, so `#sync()` cannot have reached it.
+    this.#syncPanelValidity();
 
     this.#trigger.setAttribute('aria-expanded', 'true');
     this.dataset.open = 'true';

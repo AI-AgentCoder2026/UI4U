@@ -257,9 +257,17 @@ test.describe('Beacon app', () => {
       'aria-invalid',
       'true'
     );
-    await expect(
-      page.locator('ui-dropdown[name="severity"] .ui4u-dropdown__trigger')
-    ).toHaveAttribute('aria-invalid', 'true');
+    // A dropdown's `aria-invalid` goes on its listbox, not its `<button>`
+    // trigger, so the closed field is checked through its error message and the
+    // open one through the panel.
+    await expect(page.locator('ui-dropdown[name="severity"] .ui4u-dropdown__error')).toHaveText(
+      /.+/,
+      { timeout: 5000 }
+    );
+    await page.locator('ui-dropdown[name="severity"] .ui4u-dropdown__trigger').click();
+    await expect(page.locator('.ui4u-dropdown__panel')).toHaveAttribute('aria-invalid', 'true');
+    await page.keyboard.press('Escape');
+
     // …while the message itself is the host's `error`, so it can be themed.
     await expect(page.locator('ui-input[name="title"]')).toHaveAttribute('error', /.+/);
   });

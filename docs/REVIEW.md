@@ -28,9 +28,9 @@ accessible name, plus heading-order and `lang` checks. Two flags, both benign:
 
 ## Findings worth acting on
 
-### 1. CI never runs the e2e suite
+### 1. ~~CI never runs the e2e suite~~ — fixed
 
-The Pages workflow gates on lint and unit tests only. Every real defect found
+The Pages workflow gated on lint and unit tests only. Every real defect found
 during this build was caught by Playwright, not by the unit suite:
 
 - popup had **no positioning at all** (portalled nodes styled by a descendant
@@ -39,8 +39,12 @@ during this build was caught by Playwright, not by the unit suite:
 - separators never focused on click, so arrow keys did nothing
 - `ui-input` copied its host `id`, producing duplicate IDs
 
-None of those are observable to jsdom. `npm run test:e2e` should be a CI gate,
-with `npx playwright install --with-deps chromium` added to the build job.
+None of those are observable to jsdom. `pages.yml` is now one workflow that
+runs format, lint, unit **and** Playwright on every push and every pull
+request, and only deploys on a push. Chromium is installed with
+`--with-deps`, because without the system libraries it launches and then dies
+on a missing shared object — which fails as a timeout rather than as the
+obvious error.
 
 ### 2. The package cannot be tree-shaken
 
@@ -50,11 +54,10 @@ there is nothing for a bundler to drop. Per-component subpath exports
 (`ui4u/tabs`, `ui4u/popup`, …) plus per-component CSS files would let a consumer
 pay only for what they use.
 
-### 3. Prettier is configured but not enforced
+### 3. ~~Prettier is configured but not enforced~~ — fixed
 
-`npm run format:check` currently fails across the tree. ESLint is clean, so this
-is cosmetic — but a declared tool that always fails will be ignored, then
-respected by nobody. Run `prettier --write` once and gate on it.
+`npm run format:check` used to fail across the tree. The tree is formatted and
+the check is a CI step, so it cannot drift back.
 
 ### 4. No namespace escape hatch
 
@@ -62,27 +65,72 @@ Tags are hard-coded as `ui-*`. A consumer whose own markup already uses that
 prefix has no way to rename it. A `UI4U.config({ prefix })` applied before
 `install()` would fix that.
 
+### 5. No automated accessibility check — fixed
+
+The only audits in this repo were manual sweeps recorded in this file. There is
+now `e2e/a11y.spec.js`: axe-core over all eighteen demo pages, in all three
+themes, on both viewport projects. 108 checks.
+
+It found five real defects on its first run, three of them in the library
+rather than the demos:
+
+- `ui-dropdown` set `aria-required` and `aria-invalid` on its `<button>`
+  trigger. ARIA in HTML does not allow either attribute on that role, so a
+  screen reader was entitled to ignore both. They now live on the listbox,
+  whose role does support them.
+- `--ui4u-text-subtle` measured 3.99:1 against `--ui4u-surface-3` — below AA
+  for body text. It was introduced by the restyle below, and axe caught it.
+- Three light-theme status colours (`--ui4u-warning`, `--ui4u-danger`,
+  `--ui4u-success`) failed AA against the darker light surfaces.
+- No demo page had a `<main>` landmark, and the per-page `<header>` became a
+  `banner` nested inside it.
+
+The lesson worth keeping: every one of these was invisible to 959 jsdom unit
+tests and to a screenshot. **Solved, not eyeballed** — the colour values in
+`tokens.css` now carry the worst-case ratio in a comment, because "looks
+right on my screen" is how all four of them got in.
+
 ## Feature shortlist
 
 Ranked by how much of a real interface they unblock.
 
+The previous version of this list pointed at four things that had already
+shipped — `ui-checkbox`, `ui-radio`, `ui-select` (that is `ui-dropdown`) and
+`ui-calendar` (that is `ui-input type="date"`), plus `ui-pagination`, which is
+built into `ui-tablegrid`. A roadmap that names shipped work is worse than no
+roadmap, because it makes the real gaps look considered.
+
 ### Tier 1 — control gaps
 
-| Feature                    | Why it is next                                                                                                                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ui-select`                | Demos currently use `ui-tabs` as a segmented control, which is fine for two or three options and wrong for fifteen. Needs the listbox pattern, typeahead and `aria-activedescendant` or roving focus. |
-| `ui-switch`                | `role="switch"` with `aria-checked`. `ui-input` has no boolean control and the input demo keeps reaching for raw checkboxes.                                                                          |
-| `ui-checkbox` / `ui-radio` | Same reasoning: wrap the native control so validation and theming stay consistent.                                                                                                                    |
-| `ui-accordion`             | Near-free on top of `ui-disclosure`, and one of the most requested patterns.                                                                                                                          |
+| Feature        | Why it is next                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `ui-switch`    | `role="switch"` with `aria-checked`. `ui-input` has no boolean control, and a setting that is on by default is not a checkbox. |
+| `ui-accordion` | Near-free on top of `ui-disclosure`, and one of the most requested patterns.                                                   |
+| `ui-textarea`  | `ui-input` is single-line only. Every "notes" field in this repo is a `<p>` because there was nothing to put a textarea in.    |
 
 ### Tier 2 — navigation and feedback
 
-| Feature                                                             | Notes                                                                                             |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ui-menu`                                                           | Dropdown/context menu with roving focus and typeahead. Reuses `core/position.js`.                 |
-| `ui-toast`                                                          | Transient messages with correct live-region politeness. Absent from any UI library of this scope. |
-| `ui-pagination`, `ui-breadcrumb`                                    | Small, common, low-risk.                                                                          |
-| `ui-progress`, `ui-spinner`, `ui-skeleton`, `ui-badge`, `ui-avatar` | Cheap primitives that round out a design system.                                                  |
+| Feature                      | Notes                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| `ui-menu`                    | Dropdown/context menu with roving focus and typeahead. Reuses `core/position.js`.                 |
+| `ui-toast`                   | Transient messages with correct live-region politeness. Absent from any UI library of this scope. |
+| `ui-breadcrumb`              | Small, common, low-risk.                                                                          |
+| `ui-skeleton`, `ui-progress` | The async primitives. Also the answer to the grid's missing loading state — see below.            |
+| `ui-badge`, `ui-avatar`      | Cheap primitives that round out a design system.                                                  |
+
+### Tier 2.5 — holes in components that already exist
+
+Not new components: missing capability in shipped ones, which is a different
+kind of debt.
+
+- **`ui-tablegrid` has no loading, empty or error state.** It is the flagship
+  component and it cannot express "fetching" at all. Every real interface has
+  loading.
+- **No virtualisation.** No `IntersectionObserver`, no windowing. Fine at 200
+  rows, unusable at 10k — and with no documented limit, people find out the
+  hard way.
+- **No icon system.** Only `ui-sidebar` has an `icon` attribute, and it takes a
+  text glyph. Every icon button in a real app needs an SVG slot.
 
 ### Tier 3 — showcase pieces
 
@@ -95,8 +143,13 @@ actually asking for.
 - **Theme studio** — a demo page that live-edits every `--ui4u-*` token and
   exports copy-paste CSS. Right now "fully themeable" is asserted in the docs
   and demonstrated by four coloured buttons; a studio would prove it.
-- **`ui-calendar`** — genuinely useful, and a large surface. Only worth it once
-  the tier 1 and 2 gaps are closed.
+
+Deliberately _not_ on this list, though they were on the previous one:
+`ui-calendar` (shipped, inside `ui-input type="date"`), `ui-select` (that is
+`ui-dropdown`) and `ui-pagination` (built into `ui-tablegrid`). A ⌘K palette is
+also worth saying plainly: it is the most impressive item here and the least
+useful. It composes components that already exist into a demo, and it adds no
+capability.
 
 ## The visual identity
 

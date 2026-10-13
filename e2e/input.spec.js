@@ -655,10 +655,13 @@ test.describe('validation error treatment', () => {
     await page.locator('ui-button#toggle-error').click();
 
     const trigger = page.locator('ui-dropdown .ui4u-dropdown__trigger').first();
-    await expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    // The border is on the trigger — that is the visible error treatment. The
+    // `aria-invalid` state goes on the listbox, because a `<button>` is not
+    // allowed to carry it.
     expect(await trigger.evaluate((el) => getComputedStyle(el).borderTopColor)).not.toMatch(
       /rgb\(0, 0, 0\)/
     );
+    await expect(trigger).not.toHaveAttribute('aria-invalid');
   });
 
   test('a valid field carries no error styling', async ({ page }) => {

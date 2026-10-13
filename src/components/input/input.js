@@ -173,6 +173,30 @@ export class Input extends UI4UElement {
     this.#setTextAttribute('value', next);
   }
 
+  /**
+   * The amount as a number, for whoever is not a human.
+   *
+   * `value` is the *text*: what the reader typed, reformatted for reading. That
+   * is the right thing to show and the wrong thing to submit — a form that
+   * collects `"45,000"` from a field typed as `45k` has handed back a string the
+   * consumer now has to parse out again, and `parseFloat('45,000')` is `45`.
+   *
+   * `null` means there is no number: the field is empty, half-typed, or does not
+   * parse. `null` rather than `0` because an empty number field is not zero, and
+   * conflating the two is how a blank optional field silently becomes a value.
+   *
+   * @returns {number|null} `null` outside `type="amount"`, and whenever the text
+   *   does not parse.
+   *
+   * @example
+   * const budget = field.numberValue; // 45000, from the text '45,000'
+   */
+  get numberValue() {
+    if (!this.#isAmount) return null;
+    const parsed = parseAmount(this.value);
+    return parsed.value;
+  }
+
   /** @returns {string} */
   get type() {
     return this.getString('type', 'text') || 'text';

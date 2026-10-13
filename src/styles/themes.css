@@ -19,7 +19,7 @@
   --ui4u-bg: #e7ecf5;
   --ui4u-bg-pattern:
     radial-gradient(1100px 520px at 8% -12%, rgba(23, 104, 143, 0.09), transparent 60%),
-    radial-gradient(760px 420px at 96% 8%, rgba(169, 103, 8, 0.05), transparent 62%);
+    radial-gradient(760px 420px at 96% 8%, rgba(143, 86, 5, 0.05), transparent 62%);
   --ui4u-surface: #ffffff;
   --ui4u-surface-2: #f1f5fc;
   --ui4u-surface-3: #e3e9f4;
@@ -29,7 +29,8 @@
 
   --ui4u-text: #0a0f1e;
   --ui4u-text-muted: #48536e;
-  --ui4u-text-subtle: #6e7a96;
+  /* Solved against the darkest light surface: worst case 4.82:1. */
+  --ui4u-text-subtle: #55617a;
   --ui4u-text-inverse: #f7faff;
   --ui4u-text-link: #17688f;
 
@@ -41,7 +42,7 @@
 
   --ui4u-aurora:
     radial-gradient(420px 180px at 12% 0%, rgba(23, 104, 143, 0.16), transparent 70%),
-    radial-gradient(320px 160px at 88% 10%, rgba(169, 103, 8, 0.1), transparent 72%);
+    radial-gradient(320px 160px at 88% 10%, rgba(143, 86, 5, 0.1), transparent 72%);
 }
 
 /**
@@ -83,7 +84,13 @@
 
   --ui4u-text: #e6ebf8;
   --ui4u-text-muted: #98a4c2;
-  --ui4u-text-subtle: #6e7c9e;
+  /*
+   * Solved, not chosen: this has to clear 4.5:1 against *every* surface it can
+   * land on — surface, surface-2 and surface-3 — which is why it is lighter
+   * than the eye wants for "quiet". Worst case here is 4.84:1. The previous
+   * value measured 3.99:1 on surface-3, which is what axe caught.
+   */
+  --ui4u-text-subtle: #8390b0;
   --ui4u-text-inverse: #06080f;
   --ui4u-text-link: #a5d8f2;
 
@@ -150,7 +157,7 @@
 
     --ui4u-text: #e6ebf8;
     --ui4u-text-muted: #98a4c2;
-    --ui4u-text-subtle: #6e7c9e;
+    --ui4u-text-subtle: #8390b0;
     --ui4u-text-inverse: #06080f;
     --ui4u-text-link: #a5d8f2;
 

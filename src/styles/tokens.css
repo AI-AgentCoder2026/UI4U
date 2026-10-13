@@ -143,7 +143,7 @@
   --ui4u-bg: #e7ecf5;
   --ui4u-bg-pattern:
     radial-gradient(1100px 520px at 8% -12%, rgba(23, 104, 143, 0.09), transparent 60%),
-    radial-gradient(760px 420px at 96% 8%, rgba(169, 103, 8, 0.05), transparent 62%);
+    radial-gradient(760px 420px at 96% 8%, rgba(143, 86, 5, 0.05), transparent 62%);
   --ui4u-surface: #ffffff;
   --ui4u-surface-2: #f1f5fc;
   --ui4u-surface-3: #e3e9f4;
@@ -155,7 +155,8 @@
   /* --------------------------------------------------------------- text */
   --ui4u-text: #0a0f1e;
   --ui4u-text-muted: #48536e;
-  --ui4u-text-subtle: #6e7a96;
+  /* Solved against the darkest light surface: worst case 4.82:1. */
+  --ui4u-text-subtle: #55617a;
   --ui4u-text-inverse: #f7faff;
   --ui4u-text-link: var(--ui4u-primary);
 
@@ -167,13 +168,13 @@
   --ui4u-divider: rgba(16, 28, 56, 0.09);
 
   /* ------------------------------------------------------------- status */
-  --ui4u-success: #0b7a5c;
-  --ui4u-success-soft: rgba(11, 122, 92, 0.12);
-  --ui4u-warning: #a96708;
-  --ui4u-warning-soft: rgba(169, 103, 8, 0.13);
-  --ui4u-danger: #c22f49;
+  --ui4u-success: #096e53;
+  --ui4u-success-soft: rgba(9, 110, 83, 0.12);
+  --ui4u-warning: #8f5605;
+  --ui4u-warning-soft: rgba(143, 86, 5, 0.13);
+  --ui4u-danger: #b32a42;
   --ui4u-danger-hover: #a32339;
-  --ui4u-danger-soft: rgba(194, 47, 73, 0.12);
+  --ui4u-danger-soft: rgba(179, 42, 66, 0.12);
   --ui4u-info: #3d5aa8;
   --ui4u-info-soft: rgba(61, 90, 168, 0.12);
 
@@ -202,7 +203,7 @@
    */
   --ui4u-aurora:
     radial-gradient(420px 180px at 12% 0%, rgba(23, 104, 143, 0.16), transparent 70%),
-    radial-gradient(320px 160px at 88% 10%, rgba(169, 103, 8, 0.1), transparent 72%);
+    radial-gradient(320px 160px at 88% 10%, rgba(143, 86, 5, 0.1), transparent 72%);
 
   /* ------------------------------------------------------------- motion */
   --ui4u-duration-instant: 60ms;

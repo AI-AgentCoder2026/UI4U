@@ -1,10 +1,17 @@
-name: Deploy demo to GitHub Pages
+name: CI and Pages deploy
 
-# Publishes the demo site on every push to main. Lint and unit tests gate the
-# deploy, so a broken build never reaches the published site.
+# One workflow, deliberately. A PR gets everything; a push to main gets
+# everything and then deploys.
+#
+# Playwright runs here and nowhere else before this change: 715 of the tests
+# that caught every real defect in this project were never run by CI, so a
+# green build meant "lint passes and jsdom is happy", which is a much weaker
+# claim than it looks.
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -14,9 +21,11 @@ permissions:
   id-token: write
 
 # Never cancel an in-flight deploy — it would leave Pages serving a partial site.
+# On a PR the newest run still supersedes the older one, because there is
+# nothing to corrupt.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -31,23 +40,39 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
+      - name: Prettier
+        run: npm run format:check
+
+      - name: ESLint
         run: npm run lint
 
       - name: Unit tests
         run: npm test
+
+      # --with-deps installs the system libraries Chromium needs. Without it the
+      # browser launches and then dies on a missing shared object, which fails
+      # as a timeout rather than as the obvious error.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: npm run test:e2e
 
       - name: Build static site
         run: npm run build:pages
 
       - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v5
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: .pages
 
   deploy:
     needs: build
+    # A pull request has to prove the same thing, but it must not publish.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

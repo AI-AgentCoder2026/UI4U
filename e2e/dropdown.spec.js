@@ -201,8 +201,15 @@ test('an empty required field fails validation and surfaces the message', async 
   await page.getByRole('button', { name: 'Validate', exact: true }).click();
 
   await expect(page.locator(`${MAIN} .ui4u-dropdown__error`)).toBeVisible();
-  await expect(triggerOf(page)).toHaveAttribute('aria-invalid', 'true');
+  // `aria-invalid` lives on the listbox, not the trigger: the trigger is a
+  // `<button>` and ARIA in HTML allows neither attribute on that role.
+  await expect(triggerOf(page)).not.toHaveAttribute('aria-invalid');
+  await expect(triggerOf(page)).toHaveAttribute('aria-describedby', /ui4u-dropdown-\d+-error/);
   await expect(page.locator('#log')).toHaveText(/valid: false/);
+
+  await triggerOf(page).click();
+  await expect(page.locator('.ui4u-dropdown__panel')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('.ui4u-dropdown__panel')).toHaveAttribute('aria-required', 'true');
 });
 
 test('a chosen value passes validation', async ({ page }) => {

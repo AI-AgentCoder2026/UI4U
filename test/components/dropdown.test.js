@@ -232,22 +232,48 @@ describe('ui-dropdown aria wiring', () => {
 
   it('marks aria-invalid only while an error is set', () => {
     const field = mount(MARKUP).querySelector('ui-dropdown');
-    assert.equal(triggerOf(field).hasAttribute('aria-invalid'), false);
+    // The listbox is built on open, so the state has to be read there.
+    field.open();
+    assert.equal(panelOf(field).hasAttribute('aria-invalid'), false);
 
     field.error = 'Not served';
-    assert.equal(triggerOf(field).getAttribute('aria-invalid'), 'true');
+    assert.equal(panelOf(field).getAttribute('aria-invalid'), 'true');
 
     field.error = '';
-    assert.equal(triggerOf(field).hasAttribute('aria-invalid'), false);
+    assert.equal(panelOf(field).hasAttribute('aria-invalid'), false);
   });
 
   it('marks aria-required when required', () => {
     const field = mount(MARKUP).querySelector('ui-dropdown');
-    assert.equal(triggerOf(field).hasAttribute('aria-required'), false);
+    field.open();
+    assert.equal(panelOf(field).hasAttribute('aria-required'), false);
 
     field.required = true;
-    assert.equal(triggerOf(field).getAttribute('aria-required'), 'true');
+    assert.equal(panelOf(field).getAttribute('aria-required'), 'true');
     assert.equal(field.dataset.required, 'true');
+  });
+
+  /*
+   * Regression guard.
+   *
+   * The trigger is a `<button>`, and ARIA in HTML does not allow
+   * `aria-required` or `aria-invalid` on that role — a screen reader is
+   * entitled to ignore them, and every conformance checker reports them. Both
+   * belong on the listbox, whose role does support them.
+   */
+  it('keeps aria-required and aria-invalid off the trigger', () => {
+    const field = mount(MARKUP).querySelector('ui-dropdown');
+
+    field.required = true;
+    field.error = 'Not served';
+    field.open();
+
+    assert.equal(triggerOf(field).hasAttribute('aria-required'), false, 'button role');
+    assert.equal(triggerOf(field).hasAttribute('aria-invalid'), false, 'button role');
+
+    // …and the listbox, whose role does support them, carries the state.
+    assert.equal(panelOf(field).getAttribute('aria-required'), 'true');
+    assert.equal(panelOf(field).getAttribute('aria-invalid'), 'true');
   });
 
   it('publishes the active option through aria-activedescendant', () => {
@@ -373,8 +399,9 @@ describe('ui-dropdown attribute syncing', () => {
     field.setAttribute('placeholder', 'Where to?');
     assert.equal(triggerOf(field).textContent, 'Where to?');
 
+    field.open();
     field.setAttribute('required', '');
-    assert.equal(triggerOf(field).getAttribute('aria-required'), 'true');
+    assert.equal(panelOf(field).getAttribute('aria-required'), 'true');
   });
 
   it('re-reads a value the author sets', () => {
@@ -811,14 +838,15 @@ describe('ui-dropdown validation', () => {
   it('reportValidity() surfaces an error and clearValidity() drops it', () => {
     const field = mount(MARKUP).querySelector('ui-dropdown');
     field.required = true;
+    field.open();
 
     assert.equal(field.reportValidity(), field, 'returns this');
     assert.ok(field.error.length > 0);
-    assert.equal(triggerOf(field).getAttribute('aria-invalid'), 'true');
+    assert.equal(panelOf(field).getAttribute('aria-invalid'), 'true');
 
     field.clearValidity();
     assert.equal(field.error, '');
-    assert.equal(triggerOf(field).hasAttribute('aria-invalid'), false);
+    assert.equal(panelOf(field).hasAttribute('aria-invalid'), false);
   });
 
   it('does not stay invalid forever after reportValidity()', () => {

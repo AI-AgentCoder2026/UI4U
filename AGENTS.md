@@ -98,6 +98,8 @@ Ship a component only when its demo page and tests exist; add the rest as the pr
 - `UI4UElement` captures `globalThis.HTMLElement` at module evaluation, so tests must call `setupDom()` before dynamically importing any component
 - New behavior needs a test that mirrors the source path — `test/components/tabs.test.js` for `src/components/tabs/`
 - Accessibility is part of done: keyboard navigation, focus trapping in popups, and correct ARIA roles must be asserted in tests
+- **A colour is solved, not eyeballed.** Any `--ui4u-*` colour that renders text must clear 4.5:1 against _every_ surface it can land on. Put the worst-case ratio in a comment beside the value, because "it looks fine on my screen" is how the first four of these got in
+- `e2e/a11y.spec.js` runs axe-core over every demo page in all three themes on both viewports. It is a CI gate, and it is not advisory — it has caught ARIA attributes on roles that do not allow them, which no screenshot and no jsdom test will ever show
 - All tests pass before a PR opens
 
 ## PR & commit conventions

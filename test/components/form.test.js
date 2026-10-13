@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { cleanup, mount, setupDom } from '../helpers/dom.js';
 
-// The DOM must exist before any component module is evaluated — the base class
+// The DOM must exist before any component module is evaluated ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the base class
 // captures globalThis.HTMLElement at module scope. See helpers/dom.js.
 setupDom();
 
@@ -29,7 +29,7 @@ function nativeOf(form) {
 
 /**
  * Fires the submit the way the platform would. jsdom does not implement
- * interactive submission, so the test dispatches the cancelable event itself —
+ * interactive submission, so the test dispatches the cancelable event itself ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â
  * which is exactly what the component listens for.
  *
  * @param {Element} form
@@ -102,7 +102,7 @@ describe('ui-form rendering', () => {
     const form = mount(TWO_FIELDS).querySelector('ui-form');
 
     // UI4U reports the failures itself, so native constraint validation must be
-    // off — otherwise no submit event is fired at all when a field is invalid.
+    // off ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â otherwise no submit event is fired at all when a field is invalid.
     assert.equal(nativeOf(form).noValidate, true);
   });
 
@@ -719,5 +719,111 @@ describe('ui-form bindings', () => {
     submit(form);
 
     assert.deepEqual(seen, ['a@b.test']);
+  });
+});
+
+describe('ui-form reset()', () => {
+  /** @type {Element} */
+  let host;
+  /** @type {any} */
+  let form;
+
+  beforeEach(() => {
+    host = mount(`
+      <ui-form>
+        <ui-input name="email" label="Email" type="email" required></ui-input>
+      </ui-form>
+    `);
+    form = /** @type {any} */ (host.querySelector('ui-form'));
+  });
+
+  afterEach(() => cleanup());
+
+  it('clears what was typed into a field authored empty', () => {
+    fieldNamed(form, 'email').value = 'typed@example.test';
+
+    form.reset();
+
+    assert.equal(form.values.email, '');
+  });
+
+  it('restores a value the author set in the markup', () => {
+    const seeded = mount(`
+      <ui-form>
+        <ui-input name="email" label="Email" value="kept@example.test"></ui-input>
+      </ui-form>
+    `);
+
+    const seededForm = /** @type {any} */ (seeded.querySelector('ui-form'));
+    fieldNamed(seededForm, 'email').value = 'changed@example.test';
+
+    seededForm.reset();
+
+    // Restoring, not blanking: that is what a reset means to the platform, and a
+    // form opened on an existing record should come back with the record on it.
+    assert.equal(seededForm.values.email, 'kept@example.test');
+  });
+
+  it('drops the error state and hides the summary', () => {
+    submit(form);
+    assert.equal(form.querySelector('.ui4u-form__summary').hidden, false);
+
+    form.reset();
+
+    assert.equal(form.querySelector('.ui4u-form__summary').hidden, true);
+    assert.equal(form.querySelector('ui-input').getAttribute('error'), null);
+  });
+
+  it('answers the platform reset event rather than letting it through', () => {
+    fieldNamed(form, 'email').value = 'typed@example.test';
+
+    const event = new Event('reset', { bubbles: true, cancelable: true });
+    nativeOf(form).dispatchEvent(event);
+
+    // The native reset would restore the inner <input> and leave the custom
+    // element still showing what was typed.
+    assert.equal(event.defaultPrevented, true);
+    assert.equal(form.values.email, '');
+  });
+
+  it('returns this, so it can be chained', () => {
+    assert.equal(form.reset(), form);
+  });
+});
+
+describe('ui-form values with an amount field', () => {
+  /** @type {any} */
+  let form;
+
+  beforeEach(() => {
+    const host = mount(`
+      <ui-form>
+        <ui-input name="budget" label="Budget" type="amount"></ui-input>
+        <ui-input name="note" label="Note"></ui-input>
+      </ui-form>
+    `);
+    form = /** @type {any} */ (host.querySelector('ui-form'));
+  });
+
+  afterEach(() => cleanup());
+
+  it('reports a number, not the formatted text behind it', () => {
+    fieldNamed(form, 'budget').value = '45000';
+
+    // The text is formatted for a reader to read. A consumer handed that string
+    // has to parse it back out, and parseFloat('45,000') is 45.
+    assert.equal(form.values.budget, 45000);
+  });
+
+  it('still reports a text field as a string', () => {
+    fieldNamed(form, 'note').value = 'rolled back to 1.2.0';
+
+    assert.equal(form.values.note, 'rolled back to 1.2.0');
+  });
+
+  it('reports an empty amount field as empty, not as zero', () => {
+    // An empty optional number field is not zero; conflating the two is how a
+    // blank field silently becomes a value.
+    assert.equal(form.values.budget, '');
   });
 });

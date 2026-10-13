@@ -85,6 +85,12 @@ export class Form extends UI4UElement {
   #stash = [];
   /** Fields this form has marked, so its own errors never mask a fix. */
   #marked = new WeakSet();
+  /**
+   * Field state as authored, so `reset()` restores rather than blanks.
+   *
+   * @type {Map<HTMLElement, { value?: string, checked?: boolean }>}
+   */
+  #authored = new Map();
   #built = false;
   /** True once a submit has been attempted, so the summary can go live. */
   #submitted = false;
@@ -142,12 +148,23 @@ export class Form extends UI4UElement {
    * Current field values by `name`, in document order. Values are read live
    * from the native controls, so a user typing is never clobbered.
    *
-   * @returns {Record<string, string>}
+   * An `amount` field reports a **number**, not the text behind it: a consumer
+   * that collects `"45,000"` from a field typed as `45k` has been handed a string
+   * it now has to parse back out, and `parseFloat('45,000')` is `45`. Every
+   * other field keeps its string. A field with no value yet reports `''`, which
+   * is what every other empty field reports.
+   *
+   * @returns {Record<string, string|number>}
    */
   get values() {
-    /** @type {Record<string, string>} */
+    /** @type {Record<string, string|number>} */
     const values = {};
-    for (const field of this.fields) values[field.getAttribute('name')] = field.value ?? '';
+    for (const field of this.fields) {
+      // `numberValue` is a getter, not a method, so `in` is what tests for it —
+      // `typeof` would report the parsed number and never fire.
+      const parsed = 'numberValue' in field ? /** @type {any} */ (field).numberValue : null;
+      values[field.getAttribute('name')] = parsed !== null ? parsed : (field.value ?? '');
+    }
     return values;
   }
 
@@ -243,6 +260,37 @@ export class Form extends UI4UElement {
     return this;
   }
 
+  /**
+   * Returns every field to the value it was authored with, and drops the error
+   * state.
+   *
+   * Restoring rather than blanking, because that is what the platform means by
+   * a reset: a form opened on an existing record should come back with the
+   * record on it, not empty. `<button type="reset">` inside the form does the
+   * same thing — the native `reset` event is intercepted rather than left to
+   * reset the inner `<input>`s only, which would leave every custom element
+   * still showing what the user typed.
+   *
+   * @returns {this}
+   *
+   * @example
+   * form.reset(); // back to the authored values, no error state
+   */
+  reset() {
+    for (const field of this.fields) {
+      const authored = this.#authored.get(field);
+      if (!authored) continue;
+
+      if (authored.checked !== undefined && 'checked' in field) {
+        /** @type {any} */ (field).checked = authored.checked;
+      } else if ('value' in field) {
+        /** @type {any} */ (field).value = authored.value;
+      }
+    }
+
+    return this.resetValidity();
+  }
+
   /* ------------------------------------------------------------ lifecycle */
 
   onConnect() {
@@ -287,6 +335,18 @@ export class Form extends UI4UElement {
     this.#built = true;
 
     this.track(on(this, 'submit', (event) => this.#onSubmit(/** @type {Event} */ (event))));
+    /*
+     * A `<button type="reset">` is the platform's own way to ask for this. The
+     * native `reset` would restore the inner `<input>` elements and leave every
+     * custom element still showing what was typed, so the component answers it
+     * instead and tells the platform no.
+     */
+    this.track(
+      on(native, 'reset', (event) => {
+        event.preventDefault();
+        this.reset();
+      })
+    );
     this.track(
       on(this, 'ui4u:change', () => {
         if (this.validateOn === 'change') this.#revalidate();
@@ -323,6 +383,17 @@ export class Form extends UI4UElement {
     append(native, [summary, ...children]);
     this.append(native);
 
+    // Captured once the children are live and upgraded, so `reset()` restores
+    // what was authored rather than what the browser guessed.
+    for (const field of this.fields) {
+      this.#authored.set(
+        field,
+        'checked' in field
+          ? { checked: /** @type {any} */ (field).checked }
+          : { value: field.value ?? '' }
+      );
+    }
+
     this.#sync();
   }
 
@@ -341,6 +412,7 @@ export class Form extends UI4UElement {
     this.#native = null;
     this.#built = false;
     this.#submitted = false;
+    this.#authored = new Map();
 
     delete this.dataset.validateOn;
   }

@@ -26,8 +26,8 @@
     <link rel="stylesheet" href="/demo/demo.css" />
   </head>
   <body>
-    <div class="page">
-      <header>
+    <div class="page" role="main">
+      <header role="none">
         <div>
           <h1 class="demo-hero">UI4U</h1>
           <p class="lede">
@@ -239,6 +239,9 @@ import 'ui4u';</code></pre>
           href: file,
           'data-kind': kind,
           variant: 'glass',
+          // The page's only heading is its <h1>, so these sit at level two.
+          // The component defaults to three, which would skip a level.
+          'heading-level': '2',
         });
 
         card.appendChild(node('p', { text: description }));

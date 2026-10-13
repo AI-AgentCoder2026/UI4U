@@ -205,7 +205,7 @@ npm run dev        # esbuild watch + demo server → http://localhost:5173
 npm run build      # dist/: ESM, CJS, global build, minified ESM, combined CSS
 npm run build:pages # static demo site in .pages/ for GitHub Pages
 npm test           # node:test
-npm run test:e2e   # Playwright (run `npx playwright install` once first)
+npm run test:e2e   # Playwright + axe-core a11y gate (run `npx playwright install` once first)
 npm run lint       # ESLint flat config
 ```
 

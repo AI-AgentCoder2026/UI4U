@@ -54,6 +54,7 @@
     "node": ">=18"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.47.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.0.0",
