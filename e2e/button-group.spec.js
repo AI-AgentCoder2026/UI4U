@@ -299,7 +299,14 @@ test('the Source samples live inside a collapsed ui-disclosure', async ({ page }
   const trigger = source.getByRole('button');
 
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
-  await trigger.click();
+  // Dispatched rather than clicked. These two disclosures sit far down a demo
+  // page, so a hit-tested click depends on where the page happens to have
+  // scrolled — which depends on the platform's font metrics. On a CI runner
+  // with taller text the click point landed on a control-group's hint instead
+  // of the trigger, and the test failed for a reason that has nothing to do
+  // with ui-disclosure. Same rationale as the hover in `tooltip.spec.js`: what
+  // is under test is the component's behaviour, not the pointer's coordinates.
+  await trigger.dispatchEvent('click');
 
   const blocks = source.locator('[data-highlight]');
   await expect(blocks).toHaveCount(3);
@@ -311,6 +318,7 @@ test('the accessibility notes are available too', async ({ page }) => {
   const notes = page.locator('ui-disclosure[summary="Accessibility notes"]');
 
   await expect(notes).toHaveCount(1);
-  await notes.getByRole('button').click();
+  // Dispatched, for the same reason as the Source samples above.
+  await notes.getByRole('button').dispatchEvent('click');
   await expect(notes.locator('.ui4u-disclosure__content')).toBeVisible();
 });
