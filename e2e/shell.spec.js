@@ -30,6 +30,8 @@ const DEMOS = [
   'toolbar.html',
   'button-group.html',
   'card.html',
+  'switch.html',
+  'textarea.html',
 ];
 
 const NAV = 'ui-toolbar.demo-nav';
@@ -173,7 +175,7 @@ test('the home link works from every demo', async ({ page }) => {
   await page.locator(`${NAV} ui-button`, { hasText: 'All demos' }).click();
 
   await expect(page).toHaveURL(/index\.html$/);
-  await expect(page.locator('#catalogue ui-card')).toHaveCount(18);
+  await expect(page.locator('#catalogue ui-card')).toHaveCount(20);
 });
 
 /* --- theme persistence ---------------------------------------------------- */

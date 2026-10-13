@@ -7,7 +7,7 @@ into any stack — or none. Every visual value is a `--ui4u-*` custom property, 
 theming a token override rather than a CSS fork.
 
 ```
-Seventeen components · 244.2 kB minified (~78.2 kB gzip) including tokens and themes
+Nineteen components · 272.4 kB minified (~87.2 kB gzip) including tokens and themes
 ```
 
 ## Status
@@ -33,6 +33,8 @@ Early, and deliberately incremental. Shipped:
 | `ui-button-group` | [`demo/button-group.html`](demo/button-group.html) | Segmented control: buttons acting as one choice, one tab stop             |
 | `ui-card`         | [`demo/card.html`](demo/card.html)                 | One item in a grid: eyebrow, heading, body, actions, stretched link       |
 | `ui-cards`        | [`demo/card.html`](demo/card.html)                 | The responsive grid those cards sit in — several per row, one on a phone  |
+| `ui-switch`       | [`demo/switch.html`](demo/switch.html)             | `role="switch"`: a setting that applies at once, not on submit            |
+| `ui-textarea`     | [`demo/textarea.html`](demo/textarea.html)         | Multiline text, optional auto-grow, `ui4u:change` on commit               |
 
 ![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
 

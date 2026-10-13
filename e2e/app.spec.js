@@ -463,9 +463,11 @@ test.describe('Beacon app', () => {
       'ui-radio-group',
       'ui-sidebar',
       'ui-sidebar-item',
+      'ui-switch',
       'ui-tab',
       'ui-tablegrid',
       'ui-tabs',
+      'ui-textarea',
       'ui-toolbar',
       'ui-tooltip',
     ]);

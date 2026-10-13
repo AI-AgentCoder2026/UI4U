@@ -160,6 +160,8 @@ const DEMOS = [
   { file: 'toolbar.html', label: 'ui-toolbar' },
   { file: 'button-group.html', label: 'ui-button-group' },
   { file: 'card.html', label: 'ui-card' },
+  { file: 'switch.html', label: 'ui-switch' },
+  { file: 'textarea.html', label: 'ui-textarea' },
 ];
 
 /**

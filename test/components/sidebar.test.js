@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { cleanup, click, mount, press, setupDom } from '../helpers/dom.js';
 
-// The DOM must exist before the component module is evaluated â€” see helpers/dom.js.
+// The DOM must exist before the component module is evaluated — see helpers/dom.js.
 setupDom();
 
 const { Sidebar, SidebarItem } = await import('../../src/components/sidebar/sidebar.js');
@@ -34,9 +34,9 @@ function focusIn(target) {
 
 const THREE_ITEMS = `
   <ui-sidebar expanded label="Main">
-    <ui-sidebar-item label="Overview" icon="â—ˆ" active></ui-sidebar-item>
-    <ui-sidebar-item label="Components" icon="â—«" href="#components"></ui-sidebar-item>
-    <ui-sidebar-item label="Settings" icon="âš™"></ui-sidebar-item>
+    <ui-sidebar-item label="Overview" icon="◈" active></ui-sidebar-item>
+    <ui-sidebar-item label="Components" icon="◫" href="#components"></ui-sidebar-item>
+    <ui-sidebar-item label="Settings" icon="⚙"></ui-sidebar-item>
   </ui-sidebar>
 `;
 
@@ -73,7 +73,7 @@ describe('ui-sidebar landmark', () => {
     assert.equal(controls.length, 3);
     assert.deepEqual(
       controls.map((c) => c.textContent),
-      ['â—ˆOverview', 'â—«Components', 'âš™Settings']
+      ['◈Overview', '◫Components', '⚙Settings']
     );
   });
 

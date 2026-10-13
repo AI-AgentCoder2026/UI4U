@@ -31,6 +31,8 @@ const DEMOS = [
   'ui-tablegrid',
   'ui-card',
   'ui-cards',
+  'ui-switch',
+  'ui-textarea',
   'Beacon app',
 ];
 

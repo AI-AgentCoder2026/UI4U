@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { cleanup, mount, setupDom } from '../helpers/dom.js';
 
-// The DOM must exist before any component module is evaluated ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the base class
+// The DOM must exist before any component module is evaluated — the base class
 // captures globalThis.HTMLElement at module scope. See helpers/dom.js.
 setupDom();
 
@@ -29,7 +29,7 @@ function nativeOf(form) {
 
 /**
  * Fires the submit the way the platform would. jsdom does not implement
- * interactive submission, so the test dispatches the cancelable event itself ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â
+ * interactive submission, so the test dispatches the cancelable event itself —
  * which is exactly what the component listens for.
  *
  * @param {Element} form
@@ -102,7 +102,7 @@ describe('ui-form rendering', () => {
     const form = mount(TWO_FIELDS).querySelector('ui-form');
 
     // UI4U reports the failures itself, so native constraint validation must be
-    // off ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â otherwise no submit event is fired at all when a field is invalid.
+    // off — otherwise no submit event is fired at all when a field is invalid.
     assert.equal(nativeOf(form).noValidate, true);
   });
 

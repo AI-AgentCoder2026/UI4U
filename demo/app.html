@@ -901,9 +901,13 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
             hint: 'Pick it or type it; the value stays ISO.',
           }),
           node('ui-checkbox', { label: 'Notify the on-call rota', name: 'notify' }),
-          node('ui-disclosure', { summary: 'Notes' }, [
-            node('p', { text: 'Anything the next person needs to know.' }),
-          ]),
+          node('ui-textarea', {
+            label: 'Notes',
+            name: 'notes',
+            rows: '3',
+            grow: '',
+            placeholder: 'What happened, what you tried, what is still open.',
+          }),
           node('ui-button', { variant: 'primary', type: 'submit', text: 'Save incident' }),
           node('ui-button', {
             variant: 'ghost',
@@ -978,6 +982,22 @@ channelFilter.addEventListener('ui4u:change', ({ detail }) =&gt; {
             node('ui-checkbox', {
               label: 'Override --ui4u-danger on this page',
               name: 'custom-danger',
+            }),
+          ]),
+          node('ui-disclosure', { summary: 'Notification', variant: 'ghost', open: true }, [
+            node('p', {
+              text: 'A setting that applies at once, rather than something to submit — which is the whole difference between a switch and a checkbox.',
+            }),
+            // A switch, not a checkbox: this takes effect when it is flipped.
+            node('ui-switch', {
+              label: 'Page me when a release ships',
+              name: 'page-on-ship',
+              checked: '',
+            }),
+            node('ui-switch', {
+              label: 'Include yanked versions in the digest',
+              name: 'digest-yanked',
+              hint: 'Off means the digest lists only what a reader can still install.',
             }),
           ]),
         ]);

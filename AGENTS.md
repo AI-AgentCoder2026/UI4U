@@ -36,10 +36,12 @@ Every component follows the same shape — keep new ones consistent:
 - Anything positioned with `position: fixed` (tooltip, popup) must be portalled to `<body>` — an ancestor with `transform`, `filter` or `backdrop-filter` otherwise becomes its containing block. When a component _has_ to move itself for that reason, use `UI4UElement.moveTo(parent)`: plain `appendChild` fires `disconnectedCallback`/`connectedCallback` and rebuilds the component from scratch
 - Mobile-first: base styles target small screens, desktop refinements go in container/`@media` queries
 - Public API carries JSDoc `@param`/`@returns` plus one runnable `@example`
+- **A control that acts immediately is a `ui-switch`, not a `ui-checkbox`.** The difference is `role="switch"` with `aria-checked`, and it is semantic rather than cosmetic: a checkbox is part of a submission, a switch is not
+- **A new field type joins `ui-form`'s `FIELD_SELECTOR` in the same commit.** The form discovers fields by that list, and a control missing from it is silently unvalidated — the worst kind of failure, because the form looks like it is working
 
 ## Required components (roadmap, ongoing)
 
-Shipped: `tabs` · `disclosure` · `button` · `button-group` · `tooltip` · `layout` · `popup` · `input` · `checkbox` · `radio` · `dropdown` · `tablegrid` · `form` · `sidebar` · `toolbar` · `card` · `cards`
+Shipped: `tabs` · `disclosure` · `button` · `button-group` · `tooltip` · `layout` · `popup` · `input` · `textarea` · `checkbox` · `switch` · `radio` · `dropdown` · `tablegrid` · `form` · `sidebar` · `toolbar` · `card` · `cards`
 
 Roadmap: none outstanding. Next candidates and the audit findings live in `docs/REVIEW.md`.
 

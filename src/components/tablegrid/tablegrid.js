@@ -115,6 +115,9 @@ export class TableGrid extends UI4UElement {
       'sort',
       'direction',
       'search-placeholder',
+      'loading',
+      'error',
+      'loading-label',
     ];
   }
 
@@ -165,6 +168,8 @@ export class TableGrid extends UI4UElement {
   #copyButton = null;
   /** @type {HTMLElement|null} */
   #toolbar = null;
+  /** The one status row shown in place of data, or `null`. @type {HTMLTableRowElement|null} */
+  #status = null;
   /** Watches the body for rows added or removed after connect. @type {MutationObserver|null} */
   #observer = null;
   /** @type {HTMLElement|null} */
@@ -296,6 +301,72 @@ export class TableGrid extends UI4UElement {
   /** Rows per page, or `0` when paging is off. @returns {number} */
   get perPage() {
     return Math.max(0, Math.trunc(this.getNumber('per-page', 0)));
+  }
+
+  /**
+   * Whether the rows are being fetched.
+   *
+   * While this is set the grid shows a status row instead of data, marks the
+   * table `aria-busy`, and disables its toolbar — sorting a table whose rows
+   * have not arrived yet is a lie about what is on screen.
+   *
+   * @returns {boolean}
+   */
+  get loading() {
+    return this.hasAttribute('loading');
+  }
+
+  set loading(next) {
+    this.toggleAttribute('loading', Boolean(next));
+  }
+
+  /**
+   * The reason the rows could not be fetched, or `''` when there is none.
+   *
+   * An error is a message, not a flag: "the sync failed" tells a reader nothing
+   * they can act on, and an empty `error` attribute would have to be read as
+   * success, which is exactly backwards.
+   *
+   * @returns {string}
+   */
+  get error() {
+    return this.getString('error', '');
+  }
+
+  set error(next) {
+    if (next === '' || next === null || next === undefined) this.removeAttribute('error');
+    else this.setAttribute('error', String(next));
+  }
+
+  /** @returns {string} the message shown while `loading` */
+  get loadingLabel() {
+    return this.getString('loading-label', 'Loading');
+  }
+
+  /**
+   * Whether the grid has rows to show right now.
+   *
+   * Derived, never authored. An `empty` attribute would have to be set by hand
+   * and would be forgotten on exactly the pages that need it — the ones where
+   * a search just returned nothing.
+   *
+   * @returns {boolean}
+   */
+  get isEmpty() {
+    return this.#matched.length === 0;
+  }
+
+  /**
+   * Whether rows exist but none of them match the active search and filters.
+   *
+   * Distinct from an empty grid, because the message has to be distinct: "no
+   * rows yet" is an invitation to create one, "nothing matches what you typed"
+   * is an invitation to change what you typed.
+   *
+   * @returns {boolean}
+   */
+  get isFilteredEmpty() {
+    return this.#matched.length === 0 && this.#authored.length > 0;
   }
 
   /** @returns {string} the active search query */
@@ -825,6 +896,10 @@ export class TableGrid extends UI4UElement {
       // so this is safe to repeat.
       this.#teardown();
       this.#build();
+    } else if (name === 'loading' || name === 'error' || name === 'loading-label') {
+      // None of these change the data, only whether any of it is shown — so a
+      // full rebuild would be wasteful, but the view does have to be repainted.
+      this.#applyView();
     }
   }
 
@@ -862,7 +937,12 @@ export class TableGrid extends UI4UElement {
     this.#observer?.disconnect();
 
     const observer = new MutationObserver(() => {
-      const present = new Set([...body.rows]);
+      /*
+       * The status row lives in the body but is not data. Without this it
+       * would be read as an added row, become part of `#authored`, and end up
+       * sortable, selectable and copied along with the real rows.
+       */
+      const present = new Set([...body.rows].filter((row) => row !== this.#status));
       const known = new Set(this.#authored);
 
       const added = [...present].filter((row) => !known.has(row));
@@ -1030,6 +1110,8 @@ export class TableGrid extends UI4UElement {
     // An author-supplied toolbar is theirs, not ours: it is re-claimed on the
     // next build, never removed here.
     this.#toolbar = null;
+    this.#status?.remove();
+    this.#status = null;
     this.#page = 1;
     // The user's selection belongs to their data, not to one rendering of it,
     // so it deliberately survives a rebuild — but not a disconnect.
@@ -1732,9 +1814,96 @@ export class TableGrid extends UI4UElement {
   #applyView() {
     if (!this.#body) return;
 
+    this.#renderStatus();
+
     const shown = new Set(this.pageRows);
-    for (const row of this.#authored) row.hidden = !shown.has(row);
+    for (const row of this.#authored) row.hidden = !shown.has(row) || this.#status !== null;
     this.#updatePager();
+  }
+
+  /**
+   * Renders the one-row status message, or removes it.
+   *
+   * Loading and error are authored; empty is derived. A grid whose rows have
+   * not arrived yet, whose fetch failed, and whose search matched nothing are
+   * three different things a reader has to act on differently, so they get
+   * three different messages — and only the first two are the author's to set.
+   *
+   * @returns {void}
+   */
+  #renderStatus() {
+    const busy = this.loading;
+    const failed = this.error !== '';
+    const empty = !busy && !failed && this.isEmpty;
+
+    // `toggleAttribute` would write an empty value, and `aria-busy=""` is not
+    // the same thing as `aria-busy="true"` to a screen reader.
+    if (busy) this.#table?.setAttribute('aria-busy', 'true');
+    else this.#table?.removeAttribute('aria-busy');
+    this.#syncStatusControls();
+
+    if (!busy && !failed && !empty) {
+      this.#status?.remove();
+      this.#status = null;
+      return;
+    }
+
+    const message = busy
+      ? this.loadingLabel
+      : failed
+        ? this.error
+        : this.isFilteredEmpty
+          ? 'Nothing matches the current search or filters'
+          : 'No rows';
+
+    if (!this.#status) {
+      const row = /** @type {HTMLTableRowElement|null} */ (
+        this.#body?.ownerDocument.createElement('tr')
+      );
+      if (!row || !this.#body) return;
+      row.className = 'ui4u-tablegrid__status';
+      this.#status = row;
+      this.#body.appendChild(row);
+    }
+
+    this.#status.dataset.state = busy ? 'loading' : failed ? 'error' : 'empty';
+    // `role="status"` is a polite live region, so arriving data announces
+    // itself. An error has to interrupt, so it is an alert instead.
+    this.#status.setAttribute('role', failed ? 'alert' : 'status');
+    this.#status.setAttribute('aria-live', failed ? 'assertive' : 'polite');
+
+    const cell = /** @type {HTMLTableCellElement|null} */ (
+      this.#body.ownerDocument.createElement('td')
+    );
+    if (!cell) return;
+    cell.colSpan = Math.max(1, this.#dataCells().length);
+    setText(cell, message);
+    this.#status.replaceChildren(cell);
+  }
+
+  /**
+   * Disables the toolbar while there is nothing to act on.
+   *
+   * Sorting or paging a table whose rows have not arrived is a lie about what
+   * is on screen, and a disabled control says so before it is clicked.
+   *
+   * @returns {void}
+   */
+  #syncStatusControls() {
+    const inert = this.loading || this.error !== '';
+    this.toggleAttribute('data-inert', inert);
+
+    // The header sort buttons as well as the toolbar: both act on the rows,
+    // and sorting rows that have not arrived is a lie about what is on screen.
+    for (const button of this.querySelectorAll('.ui4u-tablegrid__sort')) {
+      button.toggleAttribute('disabled', inert);
+    }
+
+    if (!this.#toolbar) return;
+    this.#toolbar.toggleAttribute('aria-disabled', inert);
+    for (const control of this.#toolbar.querySelectorAll('button, input, ui-dropdown')) {
+      control.toggleAttribute('disabled', inert);
+    }
   }
 
   /** @param {KeyboardEvent} event */

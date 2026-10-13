@@ -127,6 +127,48 @@ ui-tablegrid tbody tr:hover td {
   background: var(--ui4u-surface-3);
 }
 
+/* --- the status row -------------------------------------------------------
+ * One row in place of the data, for loading, failed and nothing-to-show.
+ *
+ * It is a real `<tr>` in the body rather than an overlay, so it keeps the
+ * table's column geometry: the grid does not change width or height when the
+ * data arrives, and a screen reader stays inside the table it is reading.
+ */
+
+ui-tablegrid .ui4u-tablegrid__status {
+  cursor: default;
+}
+
+ui-tablegrid .ui4u-tablegrid__status:hover td {
+  background: none;
+}
+
+ui-tablegrid .ui4u-tablegrid__status td {
+  padding: var(--ui4u-space-7) var(--ui4u-space-4);
+  text-align: center;
+  color: var(--ui4u-text-muted);
+  font-family: var(--ui4u-font-label);
+  font-size: var(--ui4u-font-size-sm);
+  letter-spacing: var(--ui4u-tracking-wide);
+  white-space: normal;
+}
+
+/*
+ * A failure is the one state that should be impossible to miss, so it takes
+ * the signal colour — the same amber that means "degraded" everywhere else.
+ * Loading deliberately does not: it is a normal part of fetching, and painting
+ * it as a warning would cry wolf on every page load.
+ */
+ui-tablegrid .ui4u-tablegrid__status[data-state='error'] td {
+  color: var(--ui4u-danger);
+}
+
+/* The grid is inert while it has nothing to act on; say so rather than
+   leaving live controls looking clickable. */
+ui-tablegrid[data-inert='true'] .ui4u-tablegrid__toolbar {
+  opacity: 0.5;
+}
+
 ui-tablegrid table.ui4u-tablegrid__striped tbody tr:nth-child(even) td {
   background: var(--ui4u-surface-2);
 }

@@ -1,0 +1,214 @@
+/**
+ * ui-switch
+ *
+ * Every value is a `--ui4u-*` token. The measurements with no global token — the
+ * track, the knob and the touch target — are declared once on the element as
+ * `--ui4u-switch-*`, so changing them is a token override, never a fork of this
+ * file.
+ *
+ * The control is a real `<button role="switch">`: native focus, native
+ * Enter/Space activation and native `:disabled`. Nothing here hides a native
+ * input behind a drawn track, because there is no input to hide — a switch has
+ * no form value to submit, which is exactly what frees it from being a
+ * checkbox.
+ *
+ * Motion is expressed only through `--ui4u-duration-*` and `--ui4u-ease-*`,
+ * which the token layer collapses to 0ms under `prefers-reduced-motion`.
+ */
+
+ui-switch {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-switch-track-width: 5.25rem;
+  --ui4u-switch-track-height: 2.75rem;
+  --ui4u-switch-knob: 2rem;
+  --ui4u-switch-inset: var(--ui4u-space-1);
+  --ui4u-switch-touch: 2.75rem;
+  --ui4u-switch-gap: var(--ui4u-space-3);
+  --ui4u-switch-padding-x: var(--ui4u-space-3);
+  --ui4u-switch-radius: var(--ui4u-radius-full);
+  --ui4u-switch-on: var(--ui4u-primary);
+  --ui4u-switch-off: var(--ui4u-surface-sunken);
+  --ui4u-switch-knob-color: var(--ui4u-surface);
+  --ui4u-switch-disabled-opacity: 0.55;
+}
+
+/* Scale. The touch target does NOT scale with it: the control keeps its 44px
+   minimum at every size, so a small switch is still comfortable on a phone. */
+ui-switch[data-size='sm'] {
+  --ui4u-switch-track-width: 3.75rem;
+  --ui4u-switch-track-height: 2rem;
+  --ui4u-switch-knob: 1.5rem;
+}
+
+ui-switch[data-size='lg'] {
+  --ui4u-switch-track-width: 6.25rem;
+  --ui4u-switch-track-height: 3.25rem;
+  --ui4u-switch-knob: 2.5rem;
+}
+
+/* --- the row ------------------------------------------------------------- */
+
+ui-switch .ui4u-switch__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui4u-switch-gap);
+  box-sizing: border-box;
+  min-height: var(--ui4u-switch-touch);
+  padding-block: var(--ui4u-space-2);
+  padding-inline: var(--ui4u-switch-padding-x);
+  border-radius: var(--ui4u-switch-radius);
+}
+
+ui-switch[disabled] .ui4u-switch__row {
+  opacity: var(--ui4u-switch-disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* --- the control --------------------------------------------------------- */
+
+ui-switch .ui4u-switch__control {
+  display: block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-height: var(--ui4u-switch-touch);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: inherit;
+  appearance: none;
+}
+
+ui-switch[disabled] .ui4u-switch__control {
+  cursor: not-allowed;
+}
+
+ui-switch .ui4u-switch__control:focus-visible {
+  outline: var(--ui4u-focus-ring-width) solid var(--ui4u-focus-ring-color);
+  outline-offset: var(--ui4u-focus-ring-offset);
+  border-radius: var(--ui4u-switch-radius);
+}
+
+/* --- the track and knob -------------------------------------------------- */
+
+ui-switch .ui4u-switch__track {
+  display: block;
+  position: relative;
+  box-sizing: border-box;
+  width: var(--ui4u-switch-track-width);
+  height: var(--ui4u-switch-track-height);
+  border-radius: var(--ui4u-switch-radius);
+  background-color: var(--ui4u-switch-off);
+  border: 1px solid var(--ui4u-border-strong);
+  transition:
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+/* `aria-checked` is the state — the same attribute that announces it — so the
+   drawing can never disagree with what a screen reader says. */
+ui-switch .ui4u-switch__control[aria-checked='true'] .ui4u-switch__track {
+  background-color: var(--ui4u-switch-on);
+  border-color: var(--ui4u-switch-on);
+}
+
+ui-switch .ui4u-switch__knob {
+  display: block;
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--ui4u-switch-inset);
+  box-sizing: border-box;
+  width: var(--ui4u-switch-knob);
+  height: var(--ui4u-switch-knob);
+  margin-block-start: calc(var(--ui4u-switch-knob) / -2);
+  border-radius: var(--ui4u-switch-radius);
+  background-color: var(--ui4u-switch-knob-color);
+  box-shadow: var(--ui4u-shadow-sm);
+  transition: transform var(--ui4u-duration-base) var(--ui4u-ease-spring);
+}
+
+/*
+ * The travel is derived from the knob, the track and the inset rather than
+ * written out, so resizing the track by token moves the knob to the far edge
+ * instead of leaving it short of it.
+ */
+ui-switch .ui4u-switch__control[aria-checked='true'] .ui4u-switch__knob {
+  transform: translateX(
+    calc(var(--ui4u-switch-track-width) - var(--ui4u-switch-knob) - (2 * var(--ui4u-switch-inset)))
+  );
+}
+
+/* --- label ---------------------------------------------------------------- */
+
+ui-switch .ui4u-switch__label {
+  font-size: var(--ui4u-font-size-md);
+  font-weight: var(--ui4u-weight-medium);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  cursor: inherit;
+  user-select: none;
+}
+
+ui-switch[disabled] .ui4u-switch__label {
+  cursor: not-allowed;
+}
+
+ui-switch .ui4u-switch__label[hidden] {
+  display: none;
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-switch .ui4u-switch__hint,
+ui-switch .ui4u-switch__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  padding-inline-start: var(--ui4u-switch-padding-x);
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-switch .ui4u-switch__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-switch .ui4u-switch__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-switch .ui4u-switch__hint[hidden],
+ui-switch .ui4u-switch__error[hidden] {
+  display: none;
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-switch {
+    --ui4u-switch-padding-x: var(--ui4u-space-4);
+  }
+}
+
+/*
+ * Error treatment, driven by the ARIA state so it can never disagree with what
+ * assistive technology announces.
+ *
+ * It is an outline around the track rather than a border: the track already has
+ * a border, and recolouring that alone is invisible at 1px on a busy ground.
+ *
+ * The colour is a variable, so an app can tint its fields without restating a
+ * theme. Overriding `--ui4u-danger` still changes it everywhere.
+ */
+ui-switch .ui4u-switch__control[aria-invalid='true'] .ui4u-switch__track {
+  outline: 2px solid var(--ui4u-switch-invalid-border, var(--ui4u-danger));
+  outline-offset: var(--ui4u-focus-ring-offset);
+}

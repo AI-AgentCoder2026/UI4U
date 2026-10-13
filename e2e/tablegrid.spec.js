@@ -312,7 +312,12 @@ test('clearing the search brings every row back', async ({ page }) => {
 
 test('a search with no match says so rather than showing a blank table', async ({ page }) => {
   await page.locator(`${MAIN} .ui4u-tablegrid__search-input`).fill('zzzz');
-  expect(await visibleOrder(page)).toEqual([]);
+
+  // The name of this test used to be aspirational: nothing matched and the
+  // table was simply blank. It now says so, and says which kind of nothing.
+  const status = page.locator(`${MAIN} .ui4u-tablegrid__status`);
+  await expect(status).toBeVisible();
+  await expect(status).toContainText('Nothing matches');
 });
 
 test('the search event reaches the demo log', async ({ page }) => {
@@ -408,6 +413,60 @@ test('arrow keys skip rows that paging has hidden', async ({ page }) => {
   await page.keyboard.press('ArrowDown');
   const still = await page.evaluate(() => document.activeElement.closest('tr').hidden);
   expect(still).toBe(false);
+});
+
+/* --- async states --------------------------------------------------------- */
+
+test.describe('loading, empty and error', () => {
+  const status = (page) => page.locator(`${MAIN} .ui4u-tablegrid__status`);
+
+  test('shows a loading row, marks the table busy, and inert the toolbar', async ({ page }) => {
+    await page.locator('#opt-state [role="tab"]', { hasText: 'Loading' }).click();
+
+    await expect(status(page)).toHaveText('Loading');
+    await expect(status(page)).toHaveAttribute('data-state', 'loading');
+    await expect(page.locator(`${MAIN} table`)).toHaveAttribute('aria-busy', 'true');
+
+    // Nothing looks actionable while there is nothing to act on.
+    await expect(page.locator(`${MAIN} .ui4u-tablegrid__sort`).first()).toBeDisabled();
+    await expect(page.locator(`${MAIN} tbody tr:not([hidden])`)).toHaveCount(1); // the status row
+  });
+
+  test('says something different when a search matched nothing', async ({ page }) => {
+    await page.locator('.ui4u-tablegrid__search-input').fill('zzzz-nothing');
+
+    await expect(status(page)).toHaveAttribute('data-state', 'empty');
+    // "No rows" would invite creating one; this invites changing the search.
+    await expect(status(page)).toContainText('Nothing matches');
+
+    await page.locator('.ui4u-tablegrid__search-input').fill('');
+    await expect(status(page)).toHaveCount(0);
+  });
+
+  test('an error is announced, and clears when the data arrives', async ({ page }) => {
+    await page.locator('#opt-state [role="tab"]', { hasText: 'Error' }).click();
+
+    await expect(status(page)).toHaveAttribute('data-state', 'error');
+    await expect(status(page)).toHaveText('Could not reach the release API');
+    // A failure interrupts; arriving data does not.
+    await expect(status(page)).toHaveAttribute('role', 'alert');
+
+    await page.locator('#opt-state [role="tab"]', { hasText: 'Loaded' }).click();
+    await expect(status(page)).toHaveCount(0);
+    await expect(page.locator(`${MAIN} table`)).not.toHaveAttribute('aria-busy', 'true');
+  });
+
+  test('the status row is never mistaken for data', async ({ page }) => {
+    const before = await page.locator(`${MAIN} tbody tr:not([hidden])`).count();
+
+    await page.locator('#opt-state [role="tab"]', { hasText: 'Loading' }).click();
+    await page.locator('#opt-state [role="tab"]', { hasText: 'Loaded' }).click();
+    await page.waitForTimeout(100);
+
+    // The MutationObserver watches the body for new rows; the status row lives
+    // there too, and must not have been adopted into the dataset.
+    await expect(page.locator(`${MAIN} tbody tr:not([hidden])`)).toHaveCount(before);
+  });
 });
 
 /* --- selection ----------------------------------------------------------- */

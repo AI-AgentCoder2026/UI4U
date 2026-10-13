@@ -57,6 +57,8 @@ import {
 } from './components/button-group/index.js';
 import { Card, CARD_STYLE_ID, cardCss } from './components/card/index.js';
 import { Cards, CARDS_STYLE_ID, cardsCss } from './components/cards/index.js';
+import { Switch, SWITCH_STYLE_ID, switchCss } from './components/switch/index.js';
+import { Textarea, TEXTAREA_STYLE_ID, textareaCss } from './components/textarea/index.js';
 
 /* ------------------------------------------------------------ foundations */
 import tokensCss from './styles/tokens.css';
@@ -126,6 +128,12 @@ export {
   Cards,
   CARDS_STYLE_ID,
   cardsCss,
+  Switch,
+  SWITCH_STYLE_ID,
+  switchCss,
+  Textarea,
+  TEXTAREA_STYLE_ID,
+  textareaCss,
 };
 export { defineElement as define, inject as injectStyle, hasStyle };
 
@@ -194,6 +202,8 @@ export const components = [
   },
   { tag: 'ui-card', ctor: Card, styleId: CARD_STYLE_ID, css: cardCss },
   { tag: 'ui-cards', ctor: Cards, styleId: CARDS_STYLE_ID, css: cardsCss },
+  { tag: 'ui-switch', ctor: Switch, styleId: SWITCH_STYLE_ID, css: switchCss },
+  { tag: 'ui-textarea', ctor: Textarea, styleId: TEXTAREA_STYLE_ID, css: textareaCss },
 ];
 
 /**
@@ -242,6 +252,8 @@ export const UI4U = {
   RadioGroup,
   Dropdown,
   DropdownOption,
+  Switch,
+  Textarea,
   UI4UElement,
   Emitter,
   define: defineElement,

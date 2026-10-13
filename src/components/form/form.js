@@ -33,15 +33,18 @@ const SUMMARY_TITLE_MANY = 'There are {count} problems with this form';
  * Every control `ui-form` knows how to validate.
  *
  * `ui-radio` is deliberately absent: it is validated through its
- * `ui-radio-group`, which is the element that carries the `name`.
+ * `ui-radio-group`, which is the element that carries the `name`. Everything
+ * listed here has to satisfy the same contract — `checkValidity()` returning
+ * `{ valid, message, value, name }` and a `clearValidity()` — so this list is
+ * the form's real definition of "a field".
  */
-const FIELD_SELECTOR = 'ui-input, ui-checkbox, ui-radio-group, ui-dropdown';
+const FIELD_SELECTOR = 'ui-input, ui-textarea, ui-checkbox, ui-radio-group, ui-dropdown';
 
 /**
  * A validating form wrapper around a REAL `<form>`. It discovers its descendant
- * field elements by `name` — `ui-input`, `ui-checkbox`, `ui-radio-group` and
- * `ui-dropdown` — checks them through their own `checkValidity()`, and refuses
- * to submit while anything is invalid.
+ * field elements by `name` — `ui-input`, `ui-textarea`, `ui-checkbox`,
+ * `ui-radio-group` and `ui-dropdown` — checks them through their own
+ * `checkValidity()`, and refuses to submit while anything is invalid.
  *
  * ```html
  * <ui-form validate-on="submit">

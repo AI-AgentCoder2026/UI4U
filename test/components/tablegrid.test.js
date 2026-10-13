@@ -1371,3 +1371,141 @@ describe('ui-tablegrid dynamic rows', () => {
     assert.equal(grid.rows.length, 2);
   });
 });
+describe('ui-tablegrid async states', () => {
+  /** @type {Element} */
+  let grid;
+
+  beforeEach(() => {
+    grid = /** @type {Element} */ (mount(TABLE).querySelector('ui-tablegrid'));
+  });
+
+  afterEach(() => cleanup());
+
+  /** @returns {Element|null} */
+  function status() {
+    return grid.querySelector('.ui4u-tablegrid__status');
+  }
+
+  it('shows a loading row and marks the table busy', () => {
+    grid.loading = true;
+
+    assert.equal(status().dataset.state, 'loading');
+    assert.equal(status().getAttribute('role'), 'status');
+    assert.equal(status().textContent.trim(), 'Loading');
+    assert.equal(grid.querySelector('table').getAttribute('aria-busy'), 'true');
+
+    // Every authored row is out of the way, so nothing looks sortable.
+    for (const row of grid.querySelectorAll('tbody tr')) {
+      if (row !== status()) assert.equal(row.hidden, true);
+    }
+  });
+
+  it('uses the authored loading label', () => {
+    grid.setAttribute('loading-label', 'Fetching releases');
+    grid.loading = true;
+
+    assert.equal(status().textContent.trim(), 'Fetching releases');
+  });
+
+  it('treats an error as an alert and says why', () => {
+    grid.error = 'Could not reach the release API';
+
+    assert.equal(status().dataset.state, 'error');
+    assert.equal(status().getAttribute('role'), 'alert');
+    assert.equal(status().getAttribute('aria-live'), 'assertive');
+    assert.equal(status().textContent.trim(), 'Could not reach the release API');
+  });
+
+  it('removes the status row once the rows arrive', () => {
+    grid.loading = true;
+    assert.ok(status());
+
+    grid.loading = false;
+
+    assert.equal(status(), null);
+    assert.equal(grid.querySelector('table').hasAttribute('aria-busy'), false);
+    assert.equal(grid.querySelectorAll('tbody tr')[0].hidden, false);
+  });
+
+  it('disables the toolbar while there is nothing to act on', () => {
+    const withToolbar = /** @type {Element} */ (
+      mount(`
+        <ui-tablegrid label="Releases" searchable>
+          <ui-toolbar><button>Refresh</button></ui-toolbar>
+          <table>
+            <thead><tr><th scope="col">Version</th></tr></thead>
+            <tbody><tr><td>1.0.0</td></tr></tbody>
+          </table>
+        </ui-tablegrid>
+      `).querySelector('ui-tablegrid')
+    );
+
+    withToolbar.loading = true;
+    assert.equal(withToolbar.querySelector('button').hasAttribute('disabled'), true);
+
+    withToolbar.loading = false;
+    assert.equal(withToolbar.querySelector('button').hasAttribute('disabled'), false);
+  });
+
+  it('derives an empty state — nobody has to remember to set one', () => {
+    const empty = /** @type {any} */ (
+      mount(`
+        <ui-tablegrid label="Empty">
+          <table>
+            <thead><tr><th scope="col">Version</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </ui-tablegrid>
+      `).querySelector('ui-tablegrid')
+    );
+
+    assert.equal(empty.isEmpty, true);
+    assert.equal(empty.querySelector('.ui4u-tablegrid__status').textContent.trim(), 'No rows');
+  });
+
+  it('says something different when rows exist but none match', () => {
+    grid.search('nothing matches this');
+
+    const state = grid.querySelector('.ui4u-tablegrid__status');
+    assert.equal(state.dataset.state, 'empty');
+    assert.match(state.textContent, /Nothing matches/);
+
+    // The distinction is the whole point: "no rows" invites creating one,
+    // "nothing matched" invites changing the search.
+    assert.equal(grid.isFilteredEmpty, true);
+    assert.equal(grid.isEmpty, true);
+  });
+
+  it('clears the empty state when the search matches again', () => {
+    grid.search('zzz');
+    assert.ok(grid.querySelector('.ui4u-tablegrid__status'));
+
+    grid.clearSearch();
+
+    assert.equal(grid.querySelector('.ui4u-tablegrid__status'), null);
+  });
+
+  it('never treats the status row as data', async () => {
+    const authored = grid.rows.length;
+
+    grid.loading = true;
+    assert.equal(grid.querySelectorAll('tbody tr').length, authored + 1, 'one extra row');
+    assert.equal(grid.rows.length, authored, 'and it is not one of them');
+
+    grid.loading = false;
+
+    // The MutationObserver that watches for new rows is asynchronous, so let it
+    // run: without the status-row exclusion it would adopt the status row into
+    // the authored set, and it would then be sorted, selected and copied along
+    // with the real ones.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(grid.rows.length, authored);
+
+    grid.search('1.0.0');
+    assert.equal(grid.rows.length, 1, 'search still works over the real rows');
+    assert.equal(grid.querySelector('.ui4u-tablegrid__status'), null);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(grid.rows.length, 1, 'and nothing adopted itself afterwards');
+  });
+});

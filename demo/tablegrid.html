@@ -85,6 +85,17 @@
 
       <div class="control-grid">
         <div class="control-group">
+          <span class="control-group__label">State</span>
+          <ui-tabs id="opt-state" variant="underline" label="State">
+            <!-- `loaded` first, so the picker's default matches the markup
+                 below; otherwise the first click is a no-op. -->
+            <ui-tab label="Loaded"></ui-tab>
+            <ui-tab label="Loading"></ui-tab>
+            <ui-tab label="Empty"></ui-tab>
+            <ui-tab label="Error"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
           <span class="control-group__label">Mode</span>
           <ui-tabs id="opt-navigate" variant="underline" label="Mode">
             <!-- `grid` first so the picker's default matches the `navigate`
@@ -397,6 +408,22 @@ grid.addEventListener('ui4u:copy', (event) =&gt; {
       document.getElementById('opt-density').addEventListener('ui4u:change', (event) => {
         const label = event.detail.label;
         grid.configure({ dense: label === 'dense', striped: label === 'striped' });
+      });
+
+      /*
+       * Loading and error are authored by whoever owns the fetch; empty is not.
+       * There is no "empty" tab setting an attribute — the grid works out that
+       * it has nothing to show by itself, which is the only way it cannot be
+       * forgotten on the page that most needs it.
+       */
+      document.getElementById('opt-state').addEventListener('ui4u:change', (event) => {
+        const label = event.detail.label;
+        grid.error = label === 'Error' ? 'Could not reach the release API' : '';
+        grid.loading = label === 'Loading';
+
+        // "Empty" is faked by searching for something that cannot match, so the
+        // demo exercises the real derived-empty path rather than a special one.
+        grid.search(label === 'Empty' ? 'zzzz-nothing' : '');
       });
 
       document.getElementById('opt-perpage').addEventListener('ui4u:change', (event) => {

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Textarea</title>
+    <meta
+      name="description"
+      content="ui-textarea — a multiline field that wraps a real native textarea, with a linked label, hint, error state, native validation and optional auto-grow."
+    />
+    <!--
+      Restores the theme chosen on any other demo page. Inline and blocking on
+      purpose: a deferred or module script would run after the stylesheet, and
+      the page would flash dark before settling on light.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('ui4u-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (error) {
+        /* storage unavailable — the default in the markup stands */
+      }
+    </script>
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page" role="main">
+      <header role="none">
+        <div>
+          <h1><code>ui-textarea</code></h1>
+          <p class="lede">
+            A multiline field that wraps a <strong>real</strong> <code>&lt;textarea&gt;</code>.
+            Native spellcheck, autocorrect, IME composition and mobile keyboards keep working
+            because the control is never re-rendered from a property.
+          </p>
+        </div>
+        <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Size</span>
+          <ui-tabs id="opt-size" variant="underline" label="Size">
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Rows</span>
+          <ui-tabs id="opt-rows" variant="underline" label="Rows">
+            <ui-tab label="2"></ui-tab>
+            <ui-tab label="4"></ui-tab>
+            <ui-tab label="8"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-textarea
+          id="demo"
+          label="Release notes"
+          name="notes"
+          rows="4"
+          placeholder="What changed in this release?"
+          hint="Markdown is fine."
+          required
+        ></ui-textarea>
+      </div>
+
+      <div class="controls">
+        <ui-button id="toggle-required" variant="ghost" size="sm">Toggle required</ui-button>
+        <ui-button id="toggle-readonly" variant="ghost" size="sm">Toggle readonly</ui-button>
+        <ui-button id="toggle-disabled" variant="ghost" size="sm">Toggle disabled</ui-button>
+        <ui-button id="toggle-sr-only" variant="ghost" size="sm"
+          >Toggle screen-reader-only label</ui-button
+        >
+        <ui-button id="toggle-error" variant="ghost" size="sm">Toggle error</ui-button>
+      </div>
+
+      <div class="controls">
+        <ui-button id="validate" variant="ghost" size="sm">Validate</ui-button>
+        <ui-button id="clear" variant="ghost" size="sm">Clear validity</ui-button>
+        <ui-button id="reset" variant="ghost" size="sm">Reset</ui-button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">
+        Type, then press Tab or Ctrl+Enter to commit.
+      </div>
+
+      <div class="controls">
+        <ui-textarea
+          label="Summary"
+          size="sm"
+          rows="2"
+          placeholder="One line is enough"
+        ></ui-textarea>
+        <ui-textarea label="Nickname" sr-only hint="Only your friends see this."></ui-textarea>
+        <ui-textarea label="Changelog" value="Frozen for review." readonly rows="2"></ui-textarea>
+        <ui-textarea label="Archived" value="You cannot type here" disabled rows="2"></ui-textarea>
+      </div>
+
+      <ui-disclosure id="grow" summary="Auto-grow" variant="ghost">
+        <p>
+          Add <code>grow</code> and the field expands to fit what you wrote instead of scrolling
+          inside itself. It only ever grows <em>while you are typing</em> — deleting text never
+          yanks the box in under your cursor — and tightens back up once you leave the field. Past
+          <code>--ui4u-textarea-grow-max</code> it scrolls like any other field.
+        </p>
+
+        <div class="control-grid">
+          <div class="control-group">
+            <span class="control-group__label">Grow</span>
+            <ui-tabs id="opt-grow" variant="underline" label="Grow">
+              <ui-tab label="off"></ui-tab>
+              <ui-tab label="on"></ui-tab>
+            </ui-tabs>
+          </div>
+        </div>
+
+        <div class="controls">
+          <ui-textarea
+            id="grow-demo"
+            label="Stand-up notes"
+            name="standup"
+            rows="2"
+            placeholder="Yesterday, today, blockers…"
+          ></ui-textarea>
+        </div>
+
+        <div class="log" id="grow-log" role="status" aria-live="polite">
+          Type several lines to watch the field follow.
+        </div>
+      </ui-disclosure>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-textarea label="Release notes" rows="4" required hint="Markdown is fine."&gt;&lt;/ui-textarea&gt;
+&lt;ui-textarea label="Summary" error="Say something." size="lg"&gt;&lt;/ui-textarea&gt;
+&lt;ui-textarea label="Stand-up notes" grow&gt;&lt;/ui-textarea&gt;
+
+&lt!-- sr-only keeps the label in the accessibility tree but out of
+     the layout, and disabled / readonly mirror onto the real control. --&gt;
+&lt;ui-textarea label="Search" sr-only&gt;&lt;/ui-textarea&gt;
+&lt;ui-textarea label="Frozen" value="read only" readonly&gt;&lt;/ui-textarea&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="js">const field = document.querySelector('ui-textarea');
+
+// Options object — never a long positional argument list.
+// Options you leave out keep the value they already have.
+field.configure({
+  label: 'Release notes',
+  rows: 4,
+  hint: 'Markdown is fine.',
+  size: 'lg',
+  required: true,
+  grow: true,
+});
+
+// Native validation, surfaced as a plain result object — this is the
+// surface ui-form will consume.
+const { valid, message, value, name } = field.checkValidity();
+field.reportValidity();  // sets `error` and shows the browser bubble
+field.clearValidity();   // drops the error state again
+
+// The native control is reachable, never proxied.
+field.textarea.focus();
+field.focus();
+
+// ui4u:input fires per keystroke. ui4u:change fires on COMMIT — the field
+// losing focus after an edit, or Ctrl+Enter. A paragraph is not a hundred
+// separate edits.
+field.addEventListener('ui4u:change', (event) =&gt; {
+  const { value, name } = event.detail;
+  console.log(`${name} → ${value}`);
+});
+
+// A binding runs BEFORE the component acts. Return false to refuse the
+// commit: nothing is emitted and the value attribute is left alone.
+field.bind('change', (detail) =&gt; detail.value.length &gt; 2000);</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-textarea-* custom properties. */
+ui-textarea {
+  --ui4u-textarea-radius: var(--ui4u-radius-full);
+  --ui4u-textarea-grow-max: 32rem;
+  /* Tints just the invalid border of every textarea, without
+     restating a theme. Overriding --ui4u-danger still wins. */
+  --ui4u-textarea-invalid-border: #f43f5e;
+}</code></pre>
+        </figure>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      const field = document.getElementById('demo');
+      const log = document.getElementById('log');
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real field.
+      document.getElementById('opt-size').addEventListener('ui4u:change', (event) => {
+        field.configure({ size: event.detail.label });
+      });
+
+      document.getElementById('opt-rows').addEventListener('ui4u:change', (event) => {
+        field.configure({ rows: Number(event.detail.label) });
+      });
+
+      const toggles = [
+        ['toggle-required', 'required'],
+        ['toggle-readonly', 'readonly'],
+        ['toggle-disabled', 'disabled'],
+        ['toggle-sr-only', 'srOnly'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('click', () => {
+          field[option] = !field[option];
+        });
+      }
+
+      document.getElementById('toggle-error').addEventListener('click', () => {
+        field.configure({ error: field.error ? '' : 'Say something about this release.' });
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        field.reportValidity();
+        const result = field.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        field.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        field
+          .configure({ value: '', error: '', hint: 'Markdown is fine.', size: 'md', rows: 4 })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      field.addEventListener('ui4u:input', (event) => {
+        // Clear a stale error as soon as the author edits the field again.
+        field.clearValidity();
+        log.textContent = `ui4u:input → ${event.detail.name || '(unnamed)'} = "${event.detail.value}"`;
+      });
+
+      // Only the commit updates the log, so it is a commit you can read back.
+      field.addEventListener('ui4u:change', (event) => {
+        log.textContent = `ui4u:change → ${event.detail.name || '(unnamed)'} = "${
+          event.detail.value
+        }" (${event.detail.value.length} chars)`;
+      });
+
+      /* --- auto-grow -------------------------------------------------------- */
+
+      const grow = document.getElementById('grow-demo');
+      const growLog = document.getElementById('grow-log');
+
+      document.getElementById('opt-grow').addEventListener('ui4u:change', (event) => {
+        grow.configure({ grow: event.detail.label === 'on' });
+      });
+
+      grow.addEventListener('ui4u:input', (event) => {
+        const lines = event.detail.value.split('\n').length;
+        growLog.textContent = `ui4u:input → ${lines} line${lines === 1 ? '' : 's'}, ${
+          event.detail.value.length
+        } chars`;
+      });
+
+      // The log counts keystrokes; commit it on the way out so the height the
+      // reader left behind is the one they can see.
+      grow.addEventListener('ui4u:change', (event) => {
+        growLog.textContent = `ui4u:change → ${event.detail.value.length} chars committed`;
+      });
+    </script>
+  </body>
+</html>

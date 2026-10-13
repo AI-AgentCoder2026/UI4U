@@ -102,11 +102,11 @@ roadmap, because it makes the real gaps look considered.
 
 ### Tier 1 — control gaps
 
-| Feature        | Why it is next                                                                                                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `ui-switch`    | `role="switch"` with `aria-checked`. `ui-input` has no boolean control, and a setting that is on by default is not a checkbox. |
-| `ui-accordion` | Near-free on top of `ui-disclosure`, and one of the most requested patterns.                                                   |
-| `ui-textarea`  | `ui-input` is single-line only. Every "notes" field in this repo is a `<p>` because there was nothing to put a textarea in.    |
+| Feature        | Why it is next                                                                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ui-switch`    | **Shipped.** `role="switch"` with `aria-checked`. The distinction from `ui-checkbox` is semantic, not cosmetic: a checkbox is part of a submission, a switch applies at once.     |
+| `ui-accordion` | Near-free on top of `ui-disclosure`, and one of the most requested patterns.                                                                                                      |
+| `ui-textarea`  | **Shipped.** `ui-input` is single-line only, so every "notes" field in this repo was a `<p>` inside a disclosure. Bare Enter inserts a newline; commit is Ctrl/Cmd+Enter or blur. |
 
 ### Tier 2 — navigation and feedback
 
@@ -123,14 +123,32 @@ roadmap, because it makes the real gaps look considered.
 Not new components: missing capability in shipped ones, which is a different
 kind of debt.
 
-- **`ui-tablegrid` has no loading, empty or error state.** It is the flagship
-  component and it cannot express "fetching" at all. Every real interface has
-  loading.
+- ~~**`ui-tablegrid` has no loading, empty or error state.**~~ **Fixed.** `loading`
+  and `error` are authored; **empty is derived**, because an `empty` attribute
+  would have to be set by hand and would be forgotten on exactly the pages that
+  need it — the ones where a search just returned nothing. The three get three
+  different messages, since they ask three different things of a reader: "no
+  rows" invites creating one, "nothing matches" invites changing the search,
+  and an error says what went wrong. While loading or failed the table is
+  `aria-busy`/`aria-disabled` and both the toolbar and the header sort buttons
+  go inert, because sorting rows that have not arrived is a lie about what is
+  on screen.
 - **No virtualisation.** No `IntersectionObserver`, no windowing. Fine at 200
   rows, unusable at 10k — and with no documented limit, people find out the
   hard way.
 - **No icon system.** Only `ui-sidebar` has an `icon` attribute, and it takes a
   text glyph. Every icon button in a real app needs an SVG slot.
+
+### Encoding: do not edit files through the PowerShell shell
+
+`Get-Content` in PowerShell 5.1 decodes with the system ANSI code page, so
+reading a UTF-8 file and writing it back mangles every non-ASCII character —
+`—` becomes `â€”`, `◈` becomes `â—ˆ`. It has silently corrupted three test
+files in this repo's history, and the mangling survives a round-trip through
+`git` because the result is still valid UTF-8.
+
+Use the `Edit` tool, or `node scripts/fix-encoding.mjs <files…>`, which
+reverses a Windows-1252 mis-read and is safe to run twice.
 
 ### Tier 3 — showcase pieces
 

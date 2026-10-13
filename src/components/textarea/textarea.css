@@ -1,0 +1,206 @@
+/**
+ * ui-textarea
+ *
+ * Every value is a `--ui4u-*` token. The measurements that have no global token
+ * — the padding block, the row height — are declared once on the element itself
+ * as `--ui4u-textarea-*`, so overriding them is a token override, never a fork
+ * of this file.
+ *
+ * Mobile-first: the base field is sized for touch, and the wide-screen rule
+ * only widens the horizontal padding. The block padding is larger than the
+ * input's line padding because a paragraph of text needs air around it.
+ */
+
+ui-textarea {
+  display: block;
+  box-sizing: border-box;
+  font-family: var(--ui4u-font-sans);
+  color: var(--ui4u-text);
+
+  /* --- component knobs ---------------------------------------------------- */
+  --ui4u-textarea-padding-x: var(--ui4u-space-4);
+  --ui4u-textarea-padding-y: var(--ui4u-space-3);
+  --ui4u-textarea-font-sm: var(--ui4u-font-size-sm);
+  --ui4u-textarea-font-md: var(--ui4u-font-size-md);
+  --ui4u-textarea-font-lg: var(--ui4u-font-size-lg);
+  --ui4u-textarea-radius: var(--ui4u-radius-md);
+  --ui4u-textarea-border-width: 1px;
+  --ui4u-textarea-disabled-opacity: 0.55;
+  /*
+   * Where auto-grow stops. Past this the field scrolls, exactly as it would
+   * without `grow` — a notes box that grows without limit is how one long entry
+   * pushes everything below it off the page.
+   */
+  --ui4u-textarea-grow-max: 24rem;
+}
+
+/* --- label ---------------------------------------------------------------- */
+
+ui-textarea .ui4u-textarea__label {
+  display: block;
+  margin-block-end: var(--ui4u-space-2);
+  font-family: var(--ui4u-font-label);
+  font-size: var(--ui4u-font-size-sm);
+  font-weight: var(--ui4u-weight-semibold);
+  line-height: var(--ui4u-line-tight);
+  letter-spacing: var(--ui4u-tracking-wide);
+  color: var(--ui4u-text-muted);
+}
+
+ui-textarea .ui4u-textarea__label[hidden] {
+  display: none;
+}
+
+/* --- the native control --------------------------------------------------- */
+
+ui-textarea .ui4u-textarea__native {
+  display: block;
+  box-sizing: border-box;
+  /*
+   * `width: 100%` plus `max-width: 100%`: the first is what makes the field
+   * fill its container, the second stops it doing that on a phone when a long
+   * unbreakable token (a URL pasted into the notes) would otherwise push the
+   * page into a horizontal scroll.
+   */
+  width: 100%;
+  max-width: 100%;
+  padding: var(--ui4u-textarea-padding-y) var(--ui4u-textarea-padding-x);
+  border: var(--ui4u-textarea-border-width) solid var(--ui4u-border);
+  border-radius: var(--ui4u-textarea-radius);
+  font-family: inherit;
+  font-size: var(--ui4u-textarea-font-md);
+  line-height: var(--ui4u-line-normal);
+  letter-spacing: var(--ui4u-tracking-normal);
+  color: var(--ui4u-text);
+  /*
+   * Flat and sunken, like `ui-input`. You type *into* this, so its contrast
+   * ratio has to be fixed: a translucent field changes legibility depending on
+   * what is behind it, and the caret stops being findable on a busy
+   * background.
+   */
+  background: var(--ui4u-surface-2);
+  box-shadow: var(--ui4u-shadow-inset);
+  /* iOS zooms the page on focus for anything under 16px; this is the floor. */
+  transition:
+    border-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    box-shadow var(--ui4u-duration-base) var(--ui4u-ease-out),
+    background-color var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    opacity var(--ui4u-duration-fast) var(--ui4u-ease-standard);
+}
+
+ui-textarea .ui4u-textarea__native::placeholder {
+  color: var(--ui4u-text-subtle);
+}
+
+/*
+ * Hover and focus must not repaint the border away from the error colour — an
+ * invalid field that looks fine while you are in it is not showing you
+ * anything. They tie on specificity with the invalid rule below, so they are
+ * scoped away rather than relying on source order.
+ */
+ui-textarea .ui4u-textarea__native:hover:not(:disabled):not([aria-invalid='true']) {
+  border-color: var(--ui4u-border-strong);
+}
+
+ui-textarea .ui4u-textarea__native:focus-visible {
+  outline: none;
+  box-shadow: var(--ui4u-focus-ring), var(--ui4u-focus-ring-offset-shadow);
+}
+
+/*
+ * The error treatment is driven by the ARIA state, so it can never disagree
+ * with what assistive technology announces.
+ *
+ * The colour is a variable rather than `var(--ui4u-danger)` directly, so it is
+ * a customisation point: an app can tint just its fields without restating a
+ * theme. Overriding `--ui4u-danger` still changes it everywhere. The token
+ * carries its own solved contrast (see `styles/tokens.css`), so nothing here
+ * needs a ratio of its own.
+ */
+ui-textarea .ui4u-textarea__native[aria-invalid='true'] {
+  border-color: var(--ui4u-textarea-invalid-border, var(--ui4u-danger));
+  /*
+   * Plus a ring, deliberately. A 1px border on a translucent field is very
+   * hard to see, and a `border` shorthand declared elsewhere can quietly
+   * repaint it; nothing else sets `box-shadow` on the control except
+   * `:focus-visible`, so the ring cannot be clobbered and the invalid state
+   * stays visible while the field has focus.
+   */
+  box-shadow: 0 0 0 1px var(--ui4u-textarea-invalid-border, var(--ui4u-danger));
+}
+
+ui-textarea .ui4u-textarea__native:disabled {
+  opacity: var(--ui4u-textarea-disabled-opacity);
+  background: var(--ui4u-surface-3);
+  cursor: not-allowed;
+}
+
+ui-textarea .ui4u-textarea__native:read-only:not(:disabled) {
+  background: var(--ui4u-surface-2);
+  cursor: default;
+}
+
+/* --- size ----------------------------------------------------------------- */
+ui-textarea[data-size='sm'] .ui4u-textarea__native {
+  padding-block: var(--ui4u-space-2);
+  font-size: var(--ui4u-textarea-font-sm);
+}
+
+ui-textarea[data-size='lg'] .ui4u-textarea__native {
+  padding-block: var(--ui4u-space-4);
+  font-size: var(--ui4u-textarea-font-lg);
+}
+
+/* --- auto-grow ------------------------------------------------------------ */
+
+/*
+ * The component measures the content and writes an explicit `height`. The cap
+ * is what keeps that from running away, and the field scrolls past it — the
+ * same behaviour it has without `grow`.
+ *
+ * `resize` is off here: the handle would let a reader drag the box taller and
+ * have the next keystroke snap it back to the measured height.
+ */
+ui-textarea[data-grow] .ui4u-textarea__native {
+  max-height: var(--ui4u-textarea-grow-max);
+  overflow-y: auto;
+  resize: none;
+}
+
+/* --- hint and error ------------------------------------------------------- */
+
+ui-textarea .ui4u-textarea__hint,
+ui-textarea .ui4u-textarea__error {
+  margin-block-start: var(--ui4u-space-2);
+  margin-block-end: 0;
+  font-size: var(--ui4u-font-size-sm);
+  line-height: var(--ui4u-line-normal);
+}
+
+ui-textarea .ui4u-textarea__hint {
+  color: var(--ui4u-text-subtle);
+}
+
+ui-textarea .ui4u-textarea__error {
+  color: var(--ui4u-danger);
+  font-weight: var(--ui4u-weight-medium);
+}
+
+/* Author rules set `display`, which would otherwise beat the UA `[hidden]`. */
+ui-textarea .ui4u-textarea__hint[hidden],
+ui-textarea .ui4u-textarea__error[hidden] {
+  display: none;
+}
+
+/* --- desktop refinements -------------------------------------------------- */
+@media (min-width: 48rem) {
+  ui-textarea {
+    --ui4u-textarea-padding-x: var(--ui4u-space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ui-textarea .ui4u-textarea__native {
+    transition: none;
+  }
+}

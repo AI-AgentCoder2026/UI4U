@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>UI4U — Switch</title>
+    <meta
+      name="description"
+      content="ui-switch — a binary setting that applies immediately. A real button with role=switch, a vetoable change binding, three sizes, hint and error state."
+    />
+    <!--
+      Restores the theme chosen on any other demo page. Inline and blocking on
+      purpose: a deferred or module script would run after the stylesheet, and
+      the page would flash dark before settling on light.
+    -->
+    <script>
+      try {
+        var saved = localStorage.getItem('ui4u-theme');
+        if (saved) document.documentElement.dataset.theme = saved;
+      } catch (error) {
+        /* storage unavailable — the default in the markup stands */
+      }
+    </script>
+    <link rel="stylesheet" href="/dist/ui4u.css" />
+    <link rel="stylesheet" href="/src/styles/reset.css" />
+    <link rel="stylesheet" href="/demo/demo.css" />
+  </head>
+  <body>
+    <div class="page" role="main">
+      <header role="none">
+        <div>
+          <h1><code>ui-switch</code></h1>
+          <p class="lede">
+            A binary setting that <strong>applies the moment it is flipped</strong>. That is the
+            whole difference from <code>ui-checkbox</code>: a checkbox is part of a form submission
+            and needs a real input with a value to send, while a switch has no form value to
+            preserve — so it is a real <code>&lt;button role="switch"&gt;</code>, and a rejected
+            change has nothing to undo.
+          </p>
+        </div>
+        <ui-button variant="ghost" size="sm" data-theme-toggle>Toggle theme</ui-button>
+      </header>
+
+      <!-- The demo drives its own options through UI4U components, not <select>. -->
+      <div class="control-grid">
+        <div class="control-group">
+          <span class="control-group__label">Checked</span>
+          <ui-tabs id="opt-checked" variant="underline" label="Checked">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Size</span>
+          <ui-tabs id="opt-size" variant="underline" label="Size">
+            <ui-tab label="sm"></ui-tab>
+            <ui-tab label="md"></ui-tab>
+            <ui-tab label="lg"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Required</span>
+          <ui-tabs id="opt-required" variant="underline" label="Required">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
+          <span class="control-group__label">Disabled</span>
+          <ui-tabs id="opt-disabled" variant="underline" label="Disabled">
+            <ui-tab label="off"></ui-tab>
+            <ui-tab label="on"></ui-tab>
+          </ui-tabs>
+        </div>
+      </div>
+
+      <div class="controls">
+        <ui-switch
+          id="demo"
+          label="Dark theme"
+          name="theme"
+          hint="Takes effect immediately. The page remembers your choice."
+          required
+        ></ui-switch>
+      </div>
+
+      <div class="controls">
+        <ui-button id="toggle-checked" variant="ghost" size="sm">Toggle checked</ui-button>
+        <ui-button id="toggle-required" variant="ghost" size="sm">Toggle required</ui-button>
+        <ui-button id="toggle-disabled" variant="ghost" size="sm">Toggle disabled</ui-button>
+        <ui-button id="toggle-sr-only" variant="ghost" size="sm"
+          >Toggle screen-reader-only label</ui-button
+        >
+        <ui-button id="toggle-error" variant="ghost" size="sm">Toggle error</ui-button>
+      </div>
+
+      <div class="controls">
+        <ui-button id="toggle-veto" variant="ghost" size="sm">Arm the veto</ui-button>
+        <ui-button id="validate" variant="ghost" size="sm">Validate</ui-button>
+        <ui-button id="clear" variant="ghost" size="sm">Clear validity</ui-button>
+        <ui-button id="reset" variant="ghost" size="sm">Reset</ui-button>
+      </div>
+
+      <div class="log" id="log" role="status" aria-live="polite">Waiting for input…</div>
+
+      <h2>A settings row</h2>
+      <p class="lede">
+        The shape a switch actually appears in: a list of settings that each take effect at once.
+        The label sits <em>beside</em> the control rather than around it, and carries the click
+        itself, so the whole row is one comfortable target on a phone.
+      </p>
+
+      <div class="controls">
+        <ui-switch label="Release notes" name="notes" data-setting checked></ui-switch>
+        <ui-switch label="Mentions" name="mentions" data-setting></ui-switch>
+        <ui-switch label="Compact density" name="density" data-setting></ui-switch>
+        <ui-switch label="Sync over cellular" name="cellular" data-setting disabled></ui-switch>
+      </div>
+
+      <h2>More</h2>
+      <div class="controls">
+        <ui-switch
+          label="Search the docs"
+          sr-only
+          hint="Only your reading list sees this."
+        ></ui-switch>
+        <ui-switch label="Locked off" size="sm" disabled></ui-switch>
+        <ui-switch label="Needs attention" error="Turn this on to continue."></ui-switch>
+      </div>
+
+      <ui-disclosure id="source" summary="Source">
+        <p>Markup, options and theming. All three blocks are copyable.</p>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">HTML</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="html">&lt;ui-switch label="Dark theme" name="theme" hint="Takes effect immediately." required&gt;&lt;/ui-switch&gt;
+
+&lt;!-- `checked` is a reflected boolean property, so `el.checked = true`
+     and el.setAttribute('checked', '') are the same statement. Sizes
+     are sm / md / lg; md is the default. --&gt;
+&lt;ui-switch label="Release notes" size="sm" checked&gt;&lt;/ui-switch&gt;</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">JavaScript</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="js">const sw = document.querySelector('ui-switch');
+
+// Options object — never a long positional argument list.
+sw.configure({ label: 'Dark theme', size: 'lg', hint: 'Applies immediately.' });
+
+// Every public event is namespaced so it cannot collide with yours.
+sw.addEventListener('ui4u:change', (event) =&gt; {
+  const { name, checked } = event.detail;
+  console.log(`${name} = ${checked}`);
+});
+
+// The binding runs BEFORE the component mutates, so returning false
+// leaves the switch exactly as it was. There is nothing to undo,
+// because nothing has happened yet.
+sw.bind('change', ({ checked }) =&gt; checked || askBeforeEnabling());
+
+sw.checkValidity();   // { valid, message, checked, name }
+sw.reportValidity();  // sets `error` and shows it
+sw.clearValidity();   // drops the error state again</code></pre>
+        </figure>
+
+        <figure class="demo-code">
+          <figcaption class="demo-code__head">
+            <span class="demo-code__lang">CSS</span>
+            <ui-button class="demo-code__copy" variant="ghost" size="sm" data-copy>Copy</ui-button>
+          </figcaption>
+          <pre><code data-highlight="css">/* Every value is a token — override, never fork.
+   The few measurements without a global token live on the
+   element itself as --ui4u-switch-* custom properties. */
+ui-switch {
+  --ui4u-switch-track-width: 5.25rem;
+  --ui4u-switch-track-height: 2.75rem;
+  --ui4u-switch-knob: 2rem;
+  --ui4u-switch-on: var(--ui4u-primary);
+}
+
+/* The error treatment reads aria-invalid, never a bespoke class. */
+ui-switch[data-size='sm'] { --ui4u-switch-knob: 1.5rem; }</code></pre>
+        </figure>
+      </ui-disclosure>
+
+      <ui-disclosure summary="Accessibility notes">
+        <ul>
+          <li>
+            The control is a genuine <code>&lt;button role="switch"&gt;</code> with
+            <code>aria-checked</code>, so Enter and Space, <code>:focus-visible</code>,
+            <code>:disabled</code> and every screen reader come from the platform.
+          </li>
+          <li>
+            The track is drawn with <code>aria-hidden="true"</code> and the state is read from
+            <code>aria-checked</code>, so the painted switch and the announced switch cannot
+            disagree.
+          </li>
+          <li>
+            The label is a <code>&lt;span&gt;</code> beside the control, wired through
+            <code>aria-labelledby</code>. A <code>&lt;label&gt;</code> that wraps another control
+            swallows its clicks, so it never does — the row handler takes the click instead.
+          </li>
+          <li>
+            <code>hint</code> and <code>error</code> are chained through
+            <code>aria-describedby</code>; an error sets <code>aria-invalid</code>, and
+            <code>required</code> sets <code>aria-required</code>.
+          </li>
+          <li>
+            Every control is at least 44px tall at every size — the track scales with
+            <code>size</code>, the touch target does not.
+          </li>
+          <li>
+            The only motion is the knob and the track colour, both expressed through
+            <code>--ui4u-duration-*</code> and <code>--ui4u-ease-*</code>, which the token layer
+            collapses to 0ms under <code>prefers-reduced-motion</code>.
+          </li>
+        </ul>
+      </ui-disclosure>
+    </div>
+
+    <!--
+      Note: <script> content is raw text — HTML entities are NOT decoded here.
+      Arrows must be written literally as `=>`. The escaped form `=&gt;` belongs
+      only inside the <pre> samples above, which are ordinary text content.
+    -->
+    <script type="module">
+      import '/dist/ui4u.esm.js';
+      import '/demo/demo.js';
+
+      /*
+       * `ui-switch` ships in the library bundle, which is rebuilt from
+       * `src/index.js`. Registering it here from source keeps this page
+       * self-contained either way: `define()` is a no-op once the bundle has
+       * already registered the tag, and the import is caught so a missing
+       * source module can never take the rest of the page down with it.
+       */
+      const registered = import('/src/components/switch/switch.js')
+        .then(async ({ Switch }) => {
+          const { define } = await import('/src/core/registry.js');
+          define('ui-switch', Switch);
+        })
+        .catch(() => {
+          /* the bundle already registered it */
+        });
+
+      await registered;
+
+      const field = document.getElementById('demo');
+      const log = document.getElementById('log');
+      const settings = [...document.querySelectorAll('[data-setting]')];
+
+      // Each option group is a ui-tabs; its ui4u:change drives the real switch.
+      const options = [
+        ['opt-checked', 'checked'],
+        ['opt-size', 'size'],
+        ['opt-required', 'required'],
+        ['opt-disabled', 'disabled'],
+      ];
+
+      for (const [id, option] of options) {
+        document.getElementById(id).addEventListener('ui4u:change', (event) => {
+          const label = event.detail.label;
+          // `size` takes the tab label itself; every other option is a boolean,
+          // and a string like 'off' would be truthy.
+          field[option] = option === 'size' ? label : label === 'on';
+        });
+      }
+
+      const toggles = [
+        ['toggle-checked', 'checked'],
+        ['toggle-required', 'required'],
+        ['toggle-disabled', 'disabled'],
+        ['toggle-sr-only', 'srOnly'],
+      ];
+
+      for (const [id, option] of toggles) {
+        document.getElementById(id).addEventListener('click', () => {
+          field[option] = !field[option];
+        });
+      }
+
+      document.getElementById('toggle-error').addEventListener('click', () => {
+        field.configure({ error: field.error ? '' : 'Turn this on to continue.' });
+      });
+
+      // The veto: a binding that returns false, so the switch never moves.
+      let vetoArmed = false;
+      const veto = () => false;
+
+      document.getElementById('toggle-veto').addEventListener('click', (event) => {
+        vetoArmed = !vetoArmed;
+        if (vetoArmed) field.bind('change', veto);
+        else field.unbind('change', veto);
+        log.textContent = vetoArmed
+          ? 'Veto armed — every change is now refused'
+          : 'Veto released — changes go through again';
+      });
+
+      document.getElementById('validate').addEventListener('click', () => {
+        field.reportValidity();
+        const result = field.checkValidity();
+        log.textContent = `checkValidity() → valid: ${result.valid}, message: ${
+          result.message || 'none'
+        }`;
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        field.clearValidity();
+        log.textContent = 'clearValidity() → error state dropped';
+      });
+
+      document.getElementById('reset').addEventListener('click', () => {
+        field
+          .configure({
+            checked: false,
+            error: '',
+            required: true,
+            size: 'md',
+            hint: 'Takes effect immediately. The page remembers your choice.',
+          })
+          .clearValidity();
+        log.textContent = 'Reset';
+      });
+
+      field.addEventListener('ui4u:change', (event) => {
+        const { name, checked } = event.detail;
+        log.textContent = `ui4u:change → ${name || '(unnamed)'} = ${checked}`;
+        document.documentElement.dataset.theme = checked ? 'dark' : 'light';
+        // Clear a stale error as soon as the author answers the field again.
+        field.clearValidity();
+      });
+
+      for (const setting of settings) {
+        setting.addEventListener('ui4u:change', () => {
+          const on = settings.filter((item) => item.checked).length;
+          log.textContent = `${settings.length} settings → ${on} on`;
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -38,6 +38,8 @@ const PAGES = [
   'tablegrid.html',
   'toolbar.html',
   'card.html',
+  'switch.html',
+  'textarea.html',
 ];
 
 const THEMES = ['dark', 'light', 'contrast'];
