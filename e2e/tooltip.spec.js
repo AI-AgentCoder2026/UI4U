@@ -187,10 +187,22 @@ test('keeps a right-hand placement inside the viewport when it fits', async ({ p
   const surface = await surfaceOf(page, 'edge-right');
   await expect(surface).toBeVisible();
 
+  /*
+   * Polled rather than measured once. `toBeVisible()` and a separate
+   * `boundingBox()` are two round-trips, and a portalled surface is
+   * repositioned as it is placed — so on a slow runner the second call can land
+   * mid-render and get no box at all. Polling asserts the steady state rather
+   * than whichever frame happened to be on screen.
+   */
   const viewport = page.viewportSize();
-  const box = await surface.boundingBox();
-  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
-  expect(box.x).toBeGreaterThanOrEqual(0);
+  await expect
+    .poll(async () => {
+      const box = await surface.boundingBox();
+      if (!box) return 'no box';
+      const inside = box.x + box.width <= viewport.width && box.x >= 0;
+      return inside ? 'ok' : `x=${Math.round(box.x)} w=${Math.round(box.width)}`;
+    })
+    .toBe('ok');
 });
 
 test('the placement picker restyles the demo triggers', async ({ page }) => {

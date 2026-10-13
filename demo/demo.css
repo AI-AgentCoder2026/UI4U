@@ -17,6 +17,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * The demo nav is sticky, so anything scrolled to can end up underneath it.
+ *
+ * That is an accessibility problem before it is a test problem: tab through a
+ * page and the focused control scrolls to a position that hides it behind the
+ * bar, so the user is looking at the wrong element and focus appears to have
+ * stopped moving.
+ *
+ * `scroll-padding` on the scroll container applies to *every* scroll into view
+ * — the browser's, and the test runner's — which is why one declaration here
+ * covers both. It is a generous fixed value because the nav wraps to two rows
+ * on a phone; CSS cannot measure the thing it is compensating for.
+ */
+html {
+  scroll-padding-block-start: 7rem;
+}
+
 .page {
   max-width: 62rem;
   margin-inline: auto;

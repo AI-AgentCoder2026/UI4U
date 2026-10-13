@@ -70,16 +70,62 @@ test('portals the panel to body and places it under the trigger', async ({ page 
     )
   ).toBe(false);
 
-  // Placed under the trigger, and no wider than the viewport.
-  const triggerBox = await trigger.boundingBox();
-  const panelBox = await panel.boundingBox();
+  // Placed against the trigger, and fully inside the viewport.
+  //
+  // Asserted by polling rather than by two round-trips: `toBeVisible()` and a
+  // separate `boundingBox()` can straddle a re-render, and a portalled panel is
+  // repositioned as it is placed. Polling asserts the steady state instead of
+  // whatever frame happened to be on screen.
   const viewport = page.viewportSize();
 
-  expect(triggerBox).not.toBeNull();
-  expect(panelBox).not.toBeNull();
-  expect(panelBox.y).toBeGreaterThanOrEqual(triggerBox.y);
-  expect(panelBox.width).toBeLessThanOrEqual(viewport.width);
+  await expect
+    .poll(async () => {
+      const [t, p] = await Promise.all([trigger.boundingBox(), panel.boundingBox()]);
+      if (!t || !p) return 'no box';
+
+      /*
+       * Adjacency, not merely "below". A one-sided `p.y >= t.bottom` would pass
+       * for a panel floating halfway down the page; what the placement maths
+       * actually promises is that the panel stays *against* the trigger, on
+       * whichever side it chose.
+       *
+       * The gap is real and intentional — `--ui4u-space-1` between trigger and
+       * panel — so the tolerance is that gap plus two pixels of sub-pixel
+       * rounding, not zero.
+       */
+      const AGAINST = 6;
+      const below = Math.abs(p.y - (t.y + t.height)) <= AGAINST;
+      const above = Math.abs(p.y + p.height - t.y) <= AGAINST;
+      if (!below && !above) return 'detached';
+
+      const inside = p.y >= 0 && p.x >= 0 && p.y + p.height <= viewport.height;
+      const fits = p.width <= viewport.width;
+      return inside && fits ? 'ok' : 'out of viewport';
+    })
+    .toBe('ok');
+
   expect(await panel.evaluate((node) => getComputedStyle(node).position)).toBe('fixed');
+});
+
+test('flips the panel above the trigger when there is no room below', async ({ page }) => {
+  // The other half of the placement contract. A trigger pinned to the bottom of
+  // the viewport has to get an upward panel, or it opens off-screen where
+  // nothing can be read or tapped.
+  const trigger = triggerOf(page);
+  await trigger.evaluate((node) => node.scrollIntoView({ block: 'end' }));
+
+  await trigger.click();
+
+  const panel = page.locator(PANEL);
+  await expect(panel).toBeVisible();
+
+  const viewport = page.viewportSize();
+  await expect
+    .poll(async () => {
+      const box = await panel.boundingBox();
+      return box ? Math.round(box.y + box.height) <= viewport.height : 'no box';
+    })
+    .toBe(true);
 });
 
 test('gives every option a role and an accessible selection state', async ({ page }) => {
