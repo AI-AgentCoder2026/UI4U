@@ -12,37 +12,27 @@
  * gets a deliberate ground, and the duplication is what buys that.
  */
 
-/* Explicit light theme, so it can win over the media query below. */
+/*
+ * Explicit light theme.
+ *
+ * The neutrals already live on `:root` in `tokens.css`, so this block only has
+ * to do the one thing it cannot inherit: resolve the accent to its *light* side.
+ * A dark-mode ice blue on a white page is unreadable, which is exactly why each
+ * accent publishes both.
+ */
 [data-theme='light'] {
   color-scheme: light;
 
-  --ui4u-bg: #e7ecf5;
-  --ui4u-bg-pattern:
-    radial-gradient(1100px 520px at 8% -12%, rgba(23, 104, 143, 0.09), transparent 60%),
-    radial-gradient(760px 420px at 96% 8%, rgba(143, 86, 5, 0.05), transparent 62%);
-  --ui4u-surface: #ffffff;
-  --ui4u-surface-2: #f1f5fc;
-  --ui4u-surface-3: #e3e9f4;
-  --ui4u-surface-sunken: #dce3f0;
-  --ui4u-surface-glass: rgba(255, 255, 255, 0.74);
-  --ui4u-surface-glass-strong: rgba(255, 255, 255, 0.9);
+  --ui4u-primary: var(--ui4u-accent-p-light);
+  --ui4u-primary-hover: var(--ui4u-accent-p-light-hover);
+  --ui4u-primary-active: var(--ui4u-accent-p-light-active);
+  --ui4u-primary-soft: var(--ui4u-accent-p-light-soft);
+  --ui4u-primary-contrast: var(--ui4u-accent-p-light-on);
 
-  --ui4u-text: #0a0f1e;
-  --ui4u-text-muted: #48536e;
-  /* Solved against the darkest light surface: worst case 4.82:1. */
-  --ui4u-text-subtle: #55617a;
-  --ui4u-text-inverse: #f7faff;
-  --ui4u-text-link: #17688f;
-
-  --ui4u-border: rgba(16, 28, 56, 0.12);
-  --ui4u-border-strong: rgba(16, 28, 56, 0.26);
-  --ui4u-divider: rgba(16, 28, 56, 0.09);
-
-  --ui4u-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72);
-
-  --ui4u-aurora:
-    radial-gradient(420px 180px at 12% 0%, rgba(23, 104, 143, 0.16), transparent 70%),
-    radial-gradient(320px 160px at 88% 10%, rgba(143, 86, 5, 0.1), transparent 72%);
+  --ui4u-accent: var(--ui4u-accent-s-light);
+  --ui4u-accent-hover: var(--ui4u-accent-s-light-hover);
+  --ui4u-accent-soft: var(--ui4u-accent-s-light-soft);
+  --ui4u-accent-contrast: var(--ui4u-accent-s-light-on);
 }
 
 /**
@@ -59,45 +49,61 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --ui4u-primary: #7fc4e8;
-  --ui4u-primary-hover: #a5d8f2;
-  --ui4u-primary-active: #5faad4;
-  --ui4u-primary-soft: rgba(127, 196, 232, 0.14);
-  --ui4u-primary-contrast: #04121c;
+  /*
+   * The accent, resolved from whichever `data-accent` is set. These read the
+   * dark-side values, and the light theme below reads the `-light` ones —
+   * which is the whole reason an accent publishes both.
+   */
+  --ui4u-primary: var(--ui4u-accent-p);
+  --ui4u-primary-hover: var(--ui4u-accent-p-hover);
+  --ui4u-primary-active: var(--ui4u-accent-p-active);
+  --ui4u-primary-soft: var(--ui4u-accent-p-soft);
+  --ui4u-primary-contrast: var(--ui4u-accent-p-on);
 
-  --ui4u-accent: #9b8cf5;
-  --ui4u-accent-hover: #b8acf9;
-  --ui4u-accent-soft: rgba(155, 140, 245, 0.16);
-  --ui4u-accent-contrast: #100c28;
+  --ui4u-accent: var(--ui4u-accent-s);
+  --ui4u-accent-hover: var(--ui4u-accent-s-hover);
+  --ui4u-accent-soft: var(--ui4u-accent-s-soft);
+  --ui4u-accent-contrast: var(--ui4u-accent-s-on);
 
-  --ui4u-bg: #080b16;
+  --ui4u-bg: #0b0d12;
   --ui4u-bg-pattern:
-    radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.09), transparent 62%),
-    radial-gradient(720px 400px at 94% 6%, rgba(245, 165, 36, 0.055), transparent 64%);
-  --ui4u-surface: #0e1322;
-  --ui4u-surface-2: #141a2c;
-  --ui4u-surface-3: #1b2340;
-  --ui4u-surface-sunken: #06080f;
-  --ui4u-surface-glass: rgba(24, 32, 58, 0.62);
-  --ui4u-surface-glass-strong: rgba(22, 30, 54, 0.86);
-  --ui4u-overlay: rgba(4, 6, 14, 0.72);
+    radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.07), transparent 62%),
+    radial-gradient(720px 400px at 94% 6%, rgba(148, 163, 184, 0.05), transparent 64%);
+  --ui4u-surface: #12151c;
+  --ui4u-surface-2: #181c25;
+  --ui4u-surface-3: #212734;
+  --ui4u-surface-sunken: #080a0e;
+  --ui4u-surface-glass: rgba(24, 30, 44, 0.66);
+  --ui4u-surface-glass-strong: rgba(20, 26, 38, 0.88);
+  --ui4u-overlay: rgba(4, 6, 12, 0.72);
 
-  --ui4u-text: #e6ebf8;
-  --ui4u-text-muted: #98a4c2;
+  /* The tinted ground, available as `data-ground="tinted"`. Kept because it is
+     a good look for a brand that wants it; not the default because a hue on
+     every surface is tiring to read over a long page. */
+  --ui4u-bg-tinted: #080b16;
+  --ui4u-surface-tinted: #0e1322;
+  --ui4u-surface-2-tinted: #141a2c;
+  --ui4u-surface-3-tinted: #1b2340;
+  --ui4u-surface-sunken-tinted: #06080f;
+  --ui4u-surface-glass-tinted: rgba(24, 32, 58, 0.62);
+  --ui4u-surface-glass-strong-tinted: rgba(22, 30, 54, 0.86);
+
+  --ui4u-text: #e8ecf4;
+  --ui4u-text-muted: #9aa4ba;
   /*
    * Solved, not chosen: this has to clear 4.5:1 against *every* surface it can
    * land on — surface, surface-2 and surface-3 — which is why it is lighter
-   * than the eye wants for "quiet". Worst case here is 4.84:1. The previous
-   * value measured 3.99:1 on surface-3, which is what axe caught.
+   * than the eye wants for "quiet". Worst case here is 4.96:1.
+   * `scripts/check-palette.mjs` is what keeps it true.
    */
-  --ui4u-text-subtle: #8390b0;
-  --ui4u-text-inverse: #06080f;
+  --ui4u-text-subtle: #8b95a9;
+  --ui4u-text-inverse: #080a0e;
   --ui4u-text-link: #a5d8f2;
 
-  --ui4u-border: rgba(154, 176, 224, 0.14);
-  --ui4u-border-strong: rgba(154, 176, 224, 0.3);
-  --ui4u-border-subtle: rgba(154, 176, 224, 0.08);
-  --ui4u-divider: rgba(154, 176, 224, 0.11);
+  --ui4u-border: rgba(170, 184, 208, 0.14);
+  --ui4u-border-strong: rgba(170, 184, 208, 0.3);
+  --ui4u-border-subtle: rgba(170, 184, 208, 0.08);
+  --ui4u-divider: rgba(170, 184, 208, 0.11);
 
   --ui4u-success: #3fc79b;
   --ui4u-success-soft: rgba(63, 199, 155, 0.15);
@@ -132,39 +138,47 @@
   :root:not([data-theme]) {
     color-scheme: dark;
 
-    --ui4u-primary: #7fc4e8;
-    --ui4u-primary-hover: #a5d8f2;
-    --ui4u-primary-active: #5faad4;
-    --ui4u-primary-soft: rgba(127, 196, 232, 0.14);
-    --ui4u-primary-contrast: #04121c;
+    --ui4u-primary: var(--ui4u-accent-p);
+    --ui4u-primary-hover: var(--ui4u-accent-p-hover);
+    --ui4u-primary-active: var(--ui4u-accent-p-active);
+    --ui4u-primary-soft: var(--ui4u-accent-p-soft);
+    --ui4u-primary-contrast: var(--ui4u-accent-p-on);
 
-    --ui4u-accent: #9b8cf5;
-    --ui4u-accent-hover: #b8acf9;
-    --ui4u-accent-soft: rgba(155, 140, 245, 0.16);
-    --ui4u-accent-contrast: #100c28;
+    --ui4u-accent: var(--ui4u-accent-s);
+    --ui4u-accent-hover: var(--ui4u-accent-s-hover);
+    --ui4u-accent-soft: var(--ui4u-accent-s-soft);
+    --ui4u-accent-contrast: var(--ui4u-accent-s-on);
 
-    --ui4u-bg: #080b16;
+    --ui4u-bg: #0b0d12;
     --ui4u-bg-pattern:
-      radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.09), transparent 62%),
-      radial-gradient(720px 400px at 94% 6%, rgba(245, 165, 36, 0.055), transparent 64%);
-    --ui4u-surface: #0e1322;
-    --ui4u-surface-2: #141a2c;
-    --ui4u-surface-3: #1b2340;
-    --ui4u-surface-sunken: #06080f;
-    --ui4u-surface-glass: rgba(24, 32, 58, 0.62);
-    --ui4u-surface-glass-strong: rgba(22, 30, 54, 0.86);
-    --ui4u-overlay: rgba(4, 6, 14, 0.72);
+      radial-gradient(1000px 480px at 10% -10%, rgba(127, 196, 232, 0.07), transparent 62%),
+      radial-gradient(720px 400px at 94% 6%, rgba(148, 163, 184, 0.05), transparent 64%);
+    --ui4u-surface: #12151c;
+    --ui4u-surface-2: #181c25;
+    --ui4u-surface-3: #212734;
+    --ui4u-surface-sunken: #080a0e;
+    --ui4u-surface-glass: rgba(24, 30, 44, 0.66);
+    --ui4u-surface-glass-strong: rgba(20, 26, 38, 0.88);
+    --ui4u-overlay: rgba(4, 6, 12, 0.72);
 
-    --ui4u-text: #e6ebf8;
-    --ui4u-text-muted: #98a4c2;
-    --ui4u-text-subtle: #8390b0;
-    --ui4u-text-inverse: #06080f;
+    --ui4u-bg-tinted: #080b16;
+    --ui4u-surface-tinted: #0e1322;
+    --ui4u-surface-2-tinted: #141a2c;
+    --ui4u-surface-3-tinted: #1b2340;
+    --ui4u-surface-sunken-tinted: #06080f;
+    --ui4u-surface-glass-tinted: rgba(24, 32, 58, 0.62);
+    --ui4u-surface-glass-strong-tinted: rgba(22, 30, 54, 0.86);
+
+    --ui4u-text: #e8ecf4;
+    --ui4u-text-muted: #9aa4ba;
+    --ui4u-text-subtle: #8b95a9;
+    --ui4u-text-inverse: #080a0e;
     --ui4u-text-link: #a5d8f2;
 
-    --ui4u-border: rgba(154, 176, 224, 0.14);
-    --ui4u-border-strong: rgba(154, 176, 224, 0.3);
-    --ui4u-border-subtle: rgba(154, 176, 224, 0.08);
-    --ui4u-divider: rgba(154, 176, 224, 0.11);
+    --ui4u-border: rgba(170, 184, 208, 0.14);
+    --ui4u-border-strong: rgba(170, 184, 208, 0.3);
+    --ui4u-border-subtle: rgba(170, 184, 208, 0.08);
+    --ui4u-divider: rgba(170, 184, 208, 0.11);
 
     --ui4u-shadow-xs: 0 1px 2px rgba(3, 5, 12, 0.5);
     --ui4u-shadow-sm: 0 1px 2px rgba(3, 5, 12, 0.45), 0 3px 10px rgba(3, 5, 12, 0.4);
@@ -177,8 +191,173 @@
 
     --ui4u-aurora:
       radial-gradient(420px 180px at 12% 0%, rgba(127, 196, 232, 0.13), transparent 70%),
-      radial-gradient(320px 160px at 88% 10%, rgba(245, 165, 36, 0.08), transparent 72%);
+      radial-gradient(320px 160px at 88% 10%, rgba(148, 163, 184, 0.07), transparent 72%);
   }
+}
+
+/* ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------ */
+/* Accents                                                                  */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * The one thing a brand actually changes.
+ *
+ * Everything else in this file is a neutral or a status colour; the accent is
+ * what "our" means. Five options, each with a second brand voice so a consumer
+ * is not left with one hue doing two jobs.
+ *
+ * There is deliberately **no warm/gold option**. `--ui4u-warning` is amber,
+ * and an amber "selected" state beside an amber "degraded" state makes both
+ * mean nothing. Offering it here would undo the rule the rest of the library
+ * keeps.
+ *
+ * Each accent publishes a dark-side and a light-side value, and the theme
+ * decides which to use — because a dark-mode ice blue on a white page is
+ * unreadable, and hard-coding one value per accent is how that happens.
+ * Custom properties resolve lazily, so the accent block can be written before
+ * the themes that read it.
+ *
+ * Apply with `data-accent` on <html>:
+ *   <html data-theme="dark" data-accent="mint">
+ *
+ * `contrast` sits below this block on purpose: a high-contrast theme is not
+ * the place for a brand colour.
+ */
+
+[data-accent='ice'] {
+  --ui4u-accent-p: #7fc4e8;
+  --ui4u-accent-p-hover: #a5d8f2;
+  --ui4u-accent-p-active: #5faad4;
+  --ui4u-accent-p-soft: rgba(127, 196, 232, 0.14);
+  --ui4u-accent-p-on: #04121c;
+  --ui4u-accent-p-light: #17688f;
+  --ui4u-accent-p-light-hover: #0e5476;
+  --ui4u-accent-p-light-active: #0b4260;
+  --ui4u-accent-p-light-soft: rgba(23, 104, 143, 0.12);
+  --ui4u-accent-p-light-on: #ffffff;
+
+  --ui4u-accent-s: #9b8cf5;
+  --ui4u-accent-s-hover: #b8acf9;
+  --ui4u-accent-s-soft: rgba(155, 140, 245, 0.16);
+  --ui4u-accent-s-on: #100c28;
+  --ui4u-accent-s-light: #5747c4;
+  --ui4u-accent-s-light-hover: #4637a6;
+  --ui4u-accent-s-light-soft: rgba(87, 71, 196, 0.12);
+  --ui4u-accent-s-light-on: #ffffff;
+}
+
+[data-accent='mint'] {
+  --ui4u-accent-p: #6fd3b4;
+  --ui4u-accent-p-hover: #9ce0cb;
+  --ui4u-accent-p-active: #4fbfa0;
+  --ui4u-accent-p-soft: rgba(111, 211, 180, 0.14);
+  --ui4u-accent-p-on: #03231b;
+  --ui4u-accent-p-light: #0f6b57;
+  --ui4u-accent-p-light-hover: #0b5443;
+  --ui4u-accent-p-light-active: #093f32;
+  --ui4u-accent-p-light-soft: rgba(15, 107, 87, 0.12);
+  --ui4u-accent-p-light-on: #ffffff;
+
+  --ui4u-accent-s: #8fb6f0;
+  --ui4u-accent-s-hover: #adccf5;
+  --ui4u-accent-s-soft: rgba(143, 182, 240, 0.16);
+  --ui4u-accent-s-on: #08182c;
+  --ui4u-accent-s-light: #3d5aa8;
+  --ui4u-accent-s-light-hover: #2f4888;
+  --ui4u-accent-s-light-soft: rgba(61, 90, 168, 0.12);
+  --ui4u-accent-s-light-on: #ffffff;
+}
+
+[data-accent='violet'] {
+  --ui4u-accent-p: #a99bf7;
+  --ui4u-accent-p-hover: #c0b5fa;
+  --ui4u-accent-p-active: #8e7ee8;
+  --ui4u-accent-p-soft: rgba(169, 155, 247, 0.16);
+  --ui4u-accent-p-on: #100c28;
+  --ui4u-accent-p-light: #5b49c4;
+  --ui4u-accent-p-light-hover: #493aab;
+  --ui4u-accent-p-light-active: #3b2f8c;
+  --ui4u-accent-p-light-soft: rgba(91, 73, 196, 0.12);
+  --ui4u-accent-p-light-on: #ffffff;
+
+  --ui4u-accent-s: #f2a0b5;
+  --ui4u-accent-s-hover: #f8c2d0;
+  --ui4u-accent-s-soft: rgba(242, 160, 181, 0.16);
+  --ui4u-accent-s-on: #2a0713;
+  --ui4u-accent-s-light: #b3305a;
+  --ui4u-accent-s-light-hover: #99274a;
+  --ui4u-accent-s-light-active: #7d1f3a;
+  --ui4u-accent-s-light-soft: rgba(179, 48, 90, 0.12);
+  --ui4u-accent-s-light-on: #ffffff;
+}
+
+[data-accent='rose'] {
+  --ui4u-accent-p: #f2a0b5;
+  --ui4u-accent-p-hover: #f8c2d0;
+  --ui4u-accent-p-active: #e0859e;
+  --ui4u-accent-p-soft: rgba(242, 160, 181, 0.16);
+  --ui4u-accent-p-on: #2a0713;
+  --ui4u-accent-p-light: #b3305a;
+  --ui4u-accent-p-light-hover: #99274a;
+  --ui4u-accent-p-light-active: #7d1f3a;
+  --ui4u-accent-p-light-soft: rgba(179, 48, 90, 0.12);
+  --ui4u-accent-p-light-on: #ffffff;
+
+  --ui4u-accent-s: #9b8cf5;
+  --ui4u-accent-s-hover: #b8acf9;
+  --ui4u-accent-s-soft: rgba(155, 140, 245, 0.16);
+  --ui4u-accent-s-on: #100c28;
+  --ui4u-accent-s-light: #5747c4;
+  --ui4u-accent-s-light-hover: #4637a6;
+  --ui4u-accent-s-light-soft: rgba(87, 71, 196, 0.12);
+  --ui4u-accent-s-light-on: #ffffff;
+}
+
+/* No hue at all. For a product that wants the chrome to disappear. */
+[data-accent='graphite'] {
+  --ui4u-accent-p: #b8c0ce;
+  --ui4u-accent-p-hover: #d0d6e0;
+  --ui4u-accent-p-active: #99a2b2;
+  --ui4u-accent-p-soft: rgba(184, 192, 206, 0.14);
+  --ui4u-accent-p-on: #0b0d12;
+  --ui4u-accent-p-light: #4a5468;
+  --ui4u-accent-p-light-hover: #394153;
+  --ui4u-accent-p-light-active: #2b3140;
+  --ui4u-accent-p-light-soft: rgba(74, 84, 104, 0.12);
+  --ui4u-accent-p-light-on: #ffffff;
+
+  --ui4u-accent-s: #9aa6ba;
+  --ui4u-accent-s-hover: #b4bfd0;
+  --ui4u-accent-s-soft: rgba(154, 166, 186, 0.16);
+  --ui4u-accent-s-on: #0b0d12;
+  --ui4u-accent-s-light: #3a4252;
+  --ui4u-accent-s-light-hover: #2b3140;
+  --ui4u-accent-s-light-active: #1f242e;
+  --ui4u-accent-s-light-soft: rgba(58, 66, 82, 0.12);
+  --ui4u-accent-s-light-on: #ffffff;
+}
+
+/* Ground                                                                   */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * Neutral by default; tinted on request.
+ *
+ * The tinted ground tints every surface with the accent's hue, which is what
+ * makes glass read as glass. It is also a lot of hue to look at, so it is a
+ * setting rather than a default.
+ *
+ *   <html data-ground="tinted">
+ */
+[data-ground='tinted'] {
+  --ui4u-bg: var(--ui4u-bg-tinted);
+  --ui4u-surface: var(--ui4u-surface-tinted);
+  --ui4u-surface-2: var(--ui4u-surface-2-tinted);
+  --ui4u-surface-3: var(--ui4u-surface-3-tinted);
+  --ui4u-surface-sunken: var(--ui4u-surface-sunken-tinted);
+  --ui4u-surface-glass: var(--ui4u-surface-glass-tinted);
+  --ui4u-surface-glass-strong: var(--ui4u-surface-glass-strong-tinted);
 }
 
 /**

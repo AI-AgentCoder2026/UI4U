@@ -61,6 +61,35 @@ ui-tablegrid thead th:not(:has(.ui4u-tablegrid__sort)) {
   padding: var(--ui4u-space-3) var(--ui4u-space-4);
 }
 
+ui-tablegrid .ui4u-tablegrid__sort-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1em;
+  height: 1.1em;
+  border-radius: var(--ui4u-radius-full);
+  /* The secondary voice: a caption weight, a step down from the label. */
+  background: var(--ui4u-primary-soft);
+  color: var(--ui4u-primary);
+  font-family: var(--ui4u-font-label);
+  font-size: var(--ui4u-font-size-xs);
+  font-weight: var(--ui4u-weight-bold);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+ui-tablegrid .ui4u-tablegrid__sort-rank:empty {
+  display: none;
+}
+
+ui-tablegrid .ui4u-tablegrid__sort-label {
+  /* The button is a flex row so the badge can sit after the label; without
+     this the label would be squeezed by the badge's width even when empty. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 ui-tablegrid .ui4u-tablegrid__sort {
   display: flex;
   align-items: center;

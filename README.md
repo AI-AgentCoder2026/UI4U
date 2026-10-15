@@ -7,34 +7,34 @@ into any stack — or none. Every visual value is a `--ui4u-*` custom property, 
 theming a token override rather than a CSS fork.
 
 ```
-Nineteen components · 272.4 kB minified (~87.2 kB gzip) including tokens and themes
+Nineteen components · 284.9 kB minified (~91.2 kB gzip) including tokens and themes
 ```
 
 ## Status
 
 Early, and deliberately incremental. Shipped:
 
-| Component         | Demo                                               | Notes                                                                     |
-| ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
-| `ui-tabs`         | [`demo/tabs.html`](demo/tabs.html)                 | Keyboard nav, automatic + manual activation, 3 variants                   |
-| `ui-disclosure`   | [`demo/disclosure.html`](demo/disclosure.html)     | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting   |
-| `ui-button`       | [`demo/button.html`](demo/button.html)             | 5 variants, 3 sizes, loading and disabled states                          |
-| `ui-tooltip`      | [`demo/tooltip.html`](demo/tooltip.html)           | Hover + focus, viewport flipping, `Escape` to dismiss                     |
-| `ui-layout`       | [`demo/layout.html`](demo/layout.html)             | All five regions resizable, recursive, keyboard + pointer splitters       |
-| `ui-popup`        | [`demo/popup.html`](demo/popup.html)               | Modal with a real focus trap, plus popover and drawer modes               |
-| `ui-input`        | [`demo/input.html`](demo/input.html)               | Native input preserved, plus `amount` (k/m/b) and `date` (picker) modes   |
-| `ui-form`         | [`demo/form.html`](demo/form.html)                 | Validation, inline errors, `role="alert"` error summary                   |
-| `ui-sidebar`      | [`demo/sidebar.html`](demo/sidebar.html)           | Collapsible regions, off-canvas drawer on narrow screens                  |
-| `ui-tablegrid`    | [`demo/tablegrid.html`](demo/tablegrid.html)       | Column groups, sorting, search, advanced filters, selection, copy, paging |
-| `ui-checkbox`     | [`demo/checkbox.html`](demo/checkbox.html)         | Real `<input type="checkbox">`, `indeterminate`, shared validation        |
-| `ui-radio`        | [`demo/radio.html`](demo/radio.html)               | Radio group with one tab stop and arrow-key movement                      |
-| `ui-dropdown`     | [`demo/dropdown.html`](demo/dropdown.html)         | Listbox with type-ahead, arrow-key navigation and multi-select            |
-| `ui-toolbar`      | [`demo/toolbar.html`](demo/toolbar.html)           | A bar of controls that is one tab stop; plugs into a layout or a grid     |
-| `ui-button-group` | [`demo/button-group.html`](demo/button-group.html) | Segmented control: buttons acting as one choice, one tab stop             |
-| `ui-card`         | [`demo/card.html`](demo/card.html)                 | One item in a grid: eyebrow, heading, body, actions, stretched link       |
-| `ui-cards`        | [`demo/card.html`](demo/card.html)                 | The responsive grid those cards sit in — several per row, one on a phone  |
-| `ui-switch`       | [`demo/switch.html`](demo/switch.html)             | `role="switch"`: a setting that applies at once, not on submit            |
-| `ui-textarea`     | [`demo/textarea.html`](demo/textarea.html)         | Multiline text, optional auto-grow, `ui4u:change` on commit               |
+| Component         | Demo                                               | Notes                                                                                                                          |
+| ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `ui-tabs`         | [`demo/tabs.html`](demo/tabs.html)                 | Keyboard nav, automatic + manual activation, 3 variants                                                                        |
+| `ui-disclosure`   | [`demo/disclosure.html`](demo/disclosure.html)     | Collapsible sections, real `<button>` trigger, `aria-expanded`, nesting                                                        |
+| `ui-button`       | [`demo/button.html`](demo/button.html)             | 5 variants, 3 sizes, loading and disabled states                                                                               |
+| `ui-tooltip`      | [`demo/tooltip.html`](demo/tooltip.html)           | Hover + focus, viewport flipping, `Escape` to dismiss                                                                          |
+| `ui-layout`       | [`demo/layout.html`](demo/layout.html)             | All five regions resizable, recursive, keyboard + pointer splitters                                                            |
+| `ui-popup`        | [`demo/popup.html`](demo/popup.html)               | Modal with a real focus trap, plus popover and drawer modes                                                                    |
+| `ui-input`        | [`demo/input.html`](demo/input.html)               | Native input preserved, plus `amount` (k/m/b) and `date` (picker) modes                                                        |
+| `ui-form`         | [`demo/form.html`](demo/form.html)                 | Validation, inline errors, `role="alert"` error summary                                                                        |
+| `ui-sidebar`      | [`demo/sidebar.html`](demo/sidebar.html)           | Collapsible regions, off-canvas drawer on narrow screens                                                                       |
+| `ui-tablegrid`    | [`demo/tablegrid.html`](demo/tablegrid.html)       | Column groups, multi-column sort, search, filters, selection, copy, paging, loading/empty/error, and a server-side data source |
+| `ui-checkbox`     | [`demo/checkbox.html`](demo/checkbox.html)         | Real `<input type="checkbox">`, `indeterminate`, shared validation                                                             |
+| `ui-radio`        | [`demo/radio.html`](demo/radio.html)               | Radio group with one tab stop and arrow-key movement                                                                           |
+| `ui-dropdown`     | [`demo/dropdown.html`](demo/dropdown.html)         | Listbox with type-ahead, arrow-key navigation and multi-select                                                                 |
+| `ui-toolbar`      | [`demo/toolbar.html`](demo/toolbar.html)           | A bar of controls that is one tab stop; plugs into a layout or a grid                                                          |
+| `ui-button-group` | [`demo/button-group.html`](demo/button-group.html) | Segmented control: buttons acting as one choice, one tab stop                                                                  |
+| `ui-card`         | [`demo/card.html`](demo/card.html)                 | One item in a grid: eyebrow, heading, body, actions, stretched link                                                            |
+| `ui-cards`        | [`demo/card.html`](demo/card.html)                 | The responsive grid those cards sit in — several per row, one on a phone                                                       |
+| `ui-switch`       | [`demo/switch.html`](demo/switch.html)             | `role="switch"`: a setting that applies at once, not on submit                                                                 |
+| `ui-textarea`     | [`demo/textarea.html`](demo/textarea.html)         | Multiline text, optional auto-grow, `ui4u:change` on commit                                                                    |
 
 ![ui-tablegrid with column groups, selection and advanced search](docs/screenshots/tablegrid-desktop-dark.png)
 
@@ -167,19 +167,52 @@ directly.
 ````html
 <html data-theme="dark"></html>
 
-Built-in themes: `light`, `dark`, `contrast`, plus an automatic `prefers-color-scheme` fallback when
-no `data-theme` is set. ```css ui-tabs { --ui4u-primary: #f43f5e; --ui4u-radius-lg: 4px; }
-````
+Built-in themes: `light`, `dark`, `contrast`, plus an automatic `prefers-color-scheme`
+fallback when no `data-theme` is set.
+
+### Accents and grounds
+
+The theme decides light or dark; the **accent** decides what "our" means. Set it on
+`<html>` alongside the theme:
+
+```html
+<html data-theme="dark" data-accent="mint"></html>
+```
+
+| `data-accent` | Reads as                                                             |
+| ------------- | -------------------------------------------------------------------- |
+| `ice`         | A pale, desaturated blue. The default — structural, never a beacon.  |
+| `mint`        | Green-teal. Calm, and it reads as "healthy" without claiming status.  |
+| `violet`      | Indigo-purple. The more expressive of the colourful options.           |
+| `rose`        | Pink-red. Warm, and still distinct from `--ui4u-danger`.             |
+| `graphite`    | No hue at all, for a product that wants the chrome to disappear.      |
+
+There is deliberately **no gold**. `--ui4u-warning` is amber, and an amber
+"selected" state beside an amber "degraded" state makes both mean nothing — so
+offering one here would undo the rule the rest of the library keeps.
+
+Each accent publishes a dark-side and a light-side value and the theme picks,
+because a dark-mode ice blue on a white page is unreadable. You do not have to
+think about it; you do have to be able to see all five, which is why the demo
+shell carries swatches for them rather than a menu.
+
+The **ground** is neutral by default. `data-ground="tinted"` tints every surface
+with the accent's hue, which is what makes glass read as glass — and is a lot of
+hue to look at over a long page, so it is a setting rather than a default.
+
+```html
+<html data-theme="dark" data-accent="rose" data-ground="tinted"></html>
+```
+
+Every accent, on every surface, in both themes, is proved to clear WCAG AA by
+`scripts/check-palette.mjs`, which prints the worst-case ratio for each and exits
+non-zero on a miss. That is what keeps the guarantee true as colours change.
 
 ### The palette
 
-The ground is **indigo-slate**, not neutral black — glass only reads as glass when there is
-colour underneath it to refract, so every surface carries a blue cast. On top of it, two
-accents that mean something rather than two accents that look good:
-
 | Token                                              | Role                                                                                                                                       |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--ui4u-primary`                                   | **Ice.** Structural — chosen, selected, active. Desaturated on purpose: an accent that saturates turns every selected state into a beacon. |
+| `--ui4u-primary`                                   | Structural — chosen, selected, active. Desaturated on purpose: an accent that saturates turns every selected state into a beacon.   |
 | `--ui4u-warning`                                   | **Signal.** Live, degraded, needs attention. Borrowed from the colour operations already assigns to "degraded".                            |
 | `--ui4u-success` / `--ui4u-danger` / `--ui4u-info` | Status, a separate axis from brand. Quiet until something is actually wrong.                                                               |
 | `--ui4u-accent`                                    | The second brand voice. Structural, never loud.                                                                                            |
@@ -234,3 +267,4 @@ and tests.
 ## License
 
 MIT
+````

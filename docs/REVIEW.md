@@ -133,11 +133,26 @@ kind of debt.
   `aria-busy`/`aria-disabled` and both the toolbar and the header sort buttons
   go inert, because sorting rows that have not arrived is a lie about what is
   on screen.
-- **No virtualisation.** No `IntersectionObserver`, no windowing. Fine at 200
-  rows, unusable at 10k — and with no documented limit, people find out the
-  hard way.
+- ~~**`ui-tablegrid` could not page, sort or search server-side.**~~ **Fixed.**
+  `dataSource` is a seam, not a second grid: the same columns, toolbar and pager
+  either way. The grid sends `{ offset, limit, sort, query, filters }` and
+  renders the `rows` it gets back, so `total` — not the rows on screen — drives
+  the pager. Stale responses are dropped by request id, because typing fires a
+  request per keystroke and they do not come back in order. The source returns
+  `<tr>` elements rather than data objects: how a date or a currency should look
+  is the author's call.
+- ~~**Only one sort column.**~~ **Fixed.** `sort="channel,downloads:desc"` is a
+  priority list, each entry carrying its own direction; shift-click adds and
+  removes keys. `aria-sort` stays on the primary header alone — putting it on
+  every sorted column would announce three unsorted columns for one sort — and
+  the rest get a visible `data-sort-rank` badge instead.
+- **No virtualisation.** Fine at 200 rows, unusable at 10k. The data source is
+  the answer for remote data; a large _local_ set still needs windowing.
 - **No icon system.** Only `ui-sidebar` has an `icon` attribute, and it takes a
   text glyph. Every icon button in a real app needs an SVG slot.
+- **No inline editing**, no column reorder or resize, no summary row, and no
+  grid state persistence — column widths, order and search are forgotten on
+  every page load.
 
 ### Encoding: do not edit files through the PowerShell shell
 

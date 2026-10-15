@@ -12,6 +12,24 @@ import { append, el, on, setText } from '../../core/dom.js';
  * @property {FilterOperator} operator How to compare. Default `'contains'`.
  * @property {string} value The value to compare against.
  *
+ * @typedef {object} DataSourceRequest
+ * @property {number} offset Rows to skip. `0` when paging is off.
+ * @property {number} limit Page size, or `0` when paging is off.
+ * @property {Array<{ field: string, direction: SortDirection }>} sort In priority order.
+ * @property {string} query The free-text search, `''` when there is none.
+ * @property {TableFilter[]} filters The advanced criteria, combined with AND.
+ *
+ * @typedef {object} DataSourceResponse
+ * @property {HTMLTableRowElement[]} rows The page of rows to render.
+ * @property {number} [total] Rows in the whole result set, not just this page.
+ *   Without it the pager cannot know how many pages there are, and will show one.
+ * @property {string} [error] A message to show instead of the rows. Better than
+ *   throwing, because it lands in the grid's own error state and is announced.
+ *
+ * @typedef {((request: DataSourceRequest) => Promise<DataSourceResponse>|DataSourceResponse)
+ *   | { load(request: DataSourceRequest): Promise<DataSourceResponse>|DataSourceResponse }
+ *   } DataSource
+ *
  * @typedef {object} TableGridOptions
  * @property {boolean} [navigate] Make cells reachable with the arrow keys, which
  *   switches the table to `role="grid"`. Default `false` — a plain native table
@@ -143,6 +161,24 @@ export class TableGrid extends UI4UElement {
   #matched = [];
   /** @type {HTMLTableRowElement[]} rows in their current (sorted) order */
   #rows = [];
+  /** @type {DataSource|null} the remote source, when one is set */
+  #dataSource = null;
+  /** Row count reported by the source; `null` means "count the rows we hold". @type {number|null} */
+  #total = null;
+  /**
+   * The author's original rows, kept aside while a data source owns the body so
+   * that clearing it restores the grid they wrote rather than the last page of
+   * somebody else's data. @type {HTMLTableRowElement[]|null}
+   */
+  #localRows = null;
+  /**
+   * Incremented per request so a slow response cannot overwrite a newer one.
+   * Typing in a search field fires a request per keystroke and they do not come
+   * back in order.
+   */
+  #requestId = 0;
+  /** True while `#writeSort` is writing the attributes, to skip their reload. @type {boolean} */
+  #writingSort = false;
   #built = false;
   /** @type {Array<() => void>} */
   #disposers = [];
@@ -374,15 +410,103 @@ export class TableGrid extends UI4UElement {
     return this.getString('search', '');
   }
 
-  /** @returns {SortDirection} */
+  /**
+   * The direction actually in force.
+   *
+   * Read from the primary sort entry rather than from the attribute, because
+   * `sort="downloads:desc"` states the direction on the sort itself — reading
+   * `direction` straight off the attribute would report 'asc' while the grid
+   * was sorting descending.
+   *
+   * @returns {SortDirection}
+   */
   get direction() {
+    const [primary] = this.sortList;
+    return primary ? primary.direction : this.#directionAttribute();
+  }
+
+  /**
+   * The `direction` attribute as written — the default for sort entries that do
+   * not spell one out. Read separately from `direction` so `sortList` does not
+   * recurse through it.
+   *
+   * @returns {SortDirection}
+   */
+  #directionAttribute() {
     const value = this.getString('direction', 'asc');
     return value === 'desc' || value === 'none' ? value : 'asc';
   }
 
-  /** @returns {string|null} sort key of the active column */
+  /** @returns {string|null} sort key of the *primary* column */
   get sort() {
-    return this.getAttribute('sort') ?? null;
+    const [first] = this.sortList;
+    return first ? first.field : null;
+  }
+
+  /**
+   * The active sort, in priority order.
+   *
+   * `sort` accepts a comma-separated list, and each entry may carry its own
+   * direction — `sort="channel,downloads:desc"`. A bare key takes the value of
+   * `direction`, so the single-column markup that already works is unchanged.
+   *
+   * @returns {Array<{ field: string, direction: SortDirection }>}
+   */
+  get sortList() {
+    const fallback = this.#directionAttribute();
+    const raw = this.getAttribute('sort');
+    if (!raw) return [];
+
+    return raw
+      .split(',')
+      .map((entry) => {
+        const [field, direction] = entry.split(':').map((part) => part.trim());
+        if (!field) return null;
+        return {
+          field,
+          direction:
+            direction === 'desc' || direction === 'none'
+              ? /** @type {SortDirection} */ (direction)
+              : direction === 'asc'
+                ? 'asc'
+                : fallback,
+        };
+      })
+      .filter((entry) => entry !== null);
+  }
+
+  /**
+   * Writes a sort list back to the attributes, keeping `direction` in step with
+   * the primary so a consumer reading it directly still sees the right thing.
+   *
+   * @param {Array<{ field: string, direction: SortDirection }>} list
+   * @returns {void}
+   */
+  #writeSort(list) {
+    if (list.length === 0) {
+      this.removeAttribute('sort');
+      this.setAttribute('direction', 'asc');
+      return;
+    }
+    const fallback = list[0].direction;
+    /*
+     * Written under a guard, because each write is observed and each observed
+     * write reloads. Without it, setting `direction` would fire a request
+     * against the *previous* sort — the source would be asked for one page,
+     * then immediately for the corrected one.
+     */
+    this.#writingSort = true;
+    try {
+      this.setAttribute('direction', fallback);
+      this.setAttribute(
+        'sort',
+        list
+          .map(({ field, direction }) => (direction === fallback ? field : `${field}:${direction}`))
+          .join(',')
+      );
+    } finally {
+      this.#writingSort = false;
+    }
   }
 
   /** @returns {string} the accessible name applied to the table */
@@ -398,7 +522,95 @@ export class TableGrid extends UI4UElement {
   /** @returns {number} */
   get pageCount() {
     if (!this.perPage) return 1;
-    return Math.max(1, Math.ceil(this.#matched.length / this.perPage));
+    return Math.max(1, Math.ceil(this.total / this.perPage));
+  }
+
+  /**
+   * How many rows the current view has.
+   *
+   * Locally that is the number that survived the search and filters. With a
+   * data source it is what the server reported, because the grid has only ever
+   * seen one page of them.
+   *
+   * @returns {number}
+   */
+  get total() {
+    return this.#total ?? this.#matched.length;
+  }
+
+  /**
+   * The remote data source, or `null` when the rows are the author's markup.
+   *
+   * Set it to a function or to an object with a `load(request)` method. The
+   * grid then stops sorting, filtering and paging the rows itself and asks
+   * instead, so a table of any size costs the browser one page of it.
+   *
+   * ```js
+   * grid.dataSource = async ({ offset, limit, sort, query, filters }) => {
+   *   const body = await loadReleases({ offset, limit, sort, query, filters });
+   *   return { rows: body.records.map(toRow), total: body.total };
+   * };
+   * ```
+   *
+   * @type {DataSource|null}
+   */
+  get dataSource() {
+    return this.#dataSource;
+  }
+
+  set dataSource(source) {
+    const body = this.#body;
+
+    if (!source) {
+      this.#dataSource = null;
+      this.#total = null;
+      this.removeAttribute('data-remote');
+
+      if (body) {
+        for (const row of [...body.rows]) {
+          if (row !== this.#status) row.remove();
+        }
+        // The authored markup, put back — adopting a page of remote rows
+        // removed it from the DOM, so without this the author could never
+        // return to the grid they wrote.
+        if (this.#localRows) body.append(...this.#localRows);
+        // Re-collect: `#authored` still holds the rows the source last sent,
+        // and everything downstream — filtering, sorting, paging, the pager —
+        // reads from it.
+        this.#authored = [...body.rows].filter((row) => row !== this.#status);
+      }
+
+      this.#refilter();
+      this.#applyView();
+      return;
+    }
+
+    // Captured once, before the first request replaces the body.
+    if (!this.#dataSource) {
+      this.#localRows = body ? [...body.rows].filter((row) => row !== this.#status) : [];
+    }
+
+    this.#dataSource = source;
+    // Spelled out rather than `toggleAttribute`, which would write an empty
+    // value — and `data-remote=""` reads as "off" to anyone checking it.
+    this.setAttribute('data-remote', 'true');
+    this.#total = null;
+    this.reload();
+  }
+
+  /**
+   * Re-runs the current query against the data source.
+   *
+   * @returns {this}
+   *
+   * @example
+   * grid.reload(); // after a save, a background job, or anything else off-screen
+   */
+  reload() {
+    if (!this.#dataSource) return this;
+    this.#requestId += 1;
+    this.#runRequest(this.#requestId);
+    return this;
   }
 
   /**
@@ -430,6 +642,8 @@ export class TableGrid extends UI4UElement {
 
   /** The slice of `visibleRows` shown on the current page. @returns {HTMLTableRowElement[]} */
   get pageRows() {
+    // A remote page is already the page; slicing again would drop most of it.
+    if (this.#dataSource) return [...this.#rows];
     if (!this.perPage) return [...this.#rows];
     const start = (this.#page - 1) * this.perPage;
     return this.#rows.slice(start, start + this.perPage);
@@ -518,43 +732,110 @@ export class TableGrid extends UI4UElement {
   }
 
   /**
-   * Sorts by a column key.
+   * Sorts by a column key, or by several in priority order.
    *
-   * @param {string} key value of a `data-sort` attribute
+   * @param {string|string[]} key a `data-sort` value, or an ordered list of them
    * @param {SortDirection} [direction] omit to toggle the current column
+   * @param {{ additive?: boolean, remove?: boolean }} [options]
+   *   `additive` keeps the existing keys and puts this one last — that is what
+   *   a shift-click does. `remove` drops the key instead of sorting by it.
    * @returns {this}
    *
    * @example
    * grid.sortBy('downloads', 'desc');
+   * grid.sortBy(['channel', 'downloads']);       // channel, then downloads
+   * grid.sortBy('version', undefined, { additive: true }); // shift-click
    */
-  sortBy(key, direction) {
-    const index = this.#sortableKeys().indexOf(key);
-    if (index === -1) return this;
+  sortBy(key, direction, options = {}) {
+    if (Array.isArray(key)) {
+      /*
+       * Built from the keys rather than looked up in the current sort: this is
+       * the call that *sets* an order, so the list may be empty going in. A key
+       * that is already sorted keeps its direction; the rest take the one
+       * passed, or the grid's default.
+       */
+      const fallback = direction ?? this.direction;
+      const current = this.sortList;
+      const list = key
+        .filter((field) => this.#sortableKeys().indexOf(field) !== -1)
+        .map((field) => ({
+          field,
+          // An explicit direction wins for every key; without one, a key that
+          // is already sorted keeps what it had.
+          direction:
+            direction ?? current.find((entry) => entry.field === field)?.direction ?? fallback,
+        }));
 
-    const next = direction ?? (this.sort === key && this.direction === 'asc' ? 'desc' : 'asc');
+      if (list.length === 0) return this;
+      return this.#commitSort(list, { column: list[0].field, direction: list[0].direction });
+    }
 
-    // Guarded before any attribute is written, so a veto leaves the previous
-    // sort, the direction and the row order exactly as they were.
-    if (!this.runBinding('sort', { column: key, direction: next })) return this;
+    if (options.remove) return this.unsort(key);
 
-    if (direction === undefined) this.setAttribute('direction', next);
-    else this.setAttribute('direction', direction);
+    // A key that is not in the header is not a column, so there is nothing to
+    // sort by — and writing it into the attribute would leave the grid claiming
+    // a sort it is not performing.
+    if (this.#sortableKeys().indexOf(key) === -1) return this;
 
-    if (this.sort === key) this.removeAttribute('sort');
-    else this.setAttribute('sort', key);
+    const current = this.sortList;
+    const existing = current.find((entry) => entry.field === key);
 
-    this.#applySort(index, next);
-    this.emit('ui4u:sort', { column: key, direction: next, rows: this.data });
+    if (options.additive) {
+      // Shift-click on an already-present key removes it, which is the only way
+      // back to a shorter list once you have committed to adding.
+      if (existing) return this.unsort(key);
+
+      const next = current.length === 0 ? 'asc' : (direction ?? existing?.direction ?? 'asc');
+      return this.#commitSort([...current, { field: key, direction: next }], {
+        column: key,
+        direction: next,
+      });
+    }
+
+    const next = direction ?? (existing && this.sort === key ? 'desc' : 'asc');
+    return this.#commitSort([{ field: key, direction: next }], { column: key, direction: next });
+  }
+
+  /**
+   * Drops a column from a multi-column sort, keeping the rest.
+   *
+   * @param {string} key
+   * @returns {this}
+   *
+   * @example
+   * grid.unsort('version');
+   */
+  unsort(key) {
+    const list = this.sortList.filter((entry) => entry.field !== key);
+    if (list.length === this.sortList.length) return this;
+    return this.#commitSort(list, {
+      column: list[0]?.field ?? null,
+      direction: list[0]?.direction ?? 'none',
+    });
+  }
+
+  /**
+   * Guards, writes and re-renders a sort list — the one path every sort change
+   * goes through, so a veto always happens before anything moves.
+   *
+   * @param {Array<{ field: string, direction: SortDirection }>} list
+   * @param {{ column: string|null, direction: SortDirection }} detail
+   * @returns {this}
+   */
+  #commitSort(list, detail) {
+    if (!this.runBinding('sort', { ...detail, columns: list.map((e) => e.field) })) {
+      return this;
+    }
+
+    this.#writeSort(list);
+    this.#applySort();
+    this.emit('ui4u:sort', { ...detail, columns: list.map((e) => e.field), rows: this.data });
     return this;
   }
 
   /** @returns {this} */
   resetSort() {
-    this.removeAttribute('sort');
-    this.setAttribute('direction', 'asc');
-    this.#applySort(-1, 'none');
-    this.emit('ui4u:sort', { column: null, direction: 'none', rows: this.data });
-    return this;
+    return this.#commitSort([], { column: null, direction: 'none' });
   }
 
   /**
@@ -598,7 +879,10 @@ export class TableGrid extends UI4UElement {
     if (!this.runBinding('page', { page: next, pageCount: this.pageCount })) return this;
 
     this.#page = next;
-    this.#applyView();
+    // A page is a server concept: locally the slice is free, remotely the rows
+    // for this page have not been asked for yet.
+    if (this.#dataSource) this.reload();
+    else this.#applyView();
     this.emit('ui4u:page', { page: next, pageCount: this.pageCount, rows: this.data });
     return this;
   }
@@ -890,6 +1174,11 @@ export class TableGrid extends UI4UElement {
         if (first) this.#selected.add(first);
       }
       this.#syncSelection();
+    } else if (name === 'sort' || name === 'direction') {
+      // Setting the attribute is how a consumer sorts declaratively after
+      // connect. Without this branch `sort="…"` only worked at build time, so
+      // `grid.setAttribute('sort', 'downloads:desc')` silently did nothing.
+      this.#applySort();
     } else if (name === 'navigate') {
       // Grid roles and the roving tab stop are baked in at build time, so
       // switching mode has to rebuild. The author's <table> is never moved,
@@ -1036,8 +1325,21 @@ export class TableGrid extends UI4UElement {
       button.type = 'button';
       button.className = 'ui4u-tablegrid__sort';
       button.textContent = (cell.textContent ?? '').trim();
+      // A wrapper, because the priority badge is added and removed as the sort
+      // changes and must not become part of the button's accessible name.
+      const label = el('span', { class: 'ui4u-tablegrid__sort-label' }, button.textContent);
+      const rank = el('span', { class: 'ui4u-tablegrid__sort-rank', 'aria-hidden': 'true' });
+      button.replaceChildren(label, rank);
       cell.replaceChildren(button);
-      this.#disposers.push(on(button, 'click', () => this.sortBy(key)));
+
+      this.#disposers.push(
+        on(button, 'click', (event) => {
+          // Shift-click adds a tiebreaker rather than replacing the sort, which
+          // is the convention every data grid on the web has trained people on.
+          const additive = /** @type {MouseEvent} */ (event).shiftKey === true;
+          this.sortBy(key, undefined, { additive });
+        })
+      );
     }
 
     this.#disposers.push(
@@ -1056,10 +1358,7 @@ export class TableGrid extends UI4UElement {
 
     if (this.navigate) this.#enableNavigation(headRow);
 
-    this.#applySort(
-      this.sort ? this.#sortIndexOf(this.sort) : -1,
-      this.sort ? this.direction : 'none'
-    );
+    this.#applySort();
     this.#applyView();
   }
 
@@ -1456,8 +1755,7 @@ export class TableGrid extends UI4UElement {
   #updatePager() {
     if (!this.#pager) return;
     const status = this.#pager.querySelector('.ui4u-tablegrid__page-status');
-    if (status)
-      setText(status, `Page ${this.#page} of ${this.pageCount} · ${this.#matched.length} rows`);
+    if (status) setText(status, `Page ${this.#page} of ${this.pageCount} · ${this.total} rows`);
 
     const buttons = this.#pager.querySelectorAll('.ui4u-tablegrid__page-btn');
     const [prev, next] = buttons;
@@ -1713,11 +2011,6 @@ export class TableGrid extends UI4UElement {
     });
   }
 
-  /** @param {string} key @returns {number} column index, or `-1` */
-  #sortIndexOf(key) {
-    return this.#sortableKeys().indexOf(key);
-  }
-
   /**
    * Recomputes which rows survive the query and the advanced criteria, then
    * re-applies the current sort to them, so changing a filter never leaves the
@@ -1728,6 +2021,14 @@ export class TableGrid extends UI4UElement {
    * `resetSort()` / `clearSearch()` would no longer restore the markup order.
    */
   #refilter() {
+    // With a data source the query belongs to the server, not to the rows we
+    // happen to hold — filtering locally would filter one page and call it the
+    // whole result.
+    if (this.#dataSource) {
+      this.reload();
+      return;
+    }
+
     const query = this.query.trim().toLowerCase();
     const columns = this.#allBodyColumns();
     const filters = this.#filters;
@@ -1748,66 +2049,208 @@ export class TableGrid extends UI4UElement {
 
     this.#matched = this.#authored.filter(passes);
 
-    const index = this.sort ? this.#sortIndexOf(this.sort) : -1;
-    this.#applySort(index, index >= 0 ? this.direction : 'none');
+    this.#applySort();
     this.#syncSelection();
   }
 
   /**
-   * Reorders the matched rows. A stable comparator falls back to the authored
-   * order for equal keys, so repeated sorts do not shuffle.
+   * Reorders the matched rows by the active sort list.
    *
-   * @param {number} index column index, or `-1` to restore the authored order
-   * @param {SortDirection} direction
+   * A stable comparator falls back to the authored order for fully equal rows,
+   * so repeated sorts do not shuffle. Each key in the list is a tiebreaker for
+   * the ones before it, which is what makes a multi-column sort meaningful.
    */
-  #applySort(index, direction) {
+  #applySort() {
     if (!this.#body) return;
 
-    const key = index >= 0 ? this.#sortableKeys()[index] : null;
-    const type = key ? (this.#headRow?.cells[index]?.getAttribute('data-type') ?? 'text') : 'text';
+    // The header still has to be painted — the sort state is a fact about the
+    // table whatever filled it — but the rows came back in the server's order,
+    // so sorting one page of them locally would be a different sort.
+    if (this.#dataSource) {
+      this.#renderSortState();
+      // `#writeSort` writes two attributes, and this is the reload it stands
+      // for. Reloading here too would send the same request twice.
+      if (!this.#writingSort) this.reload();
+      return;
+    }
 
+    const list = this.sortList;
     const original = new Map(this.#authored.map((row, i) => [row, i]));
+
     // A group header with `rowspan`, or the selection column, shifts the
-    // columns, so the head position is translated before it reads a body cell.
-    const column = index >= 0 ? this.#columnOf(index) : -1;
-    const valueAt = (row) => (column >= 0 ? this.#cellText(row, column) : '');
+    // columns, so each head position is translated before it reads a body cell.
+    const columns = list.map(({ field }) => {
+      const index = this.#sortableKeys().indexOf(field);
+      if (index === -1) return null;
+      return {
+        column: this.#columnOf(index),
+        numeric: (this.#headRow?.cells[index]?.getAttribute('data-type') ?? 'text') === NUMERIC,
+      };
+    });
 
     // Sorting must not lose the authored order, which `resetSort()` restores,
     // and must operate on the searched subset, not every row.
     const sorted = [...this.#matched];
-    if (key && direction !== 'none') {
-      const sign = direction === 'desc' ? -1 : 1;
+    if (columns.some(Boolean)) {
       sorted.sort((a, b) => {
-        const left = valueAt(a);
-        const right = valueAt(b);
-        const result =
-          type === NUMERIC
+        for (let i = 0; i < columns.length; i += 1) {
+          const spec = columns[i];
+          if (!spec) continue;
+
+          const left = this.#cellText(a, spec.column);
+          const right = this.#cellText(b, spec.column);
+          const result = spec.numeric
             ? (Number.parseFloat(left) || 0) - (Number.parseFloat(right) || 0)
             : left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' });
-        return result !== 0 ? result * sign : (original.get(a) ?? 0) - (original.get(b) ?? 0);
+
+          if (result !== 0) {
+            const sign = list[i].direction === 'desc' ? -1 : 1;
+            return result * sign;
+          }
+        }
+        return (original.get(a) ?? 0) - (original.get(b) ?? 0);
       });
     }
 
     for (const row of sorted) this.#body.appendChild(row);
     this.#rows = sorted;
+    this.#renderSortState();
+  }
 
-    /*
-     * `aria-sort` belongs on exactly one header. Leaving `aria-sort="none"` on
-     * every sortable column would announce three unsorted columns for what is
-     * really one sorted column, so the rest have the attribute removed.
-     */
-    if (this.#headRow) {
-      this.#dataCells().forEach((cell, i) => {
-        if (i !== index) {
-          cell.removeAttribute('aria-sort');
-          return;
-        }
+  /**
+   * Paints the sort state onto the headers.
+   *
+   * `aria-sort` belongs on exactly one header — the primary — because leaving
+   * `aria-sort="none"` on every sorted column would announce four unsorted
+   * columns for what is really one sort. Secondary keys are marked with
+   * `data-sort-rank` instead, which is presentational and can be rendered as
+   * the small priority number a reader needs to make sense of the order.
+   */
+  #renderSortState() {
+    if (!this.#headRow) return;
+
+    const list = this.sortList;
+    const primary = list[0];
+
+    this.#dataCells().forEach((cell, i) => {
+      const key = this.#sortableKeys()[i];
+      const rank = list.findIndex((entry) => entry.field === key);
+
+      cell.removeAttribute('data-sort-rank');
+      cell.removeAttribute('aria-sort');
+
+      const badge = cell.querySelector('.ui4u-tablegrid__sort-rank');
+      if (badge) badge.textContent = '';
+
+      if (rank === -1) return;
+      if (rank === 0) {
         cell.setAttribute(
           'aria-sort',
-          direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'
+          primary.direction === 'desc'
+            ? 'descending'
+            : primary.direction === 'none'
+              ? 'none'
+              : 'ascending'
         );
-      });
+        return;
+      }
+      cell.setAttribute('data-sort-rank', String(rank + 1));
+      if (badge) badge.textContent = String(rank + 1);
+    });
+
+    this.toggleAttribute('data-multi-sort', list.length > 1);
+  }
+
+  /**
+   * The request the current view implies.
+   *
+   * @returns {DataSourceRequest}
+   */
+  #request() {
+    return {
+      offset: this.perPage ? (this.#page - 1) * this.perPage : 0,
+      limit: this.perPage,
+      sort: this.sortList,
+      query: this.query.trim(),
+      filters: [...this.#filters],
+    };
+  }
+
+  /**
+   * Runs one request and applies the answer.
+   *
+   * A stale response is dropped rather than applied: typing in the search field
+   * fires a request per keystroke, and they do not come back in order.
+   *
+   * @param {number} id the `#requestId` this request was issued under
+   * @returns {Promise<void>}
+   */
+  async #runRequest(id) {
+    const source = this.#dataSource;
+    if (!source) return;
+
+    const load = typeof source === 'function' ? source : source.load.bind(source);
+    this.loading = true;
+
+    /** @type {DataSourceResponse|undefined} */
+    let response;
+    try {
+      response = await load(this.#request());
+    } catch (cause) {
+      if (id !== this.#requestId) return;
+      // A thrown error carries no message worth showing a reader, so say what
+      // actually happened and let the console keep the stack.
+      console.error('[ui-tablegrid] data source failed', cause);
+      this.error = 'Could not load rows';
+      this.loading = false;
+      return;
     }
+
+    if (id !== this.#requestId) return;
+
+    if (response?.error) {
+      this.error = response.error;
+      this.loading = false;
+      return;
+    }
+
+    this.error = '';
+    this.#total = typeof response?.total === 'number' ? response.total : null;
+    this.#adoptRows(response?.rows ?? []);
+    this.loading = false;
+    // Through `runBinding` like every other event, so a consumer can observe
+    // the same way regardless of which one they bound.
+    const detail = { rows: this.data, total: this.total };
+    if (this.runBinding('load', detail)) this.emit('ui4u:load', detail);
+  }
+
+  /**
+   * Replaces the body with a fresh page of rows.
+   *
+   * The grid does not render these from data objects: how a date, a currency
+   * or a status pill should look is the author's call, and a generic grid that
+   * guesses is a generic grid that guesses wrong. Pass `<tr>` elements.
+   *
+   * @param {HTMLTableRowElement[]} rows
+   * @returns {void}
+   */
+  #adoptRows(rows) {
+    if (!this.#body) return;
+
+    for (const row of [...this.#body.rows]) {
+      if (row !== this.#status) row.remove();
+    }
+
+    this.#body.append(...rows);
+    this.#authored = [...rows];
+    // The source already applied the sort, the query and the filters, so the
+    // grid's own versions of those must not be run over them again.
+    this.#matched = [...rows];
+    this.#rows = [...rows];
+    this.#selected.clear();
+
+    if (this.navigate && this.#headRow) this.#enableNavigation(this.#headRow);
+    this.#applyView();
   }
 
   /** Shows only the current page's rows and refreshes the pager. */
@@ -1816,8 +2259,12 @@ export class TableGrid extends UI4UElement {
 
     this.#renderStatus();
 
-    const shown = new Set(this.pageRows);
-    for (const row of this.#authored) row.hidden = !shown.has(row) || this.#status !== null;
+    // With a data source the rows in the body *are* the page — the server has
+    // already sliced them — so there is nothing left to hide.
+    const shown = this.#dataSource ? null : new Set(this.pageRows);
+    for (const row of this.#authored) {
+      row.hidden = shown === null ? false : !shown.has(row) || this.#status !== null;
+    }
     this.#updatePager();
   }
 

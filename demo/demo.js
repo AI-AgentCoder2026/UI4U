@@ -8,6 +8,28 @@
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
 
+/**
+ * Builds one node.
+ *
+ * `data-*` props become attributes and everything else does too; `text` is a
+ * text node. Never `innerHTML` — the nav carries demo labels, and a text node
+ * cannot be talked into running markup.
+ *
+ * @param {string} tag
+ * @param {Record<string, string>} [props]
+ * @param {Node[]} [children]
+ * @returns {HTMLElement}
+ */
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [name, value] of Object.entries(props)) {
+    if (name === 'text') node.textContent = value;
+    else node.setAttribute(name, value);
+  }
+  node.append(...children);
+  return node;
+}
+
 /** Only these three characters can break out of a text node. */
 const escapeHtml = (value) => value.replace(/[&<>]/g, (char) => ESCAPES[char]);
 
@@ -105,6 +127,87 @@ function wireCopyButtons(root = document) {
  * and a reader who picked light is thrown back into dark on the next click.
  */
 const THEME_KEY = 'ui4u-theme';
+const ACCENT_KEY = 'ui4u-accent';
+const GROUND_KEY = 'ui4u-ground';
+
+/**
+ * Every accent the token layer offers, in the order they are presented.
+ *
+ * Kept here rather than read out of the stylesheet because this is the demo's
+ * affordance, not the library's contract — a consumer picks their own by
+ * writing `data-accent` on `<html>`.
+ */
+const ACCENTS = ['ice', 'mint', 'violet', 'rose', 'graphite'];
+
+/** @param {string} key @param {string|null} value */
+function remember(key, value) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable; the choice lasts for this document only */
+  }
+}
+
+/** @param {string} key */
+function recall(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Restores the accent and ground chosen on any other page.
+ *
+ * The theme restore script in each page's `<head>` handles `data-theme`
+ * because it must run before the stylesheet. These two cannot — they are
+ * chrome, not layout — so they are applied here, and deliberately not on the
+ * first paint if that would flash. The demo pages already start from the
+ * library defaults, so applying after load is invisible in practice.
+ */
+function wireAppearance() {
+  const root = document.documentElement;
+
+  const accent = recall(ACCENT_KEY);
+  if (accent && ACCENTS.includes(accent)) root.dataset.accent = accent;
+
+  const ground = recall(GROUND_KEY);
+  if (ground) root.dataset.ground = ground;
+
+  for (const swatch of document.querySelectorAll('[data-accent-option]')) {
+    swatch.setAttribute(
+      'aria-pressed',
+      String(swatch.dataset.accentOption === root.dataset.accent)
+    );
+    swatch.addEventListener('click', () => {
+      const next = swatch.dataset.accentOption;
+      root.dataset.accent = next;
+      remember(ACCENT_KEY, next);
+      for (const other of document.querySelectorAll('[data-accent-option]')) {
+        other.setAttribute('aria-pressed', String(other === swatch));
+      }
+    });
+  }
+
+  for (const toggle of document.querySelectorAll('[data-ground-option]')) {
+    toggle.setAttribute(
+      'aria-pressed',
+      String(toggle.dataset.groundOption === root.dataset.ground)
+    );
+    toggle.addEventListener('click', () => {
+      const next =
+        toggle.dataset.groundOption === root.dataset.ground ? null : toggle.dataset.groundOption;
+      if (next) root.dataset.ground = next;
+      else delete root.dataset.ground;
+      remember(GROUND_KEY, next);
+      for (const other of document.querySelectorAll('[data-ground-option]')) {
+        other.setAttribute('aria-pressed', String(other === toggle && next !== null));
+      }
+    });
+  }
+}
 
 /**
  * Cycles `data-theme` through the built-in themes and remembers the choice.
@@ -123,11 +226,7 @@ function wireThemeToggle(button = document.querySelector('[data-theme-toggle]'))
 
     // Storage can throw — a sandboxed iframe or private mode — and a theme that
     // will not persist is still worth having for this page.
-    try {
-      localStorage.setItem(THEME_KEY, root.dataset.theme);
-    } catch {
-      /* not available; the choice lasts for this document only */
-    }
+    remember(THEME_KEY, root.dataset.theme);
   });
 }
 
@@ -246,10 +345,55 @@ function wireDemoNav() {
 
   nav.appendChild(navButton(REPO_URL, 'GitHub', { external: true, end: true }));
 
+  // Nav first, then the appearance bar beneath it: the bar is a
+  // control strip for the page below, not a peer of the navigation, and
+  // `prepend` puts each new node at the very top.
+  page.prepend(appearanceBar());
   page.prepend(nav);
+}
+
+/**
+ * The accent and ground controls, in the bar rather than on every page.
+ *
+ * Swatches rather than a dropdown: the point of offering five accents is being
+ * able to see them, and a menu hides exactly what it is offering.
+ *
+ * @returns {HTMLElement}
+ */
+function appearanceBar() {
+  const bar = el('div', { class: 'demo-appearance', role: 'group', 'aria-label': 'Appearance' });
+
+  const swatches = el('span', { class: 'demo-appearance__swatches' });
+  for (const name of ACCENTS) {
+    const swatch = el('button', {
+      type: 'button',
+      class: 'demo-appearance__swatch',
+      'data-accent-option': name,
+      'data-accent': name,
+      'aria-pressed': 'false',
+      'aria-label': `${name} accent`,
+      title: `${name} accent`,
+    });
+    swatches.appendChild(swatch);
+  }
+
+  const ground = el('button', {
+    type: 'button',
+    variant: 'ghost',
+    size: 'sm',
+    class: 'demo-appearance__ground',
+    'data-ground-option': 'tinted',
+    'aria-pressed': 'false',
+    text: 'Tinted ground',
+  });
+
+  bar.append(swatches, ground);
+  return bar;
 }
 
 highlightAll();
 wireCopyButtons();
 wireThemeToggle();
+// Nav first: it is what creates the appearance bar these handlers attach to.
 wireDemoNav();
+wireAppearance();

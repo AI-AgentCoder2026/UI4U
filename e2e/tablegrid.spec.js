@@ -677,3 +677,125 @@ test('the page runs without script errors', async ({ page }) => {
 
   expect(errors).toEqual([]);
 });
+
+/* --- multi-column sort --------------------------------------------------- */
+
+test.describe('multi-column sort', () => {
+  test('shift-click adds a second key and a third click removes it', async ({ page }) => {
+    const head = (key) => page.locator(`${COLS} th[data-sort="${key}"]`);
+    const versions = () =>
+      page
+        .locator(`${MAIN} tbody tr:not([hidden])`)
+        .evaluateAll((rows) => rows.map((r) => r.cells[0].textContent.trim()));
+
+    await head('version').locator('.ui4u-tablegrid__sort').click();
+    expect(await head('version').getAttribute('aria-sort')).toBe('ascending');
+
+    await head('downloads')
+      .locator('.ui4u-tablegrid__sort')
+      .click({ modifiers: ['Shift'] });
+
+    // `aria-sort` stays on exactly one header; the second key gets a visible
+    // priority badge instead, because the order is meaningless otherwise.
+    expect(await page.locator(`${COLS} th[aria-sort]`)).toHaveCount(1);
+    expect(await head('downloads').getAttribute('data-sort-rank')).toBe('2');
+    expect(await head('downloads').locator('.ui4u-tablegrid__sort-rank')).toHaveText('2');
+
+    expect(await versions()).toHaveLength(await page.locator(`${MAIN} tbody tr`).count());
+
+    // Shift-click again drops it.
+    await head('downloads')
+      .locator('.ui4u-tablegrid__sort')
+      .click({ modifiers: ['Shift'] });
+
+    await expect(head('downloads')).not.toHaveAttribute('data-sort-rank', '2');
+    expect(await page.locator(`${COLS} th[aria-sort]`)).toHaveCount(1);
+  });
+
+  test('a plain click replaces the list rather than extending it', async ({ page }) => {
+    const head = (key) => page.locator(`${COLS} th[data-sort="${key}"]`);
+
+    await head('version').locator('.ui4u-tablegrid__sort').click();
+    await head('downloads')
+      .locator('.ui4u-tablegrid__sort')
+      .click({ modifiers: ['Shift'] });
+    await head('downloads').locator('.ui4u-tablegrid__sort').click();
+
+    // `downloads` is primary now, and nothing else is sorted.
+    expect(await head('downloads')).toHaveAttribute('aria-sort', 'ascending');
+    await expect(page.locator(`${COLS} th[data-sort-rank]`)).toHaveCount(0);
+  });
+
+  test('a veto leaves both keys alone', async ({ page }) => {
+    await page.evaluate(() => {
+      // Refuse only the *second* key, so the first one still lands and the
+      // test can see that the refusal left everything else untouched.
+      document.getElementById('demo').bind('sort', ({ columns }) => columns.length < 2);
+    });
+
+    const head = (key) => page.locator(`${COLS} th[data-sort="${key}"]`);
+    await head('version').locator('.ui4u-tablegrid__sort').click();
+    await head('downloads')
+      .locator('.ui4u-tablegrid__sort')
+      .click({ modifiers: ['Shift'] });
+
+    // Only the first click got through; the second was refused before it
+    // touched anything.
+    expect(await page.locator(`${COLS} th[aria-sort]`)).toHaveCount(1);
+    await expect(head('downloads')).not.toHaveAttribute('data-sort-rank', '2');
+  });
+});
+
+/* --- data source ---------------------------------------------------------- */
+
+test.describe('data source', () => {
+  const remote = (page) => page.locator('#opt-source [role="tab"]', { hasText: 'remote' });
+  const status = (page) => page.locator(`${MAIN} .ui4u-tablegrid__status`);
+  const pageStatus = (page) => page.locator(`${MAIN} .ui4u-tablegrid__page-status`);
+
+  /** Picks a page size, which is what makes the pager exist at all. */
+  const usePages = (page) => page.locator('#opt-perpage [role="tab"]', { hasText: /^3$/ }).click();
+
+  test('asks the source for the rows instead of reading its own markup', async ({ page }) => {
+    await usePages(page);
+    await remote(page).click();
+
+    // The loading state is real: the demo's stand-in source waits, and a grid
+    // that faked it would show a status row for no reason.
+    await expect(status(page)).toHaveAttribute('data-state', 'loading');
+    await expect(status(page)).not.toBeVisible({ timeout: 3000 });
+    await expect(pageStatus(page)).toBeVisible();
+
+    // Server paging: the pager counts what the source reports, not the rows it
+    // happens to be holding.
+    await expect(pageStatus(page)).toHaveText('Page 1 of 2 · 6 rows');
+    await expect(page.locator(`${MAIN} tbody tr:not([hidden])`)).toHaveCount(3);
+  });
+
+  test('sorting goes through the source and comes back in its order', async ({ page }) => {
+    await usePages(page);
+    await remote(page).click();
+    await expect(status(page)).not.toBeVisible({ timeout: 3000 });
+
+    await page.locator(`${MAIN} th[data-sort="version"] .ui4u-tablegrid__sort`).click();
+    await page.waitForTimeout(700);
+
+    const versions = await page
+      .locator(`${MAIN} tbody tr:not([hidden]) td:first-child`)
+      .evaluateAll((cells) => cells.map((c) => c.textContent.trim()));
+    expect(versions).toEqual([...versions].sort().reverse());
+  });
+
+  test('switches back to the authored rows', async ({ page }) => {
+    await remote(page).click();
+    await expect(status(page)).not.toBeVisible({ timeout: 3000 });
+    await expect(page.locator(`${MAIN}`)).toHaveAttribute('data-remote', 'true');
+
+    await page.locator('#opt-source [role="tab"]', { hasText: 'local' }).click();
+
+    await expect(page.locator(`${MAIN}`)).not.toHaveAttribute('data-remote', 'true');
+    // The markup the author wrote is back, not the last page of the source.
+    await expect(page.locator(`${MAIN} tbody tr`)).toHaveCount(6);
+    await expect(status(page)).toHaveCount(0);
+  });
+});

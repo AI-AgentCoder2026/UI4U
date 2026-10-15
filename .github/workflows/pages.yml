@@ -43,6 +43,12 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+      # Every accent, against every surface, in both themes. Exits non-zero on
+      # any WCAG AA miss, which is the whole reason it is a step rather than a
+      # script somebody remembers to run.
+      - name: Palette contrast
+        run: node scripts/check-palette.mjs
+
       - name: ESLint
         run: npm run lint
 

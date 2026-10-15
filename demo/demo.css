@@ -98,6 +98,89 @@ section > p {
   background: var(--ui4u-surface);
 }
 
+/* --- appearance ---------------------------------------------------------- */
+
+.demo-appearance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui4u-space-2);
+  margin-block-end: var(--ui4u-space-4);
+  padding-block-end: var(--ui4u-space-3);
+  border-block-end: 1px solid var(--ui4u-divider);
+}
+
+.demo-appearance__swatches {
+  display: inline-flex;
+  gap: var(--ui4u-space-1);
+}
+
+.demo-appearance__swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  cursor: pointer;
+  /* The dot *is* the button, so it needs a ring to be focusable at all. */
+  border: 1px solid var(--ui4u-border-strong);
+  border-radius: var(--ui4u-radius-full);
+  transition:
+    box-shadow var(--ui4u-duration-fast) var(--ui4u-ease-standard),
+    transform var(--ui4u-duration-fast) var(--ui4u-ease-out);
+}
+
+/*
+ * Every swatch gets an explicit colour, including the default one. Leaving it
+ * on `var(--ui4u-primary)` would make the ice swatch show whatever accent is
+ * currently selected — so the chip that claims to be ice would turn mint the
+ * moment you picked mint.
+ */
+.demo-appearance__swatch[data-accent='ice'] {
+  background: #7fc4e8;
+}
+
+.demo-appearance__swatch[data-accent='mint'] {
+  background: #6fd3b4;
+}
+
+.demo-appearance__swatch[data-accent='violet'] {
+  background: #a99bf7;
+}
+
+.demo-appearance__swatch[data-accent='rose'] {
+  background: #f2a0b5;
+}
+
+.demo-appearance__swatch[data-accent='graphite'] {
+  background: #b8c0ce;
+}
+
+.demo-appearance__swatch:hover {
+  transform: scale(1.08);
+}
+
+.demo-appearance__swatch[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 2px var(--ui4u-bg),
+    0 0 0 4px var(--ui4u-primary);
+}
+
+.demo-appearance__swatch:focus-visible {
+  outline: 2px solid var(--ui4u-primary);
+  outline-offset: 2px;
+}
+
+.demo-appearance__ground {
+  font-family: var(--ui4u-font-label);
+  font-size: var(--ui4u-font-size-xs);
+  letter-spacing: var(--ui4u-tracking-wide);
+  text-transform: uppercase;
+}
+
+.demo-appearance__ground[aria-pressed='true'] {
+  color: var(--ui4u-primary);
+}
+
 /* Keeps anything scrolled to from landing underneath the sticky bar. */
 .page > header,
 .page > section,

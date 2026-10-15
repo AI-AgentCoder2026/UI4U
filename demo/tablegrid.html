@@ -96,6 +96,15 @@
           </ui-tabs>
         </div>
         <div class="control-group">
+          <span class="control-group__label">Source</span>
+          <ui-tabs id="opt-source" variant="underline" label="Source">
+            <!-- `local` first so the picker's default matches the markup
+                 below; otherwise the first click is a no-op. -->
+            <ui-tab label="local"></ui-tab>
+            <ui-tab label="remote"></ui-tab>
+          </ui-tabs>
+        </div>
+        <div class="control-group">
           <span class="control-group__label">Mode</span>
           <ui-tabs id="opt-navigate" variant="underline" label="Mode">
             <!-- `grid` first so the picker's default matches the `navigate`
@@ -235,6 +244,20 @@
           column groups, sorting, search, advanced filters, selection, copy, pagination and keyboard
           navigation — each one opt-in.
         </p>
+        <p>
+          <strong>Shift-click a second header to add a tiebreaker</strong>, and shift-click it again
+          to drop it. Group by channel and rank by downloads within each channel with
+          <code>sort="channel,downloads:desc"</code>; the primary header keeps
+          <code>aria-sort</code>, because only one column is <em>the</em> sort — the rest get a
+          visible priority badge.
+        </p>
+        <p>
+          Switch <strong>Source</strong> to <strong>remote</strong> and the same grid stops sorting,
+          filtering and paging its own rows. It sends what the view asks for — offset, limit, the
+          sort list, the query, the criteria — and renders what comes back, so a table of any size
+          costs the browser one page of it. The pager counts what the server reports rather than
+          what is on screen.
+        </p>
 
         <figure class="demo-code">
           <figcaption class="demo-code__head">
@@ -296,6 +319,11 @@ grid.configure({
 grid.sortBy('downloads', 'desc');
 grid.resetSort();
 
+// Two keys in priority order. A shift-click in the header does the same thing,
+// and a shift-click on a key that is already in the list drops it.
+grid.sortBy(['channel', 'downloads:desc']);
+grid.unsort('channel');
+
 // --- search ------------------------------------------------------------
 grid.search('stable');        // substring of any column
 grid.clearSearch();
@@ -311,6 +339,29 @@ grid.clearFilters();
 
 // Operators: contains, not-contains, equals, not-equals,
 // starts-with, ends-with, gt, gte, lt, lte.
+
+// --- a data source -----------------------------------------------------
+// Set one and the grid stops sorting, filtering and paging its own rows: it
+// sends what the view asks for and renders what comes back, so a table of any
+// size costs the browser one page of it.
+//
+// It expects <tr> elements rather than data objects. How a date, a currency or
+// a status pill should look is the author's call, and a grid that guesses is a
+// grid that guesses wrong.
+grid.dataSource = async ({ offset, limit, sort, query, filters }) =&gt; {
+  const params = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+  for (const { field, direction } of sort) params.append('sort', field + ':' + direction);
+  if (query) params.set('q', query);
+  for (const f of filters) params.append('filter', f.field + ' ' + f.operator + ' ' + f.value);
+
+  const body = await fetch('/api/releases?' + params).then((r) =&gt; r.json());
+
+  // `total` is what drives the pager; `error` lands in the grid's own error
+  // state and is announced, rather than being thrown.
+  return { rows: body.records.map(makeRow), total: body.total };
+};
+grid.reload();
+grid.dataSource = null;   // back to the rows you wrote
 
 // --- selection ---------------------------------------------------------
 grid.selectRow(row, { range: true });
@@ -424,6 +475,63 @@ grid.addEventListener('ui4u:copy', (event) =&gt; {
         // "Empty" is faked by searching for something that cannot match, so the
         // demo exercises the real derived-empty path rather than a special one.
         grid.search(label === 'Empty' ? 'zzzz-nothing' : '');
+      });
+
+      /*
+       * The local/remote switch. Both modes use the same columns, the same
+       * toolbar and the same pager — only where the rows come from changes,
+       * which is the point of the seam.
+       */
+      document.getElementById('opt-source').addEventListener('ui4u:change', (event) => {
+        if (event.detail.label !== 'remote') {
+          grid.dataSource = null;
+          return;
+        }
+
+        // Stands in for a real endpoint: it slices, sorts and searches the same
+        // local array, so the demo needs no server and the behaviour is honest.
+        const REMOTE = [...grid.rows];
+
+        grid.dataSource = async ({ offset, limit, sort, query }) => {
+          // A real source would be `await fetch(...)`; the delay is here so the
+          // loading state is actually visible on a click.
+          await new Promise((resolve) => setTimeout(resolve, 400));
+
+          let found = REMOTE.map((r) => ({ ...r }));
+          if (query) {
+            const needle = query.toLowerCase();
+            found = found.filter((r) =>
+              Object.values(r).some((v) => String(v).toLowerCase().includes(needle))
+            );
+          }
+          for (const { field, direction } of [...sort].reverse()) {
+            const sign = direction === 'desc' ? -1 : 1;
+            found.sort(
+              (a, b) =>
+                String(a[field] ?? '').localeCompare(String(b[field] ?? ''), undefined, {
+                  numeric: true,
+                }) * sign
+            );
+          }
+
+          const page = limit ? found.slice(offset, offset + limit) : found;
+          return { rows: page.map(makeRow), total: found.length };
+        };
+
+        function makeRow(record) {
+          const tr = document.createElement('tr');
+          for (const cell of grid.querySelectorAll('tbody tr')[0]?.children ?? []) {
+            const key = grid
+              .querySelectorAll('thead tr:last-child th')
+              [cell.cellIndex]?.getAttribute('data-sort');
+            const td = cell.cloneNode(true);
+            const raw = String(record[key] ?? '');
+            td.setAttribute('data-value', raw);
+            td.textContent = key === 'downloads' || key === 'size' ? raw : raw;
+            tr.appendChild(td);
+          }
+          return tr;
+        }
       });
 
       document.getElementById('opt-perpage').addEventListener('ui4u:change', (event) => {

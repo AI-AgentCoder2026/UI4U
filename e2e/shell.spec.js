@@ -224,3 +224,93 @@ test('a page with no stored theme keeps its markup default', async ({ page }) =>
   await page.goto('/demo/sidebar.html');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
+
+/* --- accents and ground -------------------------------------------------- */
+
+test.describe('accents and ground', () => {
+  const swatch = (page, name) => page.locator(`[data-accent-option="${name}"]`);
+  const ground = (page) => page.locator('[data-ground-option]');
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/demo/button.html');
+    await expect(swatch(page, 'ice')).toHaveCount(1);
+  });
+  const primary = (page) =>
+    page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--ui4u-primary').trim()
+    );
+
+  test('every accent offers a swatch, and picking one moves the accent', async ({ page }) => {
+    await expect(page.locator('[data-accent-option]')).toHaveCount(5);
+
+    const ice = await primary(page);
+    await swatch(page, 'mint').click();
+
+    await expect(page.locator('html')).toHaveAttribute('data-accent', 'mint');
+    expect(await primary(page)).not.toBe(ice);
+    await expect(swatch(page, 'mint')).toHaveAttribute('aria-pressed', 'true');
+    await expect(swatch(page, 'ice')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('the choice survives a navigation', async ({ page }) => {
+    await swatch(page, 'violet').click();
+
+    await page.goto('/demo/tabs.html');
+
+    await expect(page.locator('html')).toHaveAttribute('data-accent', 'violet');
+    await expect(swatch(page, 'violet')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('the tinted ground is a toggle, not a one-way setting', async ({ page }) => {
+    const bg = () =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--ui4u-bg').trim()
+      );
+
+    const neutral = await bg();
+
+    await ground(page).click();
+    await expect(page.locator('html')).toHaveAttribute('data-ground', 'tinted');
+    expect(await bg()).not.toBe(neutral);
+
+    await ground(page).click();
+    await expect(page.locator('html')).not.toHaveAttribute('data-ground', 'tinted');
+    expect(await bg()).toBe(neutral);
+  });
+
+  test('an accent never borrows the warning colour', async ({ page }) => {
+    // The rule the palette is built on: "selected" and "degraded" must never
+    // look the same, which is why there is no gold option.
+    for (const name of ['ice', 'mint', 'violet', 'rose', 'graphite']) {
+      const { primary, warning } = await page.evaluate((accent) => {
+        const s = getComputedStyle(document.documentElement);
+        const prev = document.documentElement.dataset.accent;
+        document.documentElement.dataset.accent = accent;
+        const out = {
+          primary: s.getPropertyValue('--ui4u-primary').trim(),
+          warning: s.getPropertyValue('--ui4u-warning').trim(),
+        };
+        document.documentElement.dataset.accent = prev ?? '';
+        return out;
+      }, name);
+
+      expect(primary, `${name} primary must differ from --ui4u-warning`).not.toBe(warning);
+    }
+  });
+
+  test('the accent resolves differently in light and dark', async ({ page }) => {
+    // A dark-mode ice blue on a white page is unreadable, which is why each
+    // accent publishes two values and the theme picks one.
+    const read = () =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--ui4u-primary').trim()
+      );
+
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    const dark = await read();
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+    const light = await read();
+
+    expect(dark).not.toBe(light);
+  });
+});

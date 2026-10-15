@@ -1509,3 +1509,443 @@ describe('ui-tablegrid async states', () => {
     assert.equal(grid.rows.length, 1, 'and nothing adopted itself afterwards');
   });
 });
+
+describe('ui-tablegrid multi-column sort', () => {
+  let grid;
+
+  beforeEach(() => {
+    grid = mount(TABLE).querySelector('ui-tablegrid');
+  });
+
+  afterEach(() => cleanup());
+
+  it('reads a list of keys from the sort attribute', () => {
+    grid.setAttribute('sort', 'version,downloads');
+
+    assert.deepEqual(grid.sortList, [
+      { field: 'version', direction: 'asc' },
+      { field: 'downloads', direction: 'asc' },
+    ]);
+    // `sort` stays the primary key, because that is what it has always meant.
+    assert.equal(grid.sort, 'version');
+  });
+
+  it('lets each key carry its own direction', () => {
+    grid.setAttribute('sort', 'version,downloads:desc');
+
+    assert.deepEqual(grid.sortList, [
+      { field: 'version', direction: 'asc' },
+      { field: 'downloads', direction: 'desc' },
+    ]);
+  });
+
+  it('falls back to the direction attribute for bare keys', () => {
+    grid.setAttribute('direction', 'desc');
+    grid.setAttribute('sort', 'version,downloads');
+
+    assert.deepEqual(grid.sortList, [
+      { field: 'version', direction: 'desc' },
+      { field: 'downloads', direction: 'desc' },
+    ]);
+  });
+
+  it('uses each key as a tiebreaker for the one before it', () => {
+    grid.sortBy(['version', 'downloads'], 'asc');
+    assert.deepEqual(order(grid), ['1.0.0', '1.1.0', '1.2.0']);
+    assert.equal(grid.sortList.length, 2);
+  });
+
+  it('a direction passed to the array form applies to every key', () => {
+    const tied = mount(`
+      <ui-tablegrid label="Ties">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" data-sort="team" data-type="text">Team</th>
+              <th scope="col" data-sort="score" data-type="number">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>red</td><td data-value="10">10</td></tr>
+            <tr><td>blue</td><td data-value="30">30</td></tr>
+            <tr><td>red</td><td data-value="20">20</td></tr>
+          </tbody>
+        </table>
+      </ui-tablegrid>
+    `).querySelector('ui-tablegrid');
+
+    const scores = () =>
+      [...tied.querySelectorAll('tbody tr td:nth-child(2)')].map((c) => c.textContent);
+
+    tied.sortBy(['team', 'score']);
+    assert.deepEqual(scores(), ['30', '10', '20'], 'blue, then red ascending');
+
+    // One direction covers every key, so the teams reverse too.
+    tied.sortBy(['team', 'score'], 'desc');
+    assert.deepEqual(scores(), ['20', '10', '30'], 'red descending, then blue');
+  });
+
+  it('per-key directions come from the attribute, not the array', () => {
+    const tied = mount(`
+      <ui-tablegrid label="Ties">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" data-sort="team" data-type="text">Team</th>
+              <th scope="col" data-sort="score" data-type="number">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>red</td><td data-value="10">10</td></tr>
+            <tr><td>blue</td><td data-value="30">30</td></tr>
+            <tr><td>red</td><td data-value="20">20</td></tr>
+          </tbody>
+        </table>
+      </ui-tablegrid>
+    `).querySelector('ui-tablegrid');
+
+    // This is the case that matters: team ascending, but the tiebreaker on
+    // score descending — which is how you group by one thing and rank within it.
+    tied.setAttribute('sort', 'team,score:desc');
+
+    assert.deepEqual(
+      [...tied.querySelectorAll('tbody tr td:first-child')].map((c) => c.textContent),
+      ['blue', 'red', 'red']
+    );
+    assert.deepEqual(
+      [...tied.querySelectorAll('tbody tr td:nth-child(2)')].map((c) => c.textContent),
+      ['30', '20', '10']
+    );
+    assert.equal(tied.direction, 'asc', 'the primary key is still ascending');
+  });
+
+  it('adds a key on a shift-click and keeps the existing ones', () => {
+    grid.sortBy('version');
+    grid.sortBy('downloads', undefined, { additive: true });
+
+    assert.deepEqual(
+      grid.sortList.map((entry) => entry.field),
+      ['version', 'downloads']
+    );
+    assert.equal(grid.getAttribute('sort'), 'version,downloads');
+  });
+
+  it('removes a key on a second shift-click', () => {
+    grid.sortBy('version');
+    grid.sortBy('downloads', undefined, { additive: true });
+    grid.sortBy('version', undefined, { additive: true });
+
+    assert.deepEqual(
+      grid.sortList.map((entry) => entry.field),
+      ['downloads']
+    );
+    assert.equal(grid.sort, 'downloads');
+  });
+
+  it('unsorts one key and keeps the rest', () => {
+    grid.sortBy(['version', 'downloads']);
+    grid.unsort('version');
+
+    assert.deepEqual(
+      grid.sortList.map((entry) => entry.field),
+      ['downloads']
+    );
+  });
+
+  it('marks only the primary header with aria-sort', () => {
+    grid.sortBy(['version', 'downloads']);
+
+    // aria-sort belongs on exactly one header: leaving it on every sorted
+    // column would announce two unsorted columns for one sort.
+    const sorted = [...grid.querySelectorAll('th[aria-sort]')];
+    assert.equal(sorted.length, 1);
+    assert.equal(sorted[0].getAttribute('data-sort'), 'version');
+
+    // The priority order still has to be visible, so it gets a presentational
+    // rank rather than a second aria-sort.
+    const secondary = grid.querySelector('th[data-sort="downloads"]');
+    assert.equal(secondary.getAttribute('data-sort-rank'), '2');
+    assert.equal(secondary.querySelector('.ui4u-tablegrid__sort-rank').textContent, '2');
+    assert.equal(
+      grid.querySelector('th[data-sort="version"]').hasAttribute('data-sort-rank'),
+      false
+    );
+  });
+
+  it('writes a redundant direction only when the keys disagree', () => {
+    grid.sortBy(['version', 'downloads']);
+    assert.equal(grid.getAttribute('sort'), 'version,downloads');
+
+    grid.setAttribute('sort', 'version:desc,downloads');
+    // The direction attribute tracks the primary, so reading it directly still
+    // gives the right answer.
+    assert.equal(grid.direction, 'desc');
+  });
+
+  it('a veto leaves the whole list untouched', () => {
+    grid.sortBy('version');
+    grid.bind('sort', () => false);
+
+    grid.sortBy('downloads', undefined, { additive: true });
+
+    assert.deepEqual(
+      grid.sortList.map((entry) => entry.field),
+      ['version']
+    );
+  });
+
+  it('resetSort clears every key', () => {
+    grid.sortBy(['version', 'downloads']);
+    grid.resetSort();
+
+    assert.deepEqual(grid.sortList, []);
+    assert.equal(grid.hasAttribute('sort'), false);
+    assert.equal(grid.querySelectorAll('th[aria-sort]').length, 0);
+  });
+
+  it('ignores a key that is not a column', () => {
+    grid.sortBy('version');
+    grid.sortBy('nonsense', undefined, { additive: true });
+
+    assert.deepEqual(
+      grid.sortList.map((entry) => entry.field),
+      ['version']
+    );
+  });
+});
+
+describe('ui-tablegrid data source', () => {
+  let grid;
+
+  /** Builds a <tr> matching the fixture's columns. */
+  const makeRow = (version, downloads) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '';
+    const cells = [version, String(downloads), '2026-01-01'];
+    for (const text of cells) {
+      const td = document.createElement('td');
+      td.setAttribute('data-value', text);
+      td.textContent = text;
+      tr.appendChild(td);
+    }
+    return tr;
+  };
+
+  /** A source that always answers with two rows out of a total of nine. */
+  const okSource = (seen) => async (request) => {
+    seen.push(request);
+    return { rows: [makeRow('a', 1), makeRow('b', 2)], total: 9 };
+  };
+
+  /** Lets a pending request settle. */
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  beforeEach(() => {
+    grid = mount(TABLE).querySelector('ui-tablegrid');
+    grid.setAttribute('per-page', '2');
+  });
+
+  afterEach(() => cleanup());
+
+  it('asks the source instead of reading its own markup', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].limit, 2);
+    assert.equal(seen[0].offset, 0);
+    assert.equal(seen[0].query, '');
+
+    // The authored rows are gone; the answer is on screen.
+    assert.deepEqual(
+      grid.data.map((r) => r.version),
+      ['a', 'b']
+    );
+    assert.equal(grid.total, 9);
+    assert.equal(grid.loading, false);
+  });
+
+  it('drives the pager from the reported total, not the rows it holds', async () => {
+    grid.dataSource = okSource([]);
+    await settle();
+
+    assert.equal(grid.total, 9);
+    assert.equal(grid.pageCount, 5, 'nine rows at two per page');
+    assert.match(
+      grid.querySelector('.ui4u-tablegrid__page-status').textContent,
+      /Page 1 of 5 · 9 rows/
+    );
+  });
+
+  it('passes the sort through instead of sorting the page', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    grid.sortBy('version', 'desc');
+    await settle();
+
+    assert.deepEqual(seen[1].sort, [{ field: 'version', direction: 'desc' }]);
+    // The two rows are left exactly as the server sent them.
+    assert.deepEqual(
+      grid.data.map((r) => r.version),
+      ['a', 'b']
+    );
+  });
+
+  it('sends the multi-column sort in priority order', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    grid.sortBy(['version', 'downloads']);
+    await settle();
+
+    assert.deepEqual(seen[1].sort, [
+      { field: 'version', direction: 'asc' },
+      { field: 'downloads', direction: 'asc' },
+    ]);
+  });
+
+  it('sends the query and the advanced filters', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    grid.search('beta');
+    grid.addFilter({ field: 'channel', operator: 'equals', value: 'stable' });
+    await settle();
+
+    const last = seen[seen.length - 1];
+    assert.equal(last.query, 'beta');
+    assert.deepEqual(last.filters, [{ field: 'channel', operator: 'equals', value: 'stable' }]);
+  });
+
+  it('moves the offset rather than slicing locally', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    grid.nextPage();
+    await settle();
+
+    assert.equal(seen[1].offset, 2);
+    // Every row stays visible: the server already sent this page.
+    assert.equal(grid.querySelectorAll('tbody tr:not([hidden])').length, 2);
+  });
+
+  it('shows a loading state while the request is in flight', async () => {
+    let release;
+    grid.dataSource = () =>
+      new Promise((resolve) => (release = () => resolve({ rows: [], total: 0 })));
+
+    assert.equal(grid.loading, true);
+    assert.equal(grid.querySelector('table').getAttribute('aria-busy'), 'true');
+    assert.ok(grid.querySelector('.ui4u-tablegrid__status'));
+
+    release();
+    await settle();
+    assert.equal(grid.loading, false);
+  });
+
+  it('reports an error the source returns, without throwing', async () => {
+    grid.dataSource = async () => ({ error: 'The release service is down' });
+    await settle();
+
+    assert.equal(grid.loading, false);
+    assert.match(
+      grid.querySelector('.ui4u-tablegrid__status').textContent,
+      /release service is down/
+    );
+    assert.equal(grid.querySelector('.ui4u-tablegrid__status').getAttribute('role'), 'alert');
+  });
+
+  it('survives a source that throws', async () => {
+    const consoleError = console.error;
+    console.error = () => {};
+    try {
+      grid.dataSource = async () => {
+        throw new Error('socket hang up');
+      };
+      await settle();
+
+      assert.equal(grid.loading, false);
+      assert.match(
+        grid.querySelector('.ui4u-tablegrid__status').textContent,
+        /Could not load rows/
+      );
+    } finally {
+      console.error = consoleError;
+    }
+  });
+
+  it('drops a stale response rather than letting it overwrite a newer one', async () => {
+    const pending = [];
+    grid.dataSource = () => new Promise((resolve) => pending.push(resolve));
+
+    // Setting the source fires the first request; each search fires another.
+    grid.search('a');
+    grid.search('ab');
+    assert.equal(pending.length, 3);
+
+    // Answer the newest first and the oldest last — the order that loses data
+    // if a response is applied without checking which request it answers.
+    pending[2]({ rows: [makeRow('second', 2)], total: 1 });
+    await settle();
+    pending[1]({ rows: [makeRow('first', 1)], total: 1 });
+    await settle();
+
+    assert.deepEqual(
+      grid.data.map((r) => r.version),
+      ['second']
+    );
+    assert.equal(grid.loading, false);
+  });
+
+  it('reloads on demand', async () => {
+    const seen = [];
+    grid.dataSource = okSource(seen);
+    await settle();
+
+    grid.reload();
+    await settle();
+
+    assert.equal(seen.length, 2);
+  });
+
+  it('emits ui4u:load with the rows and the total', async () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    grid.bind('load', (detail) => seen.push(detail));
+    grid.dataSource = okSource([]);
+    await settle();
+
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].total, 9);
+    assert.equal(seen[0].rows.length, 2);
+  });
+
+  it('falls back to an empty pager when no total is reported', async () => {
+    grid.dataSource = async () => ({ rows: [makeRow('a', 1)] });
+    await settle();
+
+    // Without a total the grid cannot know how many pages there are, and says
+    // one rather than guessing a number that would be wrong.
+    assert.equal(grid.total, 1);
+    assert.equal(grid.pageCount, 1);
+  });
+
+  it('handles back to the authored rows when the source is removed', async () => {
+    grid.dataSource = okSource([]);
+    await settle();
+    assert.equal(grid.data.length, 2);
+
+    grid.dataSource = null;
+
+    // Back to the markup the author wrote, and the pager counts those again.
+    assert.equal(grid.data.length, 3);
+    assert.equal(grid.total, 3);
+    assert.equal(grid.hasAttribute('data-remote'), false);
+  });
+});
